@@ -140,6 +140,19 @@
   .why p{color:var(--slate);font-size:13.5px}
   @media(max-width:760px){.why-grid{grid-template-columns:1fr}}
 
+  /* partners / trusted by */
+  .partners{padding:74px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--navy)}
+  .partners .eyebrow,.partners h2{text-align:center}
+  .partners h2{font-size:clamp(22px,2.8vw,32px)}
+  .partner-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:18px;margin-top:42px}
+  .partner{flex:0 1 240px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;text-align:center;
+    border:1px solid var(--line);border-radius:14px;padding:28px 22px;background:var(--navy-deep);min-height:132px;
+    filter:grayscale(1);opacity:.82;transition:opacity .2s,filter .2s,border-color .2s,transform .15s}
+  .partner:hover{opacity:1;filter:none;border-color:var(--gold);transform:translateY(-2px)}
+  .partner img{max-width:150px;max-height:60px;object-fit:contain}
+  .partner .name{font-weight:800;font-size:17px;letter-spacing:.01em;line-height:1.2}
+  .partner .kind{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--slate)}
+
   /* aerohome cross-promo */
   .aerohome{border:1px solid var(--gold);border-radius:18px;background:linear-gradient(135deg,var(--gold-soft),var(--navy));
     padding:46px;display:grid;grid-template-columns:1.2fr .8fr;gap:40px;align-items:center;margin-top:10px}
@@ -183,6 +196,7 @@
       <a href="#fleet">Fleet</a>
       <a href="#capabilities">Capabilities</a>
       <a href="#why">Why Us</a>
+      <a href="#partners">Clients</a>
       <a href="#aerohome">AeroHome</a>
     </div>
     <a class="btn sm" href="#contact">Book a demo</a>
@@ -336,6 +350,34 @@
   </div>
 </section>
 
+<section class="partners" id="partners">
+  <div class="wrap">
+    <span class="eyebrow reveal">Trusted by public agencies</span>
+    <h2 class="reveal">Partnered with the agencies keeping Arizona safe.</h2>
+    <div class="partner-grid reveal">
+
+      <!-- LOGO SLOT: to show a real logo, replace the two <span> lines below with:
+           <img src="logos/adot.png" alt="Arizona Department of Transportation"> -->
+      <div class="partner">
+        <span class="name">Arizona DOT</span>
+        <span class="kind">ADOT</span>
+      </div>
+
+      <!-- LOGO SLOT: replace with <img src="logos/mcso.png" alt="Maricopa County Sheriff's Office"> -->
+      <div class="partner">
+        <span class="name">Maricopa County</span>
+        <span class="kind">Sheriff's Office</span>
+      </div>
+
+      <div class="partner">
+        <span class="name">+ More agencies</span>
+        <span class="kind">Municipal &amp; State</span>
+      </div>
+
+    </div>
+  </div>
+</section>
+
 <section id="aerohome" style="padding-top:20px">
   <div class="wrap">
     <div class="aerohome reveal">
@@ -366,12 +408,13 @@
     <p class="reveal">Book a live demonstration for your agency — we'll show you dispatch-to-on-scene in under 90 seconds, on your turf.</p>
     <div class="contact-row reveal">
       <a class="btn" href="mailto:info@aeroassist.us?subject=Demo%20Request">Book a demo</a>
+      <a class="btn ghost" href="tel:+18008706194">Call 800 870 6194</a>
       <a class="btn ghost" href="mailto:info@aeroassist.us">Contact us</a>
     </div>
     <div class="contact-info reveal">
       AEROASSIST INDUSTRIES, INC.<br>
-      2150 N 1st St, Suite 432 · San Jose, CA 95131<br>
-      <a href="mailto:info@aeroassist.us">info@aeroassist.us</a>
+      4750 S 44th Pl, Suite E18 · Phoenix, AZ 85040<br>
+      <a href="tel:+18008706194">800 870 6194</a> · <a href="mailto:info@aeroassist.us">info@aeroassist.us</a>
     </div>
   </div>
 </section>
