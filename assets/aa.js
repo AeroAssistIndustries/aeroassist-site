@@ -261,10 +261,11 @@ function toast(m){if(!toastEl)return;toastEl.textContent=m;toastEl.classList.add
     var i=$('input,textarea',fl); if(i) i.addEventListener('blur',function(){valid(fl);});
   });
   f.addEventListener('submit',function(e){
-    e.preventDefault();
     var ok=true;
     $$('.field[data-req]',f).forEach(function(fl){ if(!valid(fl)) ok=false; });
-    if(!ok){ toast('Check the highlighted fields'); return; }
+    if(!ok){ e.preventDefault(); toast('Check the highlighted fields'); return; }
+    if(f.getAttribute('action')) return;   /* WordPress: the server sends the email */
+    e.preventDefault();
     var body='Name: '+$('#fName').value+'\nAgency: '+$('#fOrg').value+'\nEmail: '+$('#fEmail').value+
              '\nPhone: '+$('#fPhone').value+'\nTopic: '+$('#fTopic').value+'\n\n'+$('#fMsg').value;
     location.href='mailto:info@aeroassist.us?subject='+encodeURIComponent('AeroAssist enquiry — '+$('#fOrg').value)+'&body='+encodeURIComponent(body);
@@ -272,7 +273,7 @@ function toast(m){if(!toastEl)return;toastEl.textContent=m;toastEl.classList.add
     var note=document.getElementById('cNote'); if(note) note.style.display='none';
     toast('Message ready to send');
   });
-  $('#copyMail').addEventListener('click',function(){
+  var cm=$('#copyMail'); if(cm) cm.addEventListener('click',function(){
     var t='info@aeroassist.us';
     if(navigator.clipboard) navigator.clipboard.writeText(t).then(function(){toast('Email address copied');},function(){location.href='mailto:'+t;});
     else location.href='mailto:'+t;
@@ -1076,7 +1077,7 @@ function toast(m){if(!toastEl)return;toastEl.textContent=m;toastEl.classList.add
   var i=-1, prev=null;
   function show(k){
     var st=STEPS[k], el=document.querySelector(st[1]);
-    if(!el || (here!==st[0] && !(here==='' && st[0]==='index.html'))){ try{ sessionStorage.setItem('aaTour',String(k)); }catch(e){} location.href=st[0]+'?tour='+k+st[1]; return; }
+    if(!el){ try{ sessionStorage.setItem('aaTour',String(k)); }catch(e){} location.href=((window.AA_URL&&AA_URL[st[0]])||st[0])+'?tour='+k+st[1]; return; }
     if(prev) prev.classList.remove('tour-focus');
     i=k;
     document.getElementById('tourStep').textContent=(k+1)+' / '+STEPS.length;
@@ -1104,9 +1105,10 @@ function toast(m){if(!toastEl)return;toastEl.textContent=m;toastEl.classList.add
     if(e.key==='ArrowRight'){ if(i<STEPS.length-1) show(i+1); }
     if(e.key==='ArrowLeft'){ if(i>0) show(i-1); }
   });
+  /* resume only when this page was opened by the tour itself */
   var m=/[?&]tour=(\d+)/.exec(location.search), saved=null;
-  try{ saved=sessionStorage.getItem('aaTour'); }catch(e){}
-  if(!m&&saved!==null) m=[0,saved];
+  try{ saved=sessionStorage.getItem('aaTour'); sessionStorage.removeItem('aaTour'); }catch(e){}
+  if(!m&&saved!==null&&document.referrer&&document.referrer.indexOf(location.host)>=0&&STEPS[+saved]&&document.querySelector(STEPS[+saved][1])) m=[0,saved];
   if(m){ var k=+m[1]; if(k>=0&&k<STEPS.length) setTimeout(function(){ show(k); },350); }
 })();
 
@@ -1301,10 +1303,13 @@ if(rq.length){
           :n<=7?['STAGE 3 · READY TO SCOPE','You are ready for a sector study.','Most agencies at this point are about ninety days from a first launch. We can model your sector with your own data.']
           :['STAGE 4 · READY TO LAUNCH','Everything is in place.','Book a briefing and we will scope dock sites, the FAA filings and a launch date with your team.'];
     $('#rStage').textContent=st[0]; $('#rHead').textContent=st[1]; $('#rCopy').textContent=st[2];
-    $('#rNext').innerHTML=miss.slice(0,3).map(function(i){ var x=NEXT[i]; return '<a href="'+x[1]+'"><b>'+x[0]+'</b><span>'+x[2]+'</span></a>'; }).join('');
+    $('#rNext').innerHTML=miss.slice(0,3).map(function(i){ var x=NEXT[i], pp=x[1].split('#'); return '<a href="'+((window.AA_URL&&AA_URL[pp[0]])||pp[0])+'#'+pp[1]+'"><b>'+x[0]+'</b><span>'+x[2]+'</span></a>'; }).join('');
   };
   rq.forEach(function(b){ b.addEventListener('change',upd); }); upd();
 }
+
+/* ---------- after the WordPress form sends, bring its message into view ---------- */
+if(/[?&]sent=/.test(location.search)){ var fs=$('#cOk.on')||$('#cform .form-note[role=alert]'); if(fs) addEventListener('load',function(){ setTimeout(function(){ fs.scrollIntoView({block:'center'}); },250); }); }
 
 /* ---------- contact.html?topic=investor picks the right subject ---------- */
 var tp=/[?&]topic=(\w+)/.exec(location.search), sel=$('#fTopic');
