@@ -4,7 +4,7 @@ Multi-page redesign of aeroassist.us, built to match the AeroHome design system:
 silver-and-gold finish, a live daytime hero render (traffic and search-and-rescue calls),
 dropdown menus, and the NDAA / FAA / FCC / CE compliance strip.
 
-Pages: `index.html` (home), `platform.html`, `operations.html`, `deploy.html`, `trust.html`,
+Pages: `index.html` (home), `solutions.html`, `platform.html`, `operations.html`, `deploy.html`, `trust.html`, `funding.html`, `resources.html`,
 `company.html`, `faq.html`, `contact.html`, `privacy.html`, `terms.html`, `404.html`.
 Shared files: `assets/aa.css`, `assets/aa.js`, `images/`.
 

@@ -1206,6 +1206,12 @@ function setOpen(li,on,focusFirst){
   if(!li) return;
   var b=$('.mm-btn',li);
   li.classList.toggle('open',on); b.setAttribute('aria-expanded',on?'true':'false');
+  if(on&&!mq.matches){ /* keep the panel inside the window */
+    var pn=$('.mm-panel',li); pn.style.marginLeft='0px';
+    var r=pn.getBoundingClientRect(), pad=16, shift=0;
+    if(r.right>innerWidth-pad) shift=innerWidth-pad-r.right; else if(r.left<pad) shift=pad-r.left;
+    pn.style.marginLeft=shift+'px';
+  }
   if(on){ if(openItem&&openItem!==li&&!mq.matches) setOpen(openItem,false); openItem=li; if(focusFirst){ var a=$('.mm-panel a',li); if(a) a.focus(); } }
   else if(openItem===li) openItem=null;
 }
@@ -1278,10 +1284,32 @@ if(matchMedia('(hover:hover)').matches&&!reduce){
   },{passive:true});
 }
 
+/* ---------- readiness check ---------- */
+var rq=$$('#ready input[type=checkbox]');
+if(rq.length){
+  var NEXT={1:['Pull six months of CAD calls','deploy.html#coverage','Model coverage for your sector'],2:['Name a program owner','deploy.html#roadmap','See the six rollout phases'],3:['Get a pilot certified under Part 107','trust.html#airspace','Read the FAA path'],
+            4:['Shortlist dock sites with power and network','deploy.html#coverage','Try dock placements in the planner'],5:['Find a funding route','funding.html#grants','See funding routes'],6:['Brief your council early','trust.html#myths','Use the myths and facts'],7:['Start a written policy','trust.html#policy','Read the model policy outline']};
+  var meter=$('#rMeter'), C=2*Math.PI*52;
+  if(meter){ meter.style.strokeDasharray=C; meter.style.strokeDashoffset=C; }
+  var upd=function(){
+    var n=0, miss=[];
+    rq.forEach(function(b,i){ if(b.checked) n++; else if(i>0) miss.push(i); });
+    $('#rScore').textContent=n;
+    if(meter) meter.style.strokeDashoffset=C*(1-n/8);
+    var st=n<=2?['STAGE 1 · EXPLORING','Start with the problem, not the aircraft.','Pull six months of calls from CAD and look at what arrives late and what never needed a unit. That is the case for a program, and it is the first thing we model with you.']
+          :n<=5?['STAGE 2 · PLANNING','You have the start of a program.','Close the gaps below, then a sector study turns your call data into dock sites, coverage and a budget you can take to council.']
+          :n<=7?['STAGE 3 · READY TO SCOPE','You are ready for a sector study.','Most agencies at this point are about ninety days from a first launch. We can model your sector with your own data.']
+          :['STAGE 4 · READY TO LAUNCH','Everything is in place.','Book a briefing and we will scope dock sites, the FAA filings and a launch date with your team.'];
+    $('#rStage').textContent=st[0]; $('#rHead').textContent=st[1]; $('#rCopy').textContent=st[2];
+    $('#rNext').innerHTML=miss.slice(0,3).map(function(i){ var x=NEXT[i]; return '<a href="'+x[1]+'"><b>'+x[0]+'</b><span>'+x[2]+'</span></a>'; }).join('');
+  };
+  rq.forEach(function(b){ b.addEventListener('change',upd); }); upd();
+}
+
 /* ---------- contact.html?topic=investor picks the right subject ---------- */
 var tp=/[?&]topic=(\w+)/.exec(location.search), sel=$('#fTopic');
 if(tp&&sel){
-  var want={investor:'Investor relations',partner:'Partnership or reseller',demo:'Requesting a demo or briefing'}[tp[1]];
+  var want={investor:'Investor relations',partner:'Partnership or reseller',demo:'Requesting a demo or briefing',grants:'Grant or funding help',procurement:'Procurement or contracts',press:'Press and media',support:'Support for an existing program'}[tp[1]];
   $$('option',sel).forEach(function(o){ if(o.textContent===want) sel.value=o.value||o.textContent; });
 }
 })();
