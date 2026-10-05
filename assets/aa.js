@@ -820,7 +820,12 @@ function toast(m){if(!toastEl)return;toastEl.textContent=m;toastEl.classList.add
     document.getElementById('anatP').textContent=d.p;
     document.getElementById('anatTags').innerHTML=d.tags.map(function(t){return '<span>'+t+'</span>';}).join('');
   }
-  hots.forEach(function(h){ h.addEventListener('click',function(){ show(h.dataset.hot); }); });
+  hots.forEach(function(h){
+    h.setAttribute('tabindex','0'); h.setAttribute('role','button');
+    h.setAttribute('aria-label',(D[h.dataset.hot]||{}).t||h.dataset.hot);
+    h.addEventListener('click',function(){ show(h.dataset.hot); });
+    h.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); show(h.dataset.hot); } });
+  });
   show('powertrain');
 })();
 
@@ -873,7 +878,7 @@ function toast(m){if(!toastEl)return;toastEl.textContent=m;toastEl.classList.add
     ];
     document.getElementById('roiCards').innerHTML=rows.map(function(x){
       return '<div class="roi-card'+(x.best?' best':'')+'">'+
-        '<h4>'+x.k+'</h4><div class="sub">'+x.s+'</div>'+
+        '<h3 class="h4">'+x.k+'</h3><div class="sub">'+x.s+'</div>'+
         '<div class="big">'+money(x.v)+'</div><div class="unit">modeled annual cost · '+x.cov+'% of eligible calls covered</div>'+
         '<div class="roi-rows">'+x.r.map(function(r){return '<div><span>'+r[0]+'</span><b>'+r[1]+'</b></div>';}).join('')+'</div></div>';
     }).join('');
@@ -993,7 +998,7 @@ function toast(m){if(!toastEl)return;toastEl.textContent=m;toastEl.classList.add
     ['Lost link','Loss of the command connection to the aircraft, and the pre-programmed behavior that follows, usually return to dock.'],
     ['VTOL','Vertical Take-Off and Landing. An aircraft that launches vertically from a pad but can transition to more efficient wing-borne flight.']
   ];
-  box.innerHTML=T.map(function(t){return '<div class="gt" data-term="'+(t[0]+' '+t[1]).toLowerCase()+'"><h4>'+t[0]+'</h4><p>'+t[1]+'</p></div>';}).join('');
+  box.innerHTML=T.map(function(t){return '<div class="gt" data-term="'+(t[0]+' '+t[1]).toLowerCase()+'"><h3 class="h4">'+t[0]+'</h3><p>'+t[1]+'</p></div>';}).join('');
   var q=document.getElementById('glosQ'), none=document.getElementById('glosNone');
   q.addEventListener('input',function(){
     var v=q.value.trim().toLowerCase(), shown=0;
@@ -1266,7 +1271,7 @@ var chips=$$('.aa-subnav a'), targets=chips.map(function(a){ return document.get
 function spy(){
   if(!chips.length) return;
   var best=-1;
-  targets.forEach(function(t,k){ if(t&&t.getBoundingClientRect().top<=160) best=k; });
+  targets.forEach(function(t,k){ if(t&&t.getBoundingClientRect().top<=parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop||0)+40) best=k; });
   chips.forEach(function(a,k){ a.classList.toggle('on',k===best); });
 }
 onScroll();
