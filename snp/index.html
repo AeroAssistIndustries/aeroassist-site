@@ -64,6 +64,17 @@ p { margin: 0; }
 .util { background: var(--ink); color: var(--muted-on-dark); font-size: 13.5px; }
 .util .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 24px; padding-block: 9px; }
 .util strong { color: #fff; font-weight: 600; }
+.util .wrap { align-items: center; }
+.clocks { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 18px; }
+.clk { display: inline-flex; align-items: baseline; gap: 6px; }
+.clk em { font-style: normal; font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted-on-dark); }
+.clk time { font-family: var(--mono); font-size: 13px; font-weight: 600; color: #fff; font-variant-numeric: tabular-nums; }
+.clk.home time { color: #FF5A60; }
+.status { display: inline-flex; align-items: center; gap: 7px; padding: 3px 10px; border: 1px solid var(--line-on-dark); font-size: 12.5px; color: #E9E9E6; }
+.status i { width: 8px; height: 8px; border-radius: 50%; background: var(--muted-on-dark); }
+.status.open i { background: #2BB673; box-shadow: 0 0 0 3px rgba(43,182,115,.25); }
+.status.closed i { background: #FF5A60; }
+@media (max-width: 760px) { .clk:not(.home):not([data-tz="America/New_York"]) { display: none; } }
 .header { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--paper); border-bottom: 1px solid var(--line); }
 .header .wrap { display: flex; align-items: center; justify-content: space-between; gap: 24px; min-height: 84px; }
 .brand { display: flex; align-items: center; text-decoration: none; }
@@ -296,7 +307,13 @@ footer .bottom { border-top: 1px solid var(--line-on-dark); padding-block: 14px;
 <div class="util">
   <div class="wrap">
     <span>Based in Arizona · <strong>Serving all 50 states since 2019</strong></span>
-    <span>Call <strong>[PHONE]</strong> · Mon–Fri 8am–5pm</span>
+    <div class="clocks" aria-label="Local times">
+      <span class="clk home" data-tz="America/Phoenix"><em>Arizona</em><time>--:--</time></span>
+      <span class="clk" data-tz="America/Los_Angeles"><em>Los Angeles</em><time>--:--</time></span>
+      <span class="clk" data-tz="America/Chicago"><em>Chicago</em><time>--:--</time></span>
+      <span class="clk" data-tz="America/New_York"><em>Miami</em><time>--:--</time></span>
+      <span class="status" id="open-status"><i aria-hidden="true"></i><span>Mon–Fri 8am–5pm AZ</span></span>
+    </div>
   </div>
 </div>
 
@@ -732,6 +749,28 @@ footer .bottom { border-top: 1px solid var(--line-on-dark); padding-block: 14px;
     btn.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
   });
   nav.addEventListener('click', function (e) { if (e.target.closest('a')) closeNav(); });
+
+  // Live clocks + open/closed (business hours: Mon–Fri 8am–5pm Arizona time)
+  var clocks = document.querySelectorAll('.clk');
+  var statusEl = document.getElementById('open-status');
+  function tick() {
+    var now = new Date();
+    clocks.forEach(function (c) {
+      try {
+        c.querySelector('time').textContent = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', timeZone: c.getAttribute('data-tz') }).format(now);
+      } catch (e) {}
+    });
+    try {
+      var parts = new Intl.DateTimeFormat('en-US', { weekday: 'short', hour: 'numeric', minute: 'numeric', hour12: false, timeZone: 'America/Phoenix' }).formatToParts(now);
+      var get = function (type) { var p = parts.find(function (x) { return x.type === type; }); return p ? p.value : ''; };
+      var day = get('weekday'), mins = (parseInt(get('hour'), 10) % 24) * 60 + parseInt(get('minute'), 10);
+      var open = ['Sat', 'Sun'].indexOf(day) === -1 && mins >= 480 && mins < 1020;
+      statusEl.className = 'status ' + (open ? 'open' : 'closed');
+      statusEl.lastElementChild.textContent = open ? 'Open now · until 5pm AZ' : 'Closed · Mon–Fri 8am–5pm AZ';
+    } catch (e) {}
+  }
+  tick();
+  setInterval(tick, 15000);
 
   var cat = document.getElementById('q-cat');
   document.querySelectorAll('[data-cat]').forEach(function (a) {
