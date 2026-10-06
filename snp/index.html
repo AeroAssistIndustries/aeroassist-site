@@ -256,13 +256,53 @@ input:focus, select:focus, textarea:focus { outline: 3px solid var(--red); outli
 .form-status:empty { display: none; }
 .form-status.ok { color: var(--ink); font-weight: 600; padding: 14px 16px; background: var(--mist); border-left: 4px solid var(--red); }
 
+/* Language button */
+.lang-btn { min-width: 48px; height: 44px; padding: 0 12px; border: 1.5px solid var(--ink); background: var(--paper); color: var(--ink); font-family: var(--mono); font-weight: 600; font-size: 13px; letter-spacing: .1em; cursor: pointer; }
+.lang-btn:hover { background: var(--ink); color: #fff; }
+@media (max-width: 960px) { .header .wrap > .lang-btn { margin-left: auto; } }
+
+/* Line sheet link */
+.sheet { align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; color: #fff; font-weight: 600; font-size: 15px; text-decoration: none; border-bottom: 2px solid var(--red); }
+.sheet:hover { color: #FF8A8E; }
+
+/* Testimonials */
+.staging-note { margin: -16px 0 24px; font-size: 14px; color: var(--muted); padding: 10px 14px; background: var(--mist); border-left: 4px solid var(--red); }
+.t-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.t-card { margin: 0; padding: 28px; border: 1px solid var(--line); border-top: 4px solid var(--ink); display: flex; flex-direction: column; gap: 16px; background: var(--paper); }
+.t-q { color: var(--red); line-height: 0; }
+.t-card blockquote { margin: 0; font-size: 17px; line-height: 1.55; color: var(--ink); flex: 1; }
+.t-card figcaption { display: flex; flex-direction: column; gap: 2px; padding-top: 14px; border-top: 1px solid var(--line); }
+.t-card figcaption span { color: var(--muted); font-size: 14.5px; }
+.t-tag { font-style: normal; margin-top: 8px; align-self: flex-start; font-family: var(--mono); font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; background: var(--mist); padding: 4px 8px; font-weight: 600; }
+
+/* Account application */
+.account { background: var(--mist); }
+.acct-grid { display: flex; flex-wrap: wrap; gap: 48px; align-items: flex-start; }
+.acct-info { flex: 1 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 22px; }
+.acct-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; border-top: 2px solid var(--ink); }
+.acct-steps li { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 14px; padding: 16px 0; border-bottom: 1px solid var(--line); }
+.acct-steps em { font-style: italic; font-family: var(--display); font-weight: 900; font-size: 30px; color: var(--red); line-height: 1; }
+.acct-steps b { display: block; }
+.acct-steps span { color: var(--muted); font-size: 15px; }
+.acct-form { flex: 1 1 540px; box-shadow: 0 24px 50px -28px rgba(18,19,22,.35); border-top: 4px solid var(--red); }
+.checks { border: 0; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 10px 22px; }
+.checks legend { font-size: 14px; font-weight: 600; margin-bottom: 8px; padding: 0; width: 100%; }
+.checks label { display: inline-flex; align-items: center; gap: 8px; font-weight: 500; font-size: 15px; min-height: 44px; }
+.checks input { width: 20px; height: 20px; min-height: 0; accent-color: var(--red); }
+input[type=file] { padding: 10px 12px; font-size: 14px; }
+
+/* WhatsApp button */
+.wa-btn { position: fixed; right: 18px; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); z-index: 30; display: inline-flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 20px 0 16px; background: #128C4A; color: #fff; text-decoration: none; font-weight: 700; font-size: 15.5px; border-radius: 999px; box-shadow: 0 14px 30px -12px rgba(0,0,0,.45); transition: transform .15s, background-color .15s; }
+.wa-btn:hover { background: #0E7A40; transform: translateY(-2px); }
+@media (max-width: 520px) { .wa-btn span { display: none; } .wa-btn { padding: 0; width: 56px; justify-content: center; } }
+
 /* Column steps so grids always fill their rows */
 @media (max-width: 1000px) {
-  .ind-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ind-grid, .t-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 620px) {
-  .ind-grid, .steps, .mia-cards, form { grid-template-columns: minmax(0, 1fr); }
+  .ind-grid, .steps, .mia-cards, form, .t-grid { grid-template-columns: minmax(0, 1fr); }
   form { padding: 28px 20px; }
   .div-main, .div-spec { padding: 28px 22px; }
 }
@@ -327,12 +367,14 @@ footer .bottom { border-top: 1px solid var(--line-on-dark); padding-block: 14px;
     <button class="menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
     </button>
+    <button class="lang-btn" id="lang-btn" type="button" aria-label="Ver en español" lang="es">ES</button>
     <nav class="nav" id="site-nav" aria-label="Main">
       <a href="#divisions">Divisions</a>
       <a href="#miami">Miami &amp; LATAM</a>
       <a href="#industries">Industries</a>
       <a href="#about">About</a>
       <a href="#process">Process</a>
+      <a href="#account">Open an account</a>
       <a href="#faq">FAQ</a>
       <a class="btn btn-red" href="#quote">Request a quote</a>
     </nav>
@@ -416,6 +458,7 @@ footer .bottom { border-top: 1px solid var(--line-on-dark); padding-block: 14px;
               <li><b>Packaging</b><code>QT · 5QT · GAL</code></li>
             </ul>
             <p class="spec-note"><strong>Direct-ship, pay the source.</strong> Tax-exempt purchasing for qualifying resellers. Brands: [BRANDS].</p>
+            <a class="sheet" href="https://aeroassistindustries.github.io/aeroassist-site/snp/linesheets/snp-oil-line-sheet.pdf" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span>Download line sheet (PDF)</span></a>
           </div>
         </article>
 
@@ -442,6 +485,7 @@ footer .bottom { border-top: 1px solid var(--line-on-dark); padding-block: 14px;
               <li><b>Condition</b><code>New · Open box · Refurb A/B</code></li>
             </ul>
             <p class="spec-note"><strong>Specs confirmed before purchase.</strong> Model, storage, color and condition grade are listed on every quote.</p>
+            <a class="sheet" href="https://aeroassistindustries.github.io/aeroassist-site/snp/linesheets/snp-phones-line-sheet.pdf" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span>Download line sheet (PDF)</span></a>
           </div>
         </article>
 
@@ -468,6 +512,7 @@ footer .bottom { border-top: 1px solid var(--line-on-dark); padding-block: 14px;
               <li><b>Other commercial goods</b><code>On request</code></li>
             </ul>
             <p class="spec-note"><strong>Freight handled properly.</strong> Some pool chemicals ship as regulated hazardous materials; we arrange carriers that are set up to move them.</p>
+            <a class="sheet" href="https://aeroassistindustries.github.io/aeroassist-site/snp/linesheets/snp-commercial-line-sheet.pdf" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span>Download line sheet (PDF)</span></a>
           </div>
         </article>
       </div>
@@ -611,6 +656,107 @@ footer .bottom { border-top: 1px solid var(--line-on-dark); padding-block: 14px;
     </div>
   </section>
 
+  <section class="section" id="reviews">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Customers</span>
+          <h2>What our customers say</h2>
+        </div>
+        <p class="lede">Six years of orders across all 50 states. Here is what buyers say about working with SNP.</p>
+      </div>
+      <p class="staging-note">Staging: these six slots are placeholders. Replace them with real quotes from customers who have agreed to be named.</p>
+      <div class="t-grid">
+        <figure class="t-card">
+          <span class="t-q"><svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 21v-7.5C4 8.6 6.4 5.6 10.5 4l1 2C9 7.1 8 8.9 8 11h3v10zm9 0v-7.5c0-4.9 2.4-7.9 6.5-9.5l1 2C18 7.1 17 8.9 17 11h3v10z"/></svg></span>
+          <blockquote>[Customer quote: one to three sentences on what SNP supplied and the result.]</blockquote>
+          <figcaption><b>[Name]</b><span>[Title], [Business] · [City, State]</span><em class="t-tag">Oil · Auto repair shop</em></figcaption>
+        </figure>
+        <figure class="t-card">
+          <span class="t-q"><svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 21v-7.5C4 8.6 6.4 5.6 10.5 4l1 2C9 7.1 8 8.9 8 11h3v10zm9 0v-7.5c0-4.9 2.4-7.9 6.5-9.5l1 2C18 7.1 17 8.9 17 11h3v10z"/></svg></span>
+          <blockquote>[Customer quote: one to three sentences on what SNP supplied and the result.]</blockquote>
+          <figcaption><b>[Name]</b><span>[Title], [Business] · [City, State]</span><em class="t-tag">Oil · Fleet operator</em></figcaption>
+        </figure>
+        <figure class="t-card">
+          <span class="t-q"><svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 21v-7.5C4 8.6 6.4 5.6 10.5 4l1 2C9 7.1 8 8.9 8 11h3v10zm9 0v-7.5c0-4.9 2.4-7.9 6.5-9.5l1 2C18 7.1 17 8.9 17 11h3v10z"/></svg></span>
+          <blockquote>[Customer quote: one to three sentences on what SNP supplied and the result.]</blockquote>
+          <figcaption><b>[Name]</b><span>[Title], [Business] · [City, State]</span><em class="t-tag">Oil · Quick-lube center</em></figcaption>
+        </figure>
+        <figure class="t-card">
+          <span class="t-q"><svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 21v-7.5C4 8.6 6.4 5.6 10.5 4l1 2C9 7.1 8 8.9 8 11h3v10zm9 0v-7.5c0-4.9 2.4-7.9 6.5-9.5l1 2C18 7.1 17 8.9 17 11h3v10z"/></svg></span>
+          <blockquote>[Customer quote: one to three sentences on what SNP supplied and the result.]</blockquote>
+          <figcaption><b>[Name]</b><span>[Title], [Business] · [City, State]</span><em class="t-tag">Phones · Miami exporter</em></figcaption>
+        </figure>
+        <figure class="t-card">
+          <span class="t-q"><svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 21v-7.5C4 8.6 6.4 5.6 10.5 4l1 2C9 7.1 8 8.9 8 11h3v10zm9 0v-7.5c0-4.9 2.4-7.9 6.5-9.5l1 2C18 7.1 17 8.9 17 11h3v10z"/></svg></span>
+          <blockquote>[Customer quote: one to three sentences on what SNP supplied and the result.]</blockquote>
+          <figcaption><b>[Name]</b><span>[Title], [Business] · [City, State]</span><em class="t-tag">Phones · Phone retailer</em></figcaption>
+        </figure>
+        <figure class="t-card">
+          <span class="t-q"><svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 21v-7.5C4 8.6 6.4 5.6 10.5 4l1 2C9 7.1 8 8.9 8 11h3v10zm9 0v-7.5c0-4.9 2.4-7.9 6.5-9.5l1 2C18 7.1 17 8.9 17 11h3v10z"/></svg></span>
+          <blockquote>[Customer quote: one to three sentences on what SNP supplied and the result.]</blockquote>
+          <figcaption><b>[Name]</b><span>[Title], [Business] · [City, State]</span><em class="t-tag">Pool · Pool service company</em></figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="section account" id="account">
+    <div class="wrap acct-grid">
+      <div class="acct-info">
+        <span class="eyebrow">Wholesale account</span>
+        <h2>Open a wholesale account</h2>
+        <p class="lede">Approved accounts get faster quotes, tax-exempt purchasing where it applies, and one contact for every division.</p>
+        <ol class="acct-steps">
+          <li><em>1</em><div><b>Apply</b><span>Tell us about your business and what you buy.</span></div></li>
+          <li><em>2</em><div><b>We verify</b><span>We confirm your business and, if you resell, your resale certificate.</span></div></li>
+          <li><em>3</em><div><b>Start ordering</b><span>Your account is active and quotes come back faster.</span></div></li>
+        </ol>
+      </div>
+      <form id="account-form" class="acct-form" novalidate>
+        <div class="form-head"><h3>Account application</h3><p>Takes about two minutes. Business customers only.</p></div>
+        <div class="field"><label for="a-biz">Legal business name <span class="req" aria-hidden="true">*</span></label><input id="a-biz" name="business" type="text" autocomplete="organization" required></div>
+        <div class="field"><label for="a-name">Contact name <span class="req" aria-hidden="true">*</span></label><input id="a-name" name="name" type="text" autocomplete="name" required></div>
+        <div class="field"><label for="a-email">Email <span class="req" aria-hidden="true">*</span></label><input id="a-email" name="email" type="email" autocomplete="email" required></div>
+        <div class="field"><label for="a-phone">Phone or WhatsApp</label><input id="a-phone" name="phone" type="tel" autocomplete="tel"></div>
+        <div class="field"><label for="a-type">Business type <span class="req" aria-hidden="true">*</span></label>
+          <select id="a-type" name="type" required>
+            <option value="">Choose one</option>
+            <option>Auto repair / quick lube</option>
+            <option>Fleet</option>
+            <option>Gas station / c-store</option>
+            <option>Phone retailer / repair</option>
+            <option>Reseller / exporter</option>
+            <option>Pool service / property</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="field"><label for="a-loc">State or country <span class="req" aria-hidden="true">*</span></label><input id="a-loc" name="location" type="text" required></div>
+        <fieldset class="field full checks">
+          <legend>Divisions you buy from</legend>
+          <label><input type="checkbox" name="divisions" value="Oil"> <span>Oil &amp; lubricants</span></label>
+          <label><input type="checkbox" name="divisions" value="Phones"> <span>Phones &amp; electronics</span></label>
+          <label><input type="checkbox" name="divisions" value="Pool"> <span>Pool chemicals &amp; commercial</span></label>
+        </fieldset>
+        <div class="field"><label for="a-vol">Estimated monthly spend</label>
+          <select id="a-vol" name="volume">
+            <option value="">Choose a range</option>
+            <option>Under $5,000</option>
+            <option>$5,000 – $25,000</option>
+            <option>$25,000 – $100,000</option>
+            <option>Over $100,000</option>
+          </select>
+        </div>
+        <div class="field"><label for="a-cert">Resale certificate (optional)</label><input id="a-cert" name="certificate" type="file" accept=".pdf,.jpg,.jpeg,.png"></div>
+        <div class="form-foot">
+          <button class="btn btn-red" type="submit" style="align-self: flex-start">Apply for an account</button>
+          <small>We review every application and reply within one business day.</small>
+          <p class="form-status" id="account-status" role="status"></p>
+        </div>
+      </form>
+    </div>
+  </section>
+
   <section class="section" id="faq">
     <div class="wrap faq-grid">
       <div>
@@ -693,6 +839,11 @@ footer .bottom { border-top: 1px solid var(--line-on-dark); padding-block: 14px;
   </section>
 </main>
 
+<a class="wa-btn" id="wa-btn" href="#quote" target="_blank" rel="noopener">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.4A8.4 8.4 0 1 1 21 11.5z"/><path d="M9 9.5c.3 2.6 2.4 4.7 5 5l1.2-1.2 1.8.8-.3 1.6c-3.8.4-8.2-3.9-7.8-7.8l1.6-.3.8 1.8z" fill="currentColor" stroke="none"/></svg>
+  <span>WhatsApp</span>
+</a>
+
 <footer>
   <div class="cta-band">
     <div class="wrap">
@@ -766,38 +917,124 @@ footer .bottom { border-top: 1px solid var(--line-on-dark); padding-block: 14px;
       var day = get('weekday'), mins = (parseInt(get('hour'), 10) % 24) * 60 + parseInt(get('minute'), 10);
       var open = ['Sat', 'Sun'].indexOf(day) === -1 && mins >= 480 && mins < 1020;
       statusEl.className = 'status ' + (open ? 'open' : 'closed');
-      statusEl.lastElementChild.textContent = open ? 'Open now · until 5pm AZ' : 'Closed · Mon–Fri 8am–5pm AZ';
+      statusEl.lastElementChild.textContent = open ? t('Open now · until 5pm AZ') : t('Closed · Mon–Fri 8am–5pm AZ');
     } catch (e) {}
   }
   tick();
   setInterval(tick, 15000);
 
+  // ---- Settings: fill these in to go live ----
+  var WHATSAPP_NUMBER = '';   // digits only with country code, e.g. '16025551234'
+  var FORM_ENDPOINT = '';     // e.g. 'https://formspree.io/f/xxxxxxx' (receives both forms)
+
+  // ---- Language (English / Español) ----
+  var ES = {"Based in Arizona ·": "Con sede en Arizona ·", "Serving all 50 states since 2019": "Atendemos los 50 estados desde 2019", "Los Angeles": "Los Ángeles", "Mon–Fri 8am–5pm AZ": "Lun–Vie 8am–5pm AZ", "Open now · until 5pm AZ": "Abierto ahora · hasta las 5pm AZ", "Closed · Mon–Fri 8am–5pm AZ": "Cerrado · Lun–Vie 8am–5pm AZ", "Divisions": "Divisiones", "Miami & LATAM": "Miami y LATAM", "Industries": "Industrias", "About": "Nosotros", "Process": "Proceso", "Open an account": "Abrir una cuenta", "FAQ": "Preguntas", "Request a quote": "Solicitar cotización", "Local times": "Horas locales", "SNP Wholesale home": "Inicio de SNP Wholesale", "Open menu": "Abrir menú", "Main": "Principal", "Wholesale brokerage & sourcing": "Corretaje y abastecimiento mayorista", "Wholesale supply.": "Suministro mayorista.", "One sourcing partner.": "Un solo socio de abastecimiento.", "Since 2019, SNP Wholesale has supplied bulk motor oil to businesses in all 50 states. We now bring the same buying power to phones and electronics, and to pool chemicals and commercial supply.": "Desde 2019, SNP Wholesale suministra aceite de motor a granel a empresas en los 50 estados. Ahora llevamos ese mismo poder de compra a celulares y electrónica, y a químicos para piscinas y suministros comerciales.", "Request a supply quote": "Solicite una cotización", "Explore our divisions": "Ver nuestras divisiones", "In business since": "En el negocio desde", "States served": "Estados atendidos", "All 50": "Los 50", "Annual revenue": "Ingresos anuales", "Connect · Source ·": "Conectar · Abastecer ·", "Supply": "Suministrar", "Oil brokerage": "Corretaje de aceite", "Motor oil & lubricants": "Aceite de motor y lubricantes", "Get an oil quote →": "Cotizar aceite →", "Phones & electronics": "Celulares y electrónica", "Devices & accessories": "Equipos y accesorios", "Get an electronics quote →": "Cotizar electrónica →", "Commercial supply": "Suministro comercial", "Pool chemicals & commercial goods": "Químicos para piscinas y productos comerciales", "Get a supply quote →": "Cotizar suministros →", "What we source": "Lo que abastecemos", "Different industries. One sourcing partner.": "Diferentes industrias. Un solo socio de abastecimiento.", "Tell us the product, the volume and where it needs to go. We find the supply, confirm pricing and coordinate delivery.": "Díganos el producto, el volumen y el destino. Nosotros conseguimos el suministro, confirmamos precios y coordinamos la entrega.", "Division": "División", "Our founding line. We place your motor oil orders on national wholesale accounts so you buy at warehouse pricing. You pay the warehouse directly and it ships straight to your location, with no distributor markup on the product.": "Nuestra línea fundadora. Colocamos sus pedidos de aceite de motor en cuentas mayoristas nacionales para que compre a precio de almacén. Usted paga directamente al almacén y el envío llega a su ubicación, sin margen de distribuidor sobre el producto.", "Repair shops": "Talleres", "Quick lube": "Cambio rápido de aceite", "Fleets": "Flotillas", "Gas stations": "Gasolineras", "Parts retailers": "Refaccionarias", "Discuss your requirements": "Hablemos de sus necesidades", "What we supply": "Lo que suministramos", "Full synthetic": "Sintético total", "Synthetic blend & high mileage": "Semisintético y alto kilometraje", "Heavy-duty diesel": "Diésel de servicio pesado", "Passenger car spec": "Especificación para autos", "Packaging": "Presentación", "Direct-ship, pay the source.": "Envío directo, pago a la fuente.", "Tax-exempt purchasing for qualifying resellers. Brands: [BRANDS].": "Compra exenta de impuestos para revendedores que califiquen. Marcas: [BRANDS].", "Download line sheet (PDF)": "Descargar ficha de productos (PDF)", "Volume sourcing for smartphones, tablets, accessories and consumer electronics. Tell us the models, condition and quantity, and we'll match supply to your specs and confirm availability before you commit.": "Abastecimiento por volumen de smartphones, tabletas, accesorios y electrónica de consumo. Díganos modelos, condición y cantidad; ajustamos el suministro a sus especificaciones y confirmamos disponibilidad antes de que usted se comprometa.", "Phone retailers": "Tiendas de celulares", "Repair stores": "Talleres de reparación", "Online sellers": "Vendedores en línea", "Resellers": "Revendedores", "Corporate buyers": "Compradores corporativos", "Smartphones": "Smartphones", "Unlocked · Carrier": "Desbloqueados · Operador", "Tablets & wearables": "Tabletas y relojes inteligentes", "By model": "Por modelo", "Accessories": "Accesorios", "Chargers · Cases · Cables": "Cargadores · Fundas · Cables", "Consumer electronics": "Electrónica de consumo", "Audio · Smart home": "Audio · Hogar inteligente", "Condition": "Condición", "New · Open box · Refurb A/B": "Nuevo · Caja abierta · Reacond. A/B", "Specs confirmed before purchase.": "Especificaciones confirmadas antes de comprar.", "Model, storage, color and condition grade are listed on every quote.": "Modelo, almacenamiento, color y grado de condición aparecen en cada cotización.", "Wholesale pool chemicals and commercial goods, for one-time buys or a recurring supply plan built around your season. We line up the product and the freight together.": "Químicos para piscinas y productos comerciales al por mayor, para compras únicas o un plan de suministro recurrente según su temporada. Coordinamos producto y flete juntos.", "Pool service companies": "Empresas de mantenimiento de piscinas", "HOAs & property managers": "Condominios y administradores", "Hotels & resorts": "Hoteles y resorts", "Pool supply stores": "Tiendas de artículos para piscinas", "Chlorine tablets": "Pastillas de cloro", "Shock": "Choque (shock)", "Liquid chlorine": "Cloro líquido", "Sodium hypochlorite": "Hipoclorito de sodio", "Balancers": "Balanceadores", "pH · Alkalinity · CYA": "pH · Alcalinidad · CYA", "Other commercial goods": "Otros productos comerciales", "On request": "Bajo pedido", "Freight handled properly.": "Flete manejado correctamente.", "Some pool chemicals ship as regulated hazardous materials; we arrange carriers that are set up to move them.": "Algunos químicos para piscinas se envían como materiales peligrosos regulados; coordinamos transportistas autorizados para moverlos.", "Phones · Miami & Latin America": "Celulares · Miami y Latinoamérica", "Wholesale phones for Miami and LATAM buyers": "Celulares al por mayor para compradores de Miami y LATAM", "Celulares al por mayor para Miami y Latinoamérica": "Wholesale phones for Miami and Latin America", "Miami is where wholesale phones move to Latin America. We source unlocked and carrier devices by model, storage, color and grade, and deliver to your Miami-area freight forwarder or warehouse, ready for export.": "Miami es la puerta de los celulares al por mayor hacia Latinoamérica. Conseguimos equipos desbloqueados y de operador por modelo, almacenamiento, color y grado, y los entregamos a su agente de carga o bodega en Miami, listos para exportar.", "What it means": "Qué significa", "NEW": "NUEVO", "OPEN BOX": "CAJA ABIERTA", "GRADE A": "GRADO A", "GRADE B": "GRADO B", "GRADE C": "GRADO C", "Factory sealed, never activated.": "Sellado de fábrica, nunca activado.", "Opened, unused or barely handled, with accessories.": "Abierto, sin uso o con uso mínimo, con accesorios.", "Like new. Minimal signs of use, fully functional.": "Como nuevo. Mínimas señales de uso, totalmente funcional.", "Light scratches or scuffs, fully functional.": "Rayones o marcas leves, totalmente funcional.", "Visible wear, fully functional. Priced for volume resale.": "Desgaste visible, totalmente funcional. Precio para reventa por volumen.", "Unlocked & carrier": "Desbloqueados y de operador", "US and international versions. Lock status is stated on every quote line.": "Versiones de EE. UU. e internacionales. El estado de bloqueo se indica en cada línea de la cotización.", "Mixed or single-SKU lots": "Lotes mixtos o de un solo modelo", "Buy one model by the box or a mixed lot built to your list.": "Compre un modelo por caja o un lote mixto armado según su lista.", "Accessories alongside": "Accesorios incluidos", "Chargers, cables and cases added to the same shipment.": "Cargadores, cables y fundas en el mismo envío.", "Spanish-speaking support": "Atención en español", "Atención en español para compradores de Latinoamérica.": "Spanish-speaking support for Latin American buyers.", "Send your list": "Envíe su lista", "Models, storage, colors, grade and quantity. A spreadsheet or a WhatsApp message both work.": "Modelos, almacenamiento, colores, grado y cantidad. Sirve una hoja de cálculo o un mensaje por WhatsApp.", "Get a line-by-line quote": "Reciba una cotización por línea", "Price and availability for each line, with lock status and grade spelled out.": "Precio y disponibilidad por línea, con estado de bloqueo y grado detallados.", "Confirm and pay": "Confirme y pague", "Terms agreed per order before anything ships.": "Condiciones acordadas por pedido antes de cualquier envío.", "Delivered in Miami": "Entregado en Miami", "To your forwarder or warehouse in Miami or Doral, with a packing list for export.": "A su agente de carga o bodega en Miami o Doral, con lista de empaque para exportación.", "Request a phone quote": "Cotizar celulares", "Solicitar cotización": "Request a quote", "Availability changes daily in this market. Every quote is confirmed before you pay.": "La disponibilidad cambia a diario en este mercado. Cada cotización se confirma antes de pagar.", "Who we supply": "A quién suministramos", "From bulk orders to recurring supply, for businesses that buy the same products again and again.": "Desde pedidos a granel hasta suministro recurrente, para empresas que compran los mismos productos una y otra vez.", "Oil": "Aceite", "Auto repair & quick lube": "Talleres y cambio rápido de aceite", "Keep the bays stocked with the grades you pour every day.": "Mantenga su taller surtido con los grados que usa a diario.", "Fleets & transport": "Flotillas y transporte", "Diesel and passenger grades for in-house maintenance.": "Grados diésel y de pasajeros para mantenimiento propio.", "Oil · Electronics": "Aceite · Electrónica", "Gas stations & c-stores": "Gasolineras y tiendas de conveniencia", "Shelf oil plus the chargers and cables that sell at the register.": "Aceite para anaquel, más los cargadores y cables que se venden en caja.", "Electronics": "Electrónica", "Phone retail & repair": "Venta y reparación de celulares", "Devices and accessories by model, condition and quantity.": "Equipos y accesorios por modelo, condición y cantidad.", "Resellers & online sellers": "Revendedores y vendedores en línea", "Volume lots with specs confirmed before you buy.": "Lotes por volumen con especificaciones confirmadas antes de comprar.", "Pool service & property": "Piscinas y propiedades", "Seasonal chemical supply for routes, HOAs, hotels and resorts.": "Suministro de químicos por temporada para rutas, condominios, hoteles y resorts.", "Why SNP Wholesale": "Por qué SNP Wholesale", "Your business moves. We help supply it.": "Su negocio avanza. Nosotros lo abastecemos.", "SNP Wholesale started in 2019 as a motor oil brokerage and grew into a supplier to businesses in every state, now doing more than $10 million a year. We've built that on sourcing that saves our customers money and doing what we say on every order.": "SNP Wholesale comenzó en 2019 como corredor de aceite de motor y creció hasta abastecer a empresas en todos los estados, con más de $10 millones al año. Lo logramos con abastecimiento que ahorra dinero a nuestros clientes y cumpliendo lo que prometemos en cada pedido.", "Buying in volume takes more than finding a product. You need the right supply, clear specs and pricing, and freight that shows up when it should. We handle that coordination across every division, so one contact covers all of it.": "Comprar por volumen requiere más que encontrar un producto. Necesita el suministro correcto, especificaciones y precios claros, y un flete que llegue a tiempo. Nosotros coordinamos todo en cada división, con un solo contacto.", "A track record since 2019": "Trayectoria desde 2019", "Six years supplying businesses nationwide.": "Seis años abasteciendo empresas en todo el país.", "One point of contact": "Un solo contacto", "The same person handles your quotes, orders and reorders.": "La misma persona atiende sus cotizaciones, pedidos y reabastecimientos.", "Built for volume and repeat orders": "Hecho para volumen y pedidos recurrentes", "Set up a recurring supply plan once and reorder with a message.": "Configure un plan de suministro una vez y reabastezca con un mensaje.", "Let's talk supply": "Hablemos de suministro", "Established": "Fundada", "Headquarters": "Sede", "Company": "Empresa", "How it works": "Cómo funciona", "From request to supply": "De la solicitud al suministro", "Start with your requirements. We work through sourcing, pricing and delivery with you, and the last step loops back to the first.": "Empiece con sus requisitos. Trabajamos con usted el abastecimiento, el precio y la entrega, y el último paso vuelve al primero.", "Share your requirements": "Comparta sus requisitos", "Product, specs or model, quantity and delivery location.": "Producto, especificaciones o modelo, cantidad y lugar de entrega.", "Get supply & pricing": "Reciba suministro y precio", "We source options and come back with availability and quoted terms.": "Buscamos opciones y le respondemos con disponibilidad y condiciones.", "Confirm & ship": "Confirme y enviamos", "Agree on purchase details and we coordinate freight to your door.": "Acuerde los detalles de compra y coordinamos el flete hasta su puerta.", "Reorder": "Reabastezca", "Set up a recurring plan, or send the same order again when stock runs low.": "Configure un plan recurrente o repita el mismo pedido cuando se le acabe el inventario.", "The arrows in our logo stand for that loop: source, supply, reorder.": "Las flechas de nuestro logo representan ese ciclo: abastecer, suministrar, reabastecer.", "Customers": "Clientes", "What our customers say": "Lo que dicen nuestros clientes", "Six years of orders across all 50 states. Here is what buyers say about working with SNP.": "Seis años de pedidos en los 50 estados. Esto dicen los compradores sobre trabajar con SNP.", "Staging: these six slots are placeholders. Replace them with real quotes from customers who have agreed to be named.": "Versión de prueba: estos seis espacios son provisionales. Reemplácelos con testimonios reales de clientes que acepten ser nombrados.", "[Customer quote: one to three sentences on what SNP supplied and the result.]": "[Testimonio del cliente: de una a tres frases sobre lo que SNP suministró y el resultado.]", "Wholesale account": "Cuenta mayorista", "Open a wholesale account": "Abra una cuenta mayorista", "Approved accounts get faster quotes, tax-exempt purchasing where it applies, and one contact for every division.": "Las cuentas aprobadas reciben cotizaciones más rápidas, compras exentas de impuestos cuando aplica y un solo contacto para todas las divisiones.", "Apply": "Solicite", "Tell us about your business and what you buy.": "Cuéntenos sobre su negocio y lo que compra.", "We verify": "Verificamos", "We confirm your business and, if you resell, your resale certificate.": "Confirmamos su empresa y, si revende, su certificado de reventa.", "Start ordering": "Empiece a comprar", "Your account is active and quotes come back faster.": "Su cuenta queda activa y las cotizaciones llegan más rápido.", "Account application": "Solicitud de cuenta", "Takes about two minutes. Business customers only.": "Toma unos dos minutos. Solo clientes empresariales.", "Legal business name": "Razón social", "Contact name": "Nombre de contacto", "Phone or WhatsApp": "Teléfono o WhatsApp", "Business type": "Tipo de negocio", "Choose one": "Elija una opción", "Auto repair / quick lube": "Taller / cambio rápido de aceite", "Fleet": "Flotilla", "Gas station / c-store": "Gasolinera / tienda de conveniencia", "Phone retailer / repair": "Tienda / reparación de celulares", "Reseller / exporter": "Revendedor / exportador", "Pool service / property": "Piscinas / propiedades", "Other": "Otro", "State or country": "Estado o país", "Divisions you buy from": "Divisiones de las que compra", "Oil & lubricants": "Aceite y lubricantes", "Pool chemicals & commercial": "Químicos para piscinas y comercial", "Estimated monthly spend": "Gasto mensual estimado", "Choose a range": "Elija un rango", "Under $5,000": "Menos de $5,000", "Over $100,000": "Más de $100,000", "Resale certificate (optional)": "Certificado de reventa (opcional)", "Apply for an account": "Solicitar cuenta", "We review every application and reply within one business day.": "Revisamos cada solicitud y respondemos en un día hábil.", "A few things to know": "Lo que debe saber", "Don't see your question? Add it to your quote request.": "¿No ve su pregunta? Inclúyala en su solicitud de cotización.", "What should I include in a quote request?": "¿Qué debo incluir en una solicitud de cotización?", "The product type, specs or model, estimated quantity, timing and delivery location. For electronics, add condition and storage. For oil, the grade and packaging. The more detail, the faster we can quote.": "El tipo de producto, especificaciones o modelo, cantidad estimada, plazo y lugar de entrega. Para electrónica, agregue condición y almacenamiento. Para aceite, el grado y la presentación. Entre más detalle, más rápido cotizamos.", "Does a request commit me to an order?": "¿Una solicitud me compromete a comprar?", "No. A request starts the conversation. Availability, pricing, minimums, payment terms and delivery are all confirmed with you before anything is ordered.": "No. Una solicitud inicia la conversación. Disponibilidad, precios, mínimos, condiciones de pago y entrega se confirman con usted antes de cualquier pedido.", "Can you set up recurring supply?": "¿Pueden configurar suministro recurrente?", "Yes. Tell us how often and how much you buy, and we'll plan around it. Many oil and pool customers reorder on a set schedule.": "Sí. Díganos con qué frecuencia y cuánto compra, y lo planeamos. Muchos clientes de aceite y piscinas reabastecen con un calendario fijo.", "Which states do you ship to?": "¿A qué estados envían?", "All 50. We've supplied businesses in every state since 2019. Some regulated pool chemicals have carrier limits; we'll tell you on the quote if any apply.": "A los 50. Abastecemos empresas en todos los estados desde 2019. Algunos químicos regulados tienen límites de transporte; se lo indicamos en la cotización si aplica.", "How does payment work for oil orders?": "¿Cómo funciona el pago de los pedidos de aceite?", "For oil, you pay the warehouse directly at checkout and it ships to you, so the price you see is the warehouse price. Payment terms for other divisions are set on each quote.": "En aceite, usted paga directamente al almacén al hacer el pedido y se le envía, así que el precio que ve es el precio de almacén. Las condiciones de pago de otras divisiones se fijan en cada cotización.", "Do I need a resale certificate?": "¿Necesito un certificado de reventa?", "Only if you're buying to resell and want to purchase tax-exempt. We'll tell you what your state requires and keep it on file for future orders.": "Solo si compra para revender y desea comprar sin impuestos. Le indicamos lo que exige su estado y lo guardamos para pedidos futuros.", "Let's get to work": "Pongámonos a trabajar", "Your next supply order starts here": "Su próximo pedido empieza aquí", "Tell us what your business needs. We'll come back with options, pricing and delivery timing.": "Díganos qué necesita su negocio. Le respondemos con opciones, precios y tiempos de entrega.", "Built around your requirements": "Pensado para sus requisitos", "Product, volume, timing and destination.": "Producto, volumen, plazo y destino.", "Three divisions, one contact": "Tres divisiones, un solo contacto", "Oil, phones & electronics, pool chemicals and commercial supply.": "Aceite, celulares y electrónica, químicos para piscinas y suministro comercial.", "Phone": "Teléfono", "Email": "Correo", "Hours": "Horario", "Mon–Fri 8am–5pm": "Lun–Vie 8am–5pm", "Based in": "Sede", "Arizona, USA": "Arizona, EE. UU.", "A few details to start the conversation.": "Algunos datos para iniciar la conversación.", "Your name": "Su nombre", "Product category": "Categoría de producto", "Choose a category": "Elija una categoría", "Phones for Miami / LATAM export": "Celulares para Miami / exportación a LATAM", "Pool chemicals": "Químicos para piscinas", "Estimated quantity": "Cantidad estimada", "Delivery location": "Lugar de entrega", "Your supply needs": "Sus necesidades de suministro", "Submit supply inquiry": "Enviar solicitud", "By submitting, you agree that SNP Wholesale may use these details to respond to your inquiry. Supply and pricing are subject to confirmation.": "Al enviar, acepta que SNP Wholesale use estos datos para responder a su solicitud. Suministro y precios sujetos a confirmación.", "e.g. 40 cases a month": "p. ej. 40 cajas al mes", "City, state": "Ciudad, estado", "Products, specs or models, condition, timing": "Productos, especificaciones o modelos, condición, plazo", "Please fill in:": "Por favor complete:", "your name": "su nombre", "company": "empresa", "email": "correo", "product category": "categoría de producto", "supply needs": "necesidades de suministro", "business name": "razón social", "contact name": "nombre de contacto", "business type": "tipo de negocio", "location": "ubicación", "Check the email address; it looks incomplete.": "Revise el correo; parece incompleto.", "Staging preview: this form isn’t connected yet, so nothing was sent.": "Versión de prueba: este formulario aún no está conectado, así que no se envió nada.", "Sending…": "Enviando…", "Thank you. We received your request and will reply within one business day.": "Gracias. Recibimos su solicitud y responderemos en un día hábil.", "That didn’t go through. Please email snpwholesalellc@gmail.com instead.": "No se pudo enviar. Por favor escriba a snpwholesalellc@gmail.com.", "Let's build your supply plan.": "Armemos su plan de suministro.", "Connect": "Conectar", "Source": "Abastecer", "Back to top": "Volver arriba", "Contact": "Contacto", "Based in Arizona, USA": "Con sede en Arizona, EE. UU.", "Industry standards we source to": "Estándares de la industria que cumplimos", "Motor oil": "Aceite de motor", "Fuel economy standard": "Estándar de eficiencia", "API licensed": "Licencia API", "Licensed products only": "Solo productos con licencia", "FCC authorized": "Autorizado por la FCC", "US-certified devices": "Equipos certificados en EE. UU.", "Graded New · A · B · C": "Grados Nuevo · A · B · C", "Condition stated per unit": "Condición indicada por unidad", "Lock status": "Estado de bloqueo", "Unlocked or carrier": "Desbloqueado o de operador", "EPA registered": "Registro EPA", "Pool sanitizers": "Desinfectantes de piscina", "Pool & spa standard": "Estándar para piscinas y spas", "Hazmat-compliant freight": "Flete para materiales peligrosos", "Proudly American · Based in Arizona": "Orgullosamente estadounidense · Con sede en Arizona", "Privacy policy": "Política de privacidad", "Terms & conditions": "Términos y condiciones", "© 2026 SNP Wholesale LLC. All rights reserved.": "© 2026 SNP Wholesale LLC. Todos los derechos reservados.", "Business customers only. Product names and standards belong to their respective owners; SNP Wholesale is not affiliated with or endorsed by these organizations.": "Solo clientes empresariales. Los nombres de productos y estándares pertenecen a sus respectivos dueños; SNP Wholesale no está afiliada ni respaldada por estas organizaciones.", "Legal": "Legal", "United States": "Estados Unidos", "Oil · Auto repair shop": "Aceite · Taller mecánico", "Oil · Fleet operator": "Aceite · Flotilla", "Oil · Quick-lube center": "Aceite · Cambio rápido de aceite", "Phones · Miami exporter": "Celulares · Exportador en Miami", "Phones · Phone retailer": "Celulares · Tienda de celulares", "Pool · Pool service company": "Piscinas · Mantenimiento de piscinas", "[Name]": "[Nombre]", "[Title], [Business] · [City, State]": "[Cargo], [Empresa] · [Ciudad, Estado]"};
+  var lang = 'en';
+  function t(s) { return lang === 'es' && ES[s] ? ES[s] : s; }
+  var textNodes = null;
+  function collect() {
+    textNodes = [];
+    var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+      acceptNode: function (n) {
+        var p = n.parentNode;
+        if (!p || /^(SCRIPT|STYLE)$/.test(p.nodeName) || p.closest('svg')) return NodeFilter.FILTER_REJECT;
+        var k = n.nodeValue.replace(/\s+/g, ' ').trim();
+        return k && ES[k] ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+      }
+    });
+    var n;
+    while ((n = walker.nextNode())) textNodes.push({ node: n, en: n.nodeValue, key: n.nodeValue.replace(/\s+/g, ' ').trim() });
+  }
+  var attrEls = null;
+  function setLang(next) {
+    if (!textNodes) {
+      collect();
+      attrEls = [];
+      document.querySelectorAll('[placeholder],[aria-label]').forEach(function (el) {
+        ['placeholder', 'aria-label'].forEach(function (a) {
+          var v = el.getAttribute(a);
+          if (v && ES[v]) attrEls.push({ el: el, attr: a, en: v });
+        });
+      });
+    }
+    lang = next;
+    textNodes.forEach(function (x) {
+      if (lang === 'es') {
+        var lead = x.en.match(/^\s*/)[0], trail = x.en.match(/\s*$/)[0];
+        x.node.nodeValue = lead + ES[x.key] + trail;
+      } else { x.node.nodeValue = x.en; }
+    });
+    attrEls.forEach(function (x) { x.el.setAttribute(x.attr, lang === 'es' ? ES[x.en] : x.en); });
+    document.documentElement.lang = lang;
+    var lb = document.getElementById('lang-btn');
+    lb.textContent = lang === 'es' ? 'EN' : 'ES';
+    lb.setAttribute('lang', lang === 'es' ? 'en' : 'es');
+    lb.setAttribute('aria-label', lang === 'es' ? 'View in English' : 'Ver en español');
+    tick();
+    try { localStorage.setItem('snp-lang', lang); } catch (e) {}
+  }
+  document.getElementById('lang-btn').addEventListener('click', function () { setLang(lang === 'es' ? 'en' : 'es'); });
+  try { if (localStorage.getItem('snp-lang') === 'es') setLang('es'); } catch (e) {}
+
+  // ---- WhatsApp ----
+  var wa = document.getElementById('wa-btn');
+  if (WHATSAPP_NUMBER) {
+    wa.href = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent('Hi SNP Wholesale, I would like a quote.');
+  } else {
+    wa.removeAttribute('target');
+    wa.setAttribute('aria-label', 'WhatsApp (coming soon): request a quote instead');
+  }
+
+  // ---- Category shortcuts ----
   var cat = document.getElementById('q-cat');
   document.querySelectorAll('[data-cat]').forEach(function (a) {
     a.addEventListener('click', function () { cat.value = a.getAttribute('data-cat'); });
   });
 
-  var form = document.getElementById('quote-form');
-  var status = document.getElementById('form-status');
-  form.addEventListener('submit', function (e) {
-    e.preventDefault();
-    var required = [['q-name', 'your name'], ['q-biz', 'company'], ['q-email', 'email'], ['q-cat', 'product category'], ['q-needs', 'supply needs']];
-    var missing = required.filter(function (r) { return !document.getElementById(r[0]).value.trim(); });
-    if (missing.length) {
+  // ---- Forms ----
+  function wireForm(formId, statusId, required, emailId) {
+    var form = document.getElementById(formId);
+    var status = document.getElementById(statusId);
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var missing = required.filter(function (r) { return !document.getElementById(r[0]).value.trim(); });
+      if (missing.length) {
+        status.className = 'form-status';
+        status.textContent = t('Please fill in:') + ' ' + missing.map(function (m) { return t(m[1]); }).join(', ') + '.';
+        document.getElementById(missing[0][0]).focus();
+        return;
+      }
+      if (!/^\S+@\S+\.\S+$/.test(document.getElementById(emailId).value.trim())) {
+        status.className = 'form-status';
+        status.textContent = t('Check the email address; it looks incomplete.');
+        document.getElementById(emailId).focus();
+        return;
+      }
+      if (!FORM_ENDPOINT) {
+        status.className = 'form-status ok';
+        status.textContent = t('Staging preview: this form isn’t connected yet, so nothing was sent.');
+        return;
+      }
+      var data = new FormData(form);
+      data.append('_form', formId);
+      data.append('_language', lang);
       status.className = 'form-status';
-      status.textContent = 'Please fill in ' + missing.map(function (m) { return m[1]; }).join(', ') + '.';
-      document.getElementById(missing[0][0]).focus();
-      return;
-    }
-    if (!/^\S+@\S+\.\S+$/.test(document.getElementById('q-email').value.trim())) {
-      status.className = 'form-status';
-      status.textContent = 'Check the email address; it looks incomplete.';
-      document.getElementById('q-email').focus();
-      return;
-    }
-    status.className = 'form-status ok';
-    status.textContent = 'Staging preview: this form isn’t connected yet, so nothing was sent.';
-  });
+      status.textContent = t('Sending…');
+      fetch(FORM_ENDPOINT, { method: 'POST', body: data, headers: { Accept: 'application/json' } })
+        .then(function (r) {
+          if (!r.ok) throw new Error();
+          status.className = 'form-status ok';
+          status.textContent = t('Thank you. We received your request and will reply within one business day.');
+          form.reset();
+        })
+        .catch(function () {
+          status.className = 'form-status';
+          status.textContent = t('That didn’t go through. Please email snpwholesalellc@gmail.com instead.');
+        });
+    });
+  }
+  wireForm('quote-form', 'form-status', [['q-name', 'your name'], ['q-biz', 'company'], ['q-email', 'email'], ['q-cat', 'product category'], ['q-needs', 'supply needs']], 'q-email');
+  wireForm('account-form', 'account-status', [['a-biz', 'business name'], ['a-name', 'contact name'], ['a-email', 'email'], ['a-type', 'business type'], ['a-loc', 'location']], 'a-email');
 })();
 </script>
 
