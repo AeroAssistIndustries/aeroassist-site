@@ -1798,6 +1798,25 @@ body:not(.pg-index) .aa-next-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
    made it the frame for the drawer, so the drawer shrank to the header's height.
    While the menu is open the header drops both, and the drawer fills the screen again. */
 @media(max-width:1100px){
-  html.nav-locked .site-head,html.nav-locked .site-head.pinned{transform:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;background:rgba(6,8,12,.98)}
+  html.nav-locked .site-head,html.nav-locked .site-head.pinned{transition:none!important;transform:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;background:rgba(6,8,12,.98)}
   html.nav-locked .nav.mm-nav.open{top:calc(var(--head-h) + var(--cmd-h));height:auto;max-height:none}
 }
+/* bottom action bar: one line of text on every phone, and nothing hides behind it */
+@media(max-width:720px){
+  #mobileCta{gap:8px;padding:9px 12px calc(9px + env(safe-area-inset-bottom))}
+  #mobileCta .btn{white-space:nowrap;padding:14px 8px;font-size:12.5px;letter-spacing:.06em;min-height:48px}
+  body{padding-bottom:calc(70px + env(safe-area-inset-bottom))}
+  #toTop{bottom:calc(82px + env(safe-area-inset-bottom));right:14px}
+}
+@media(max-width:380px){#mobileCta .btn{font-size:11.5px;letter-spacing:.04em;padding:14px 6px}}
+/* small phones: grid columns may shrink below their widest label, so no tool forces the page wider */
+@media(max-width:1100px){
+  .hero-in,.gap-in,.plan-in,.est-in,.contact-in,.roi-in,.ct-wrap,.road,.train-in,.co-in,.aa-ready,.aa-sol-in,.aa-asda,.aa-tr-in,.aa-band-in{grid-template-columns:minmax(0,1fr)!important}
+  .plan-panel,.calc,.est-out,.ct-detail,.road-detail,.contact-facts,.train-side,.ctrl,.ctrl-top,.seg,.mdetail{min-width:0}
+  .ctrl-top{flex-wrap:wrap;gap:4px 12px}
+  .ctrl-top label{min-width:0}
+  .seg button{min-width:0;padding-left:4px;padding-right:4px}
+}
+@media(max-width:720px){.plan-stats{grid-template-columns:repeat(2,minmax(0,1fr))!important}.pstat{min-width:0}.pstat .v{font-size:21px}}
+
+@media(max-width:1100px){.aa-subbar{top:calc(var(--head-h) + 1px)}}
