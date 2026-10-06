@@ -1851,17 +1851,19 @@ function lookAt(e,c){
 function mul(a,b){ var o=new Float32Array(16); for(var i=0;i<4;i++) for(var j=0;j<4;j++){ var s=0; for(var k=0;k<4;k++) s+=a[k*4+j]*b[i*4+k]; o[i*4+j]=s; } return o; }
 
 var cam={x:0,y:150,z:0,yaw:0,pitch:0,fov:0.9}, VP=null, VIEWM=null, TANY=0.45, ASP=1;
-var W=1, H=1, DPR=1, ptr={x:0,y:0}, ptrS={x:0,y:0}, scrollP=0, CLOCK=0, Z0=0, SPEED=9.5;
+var TAB=false, W=1, H=1, DPR=1, ptr={x:0,y:0}, ptrS={x:0,y:0}, scrollP=0, CLOCK=0, Z0=0, SPEED=9.5, CZ=0, CSPD=9.5;
+/* the camera cruises between calls and slows to a hover while one plays out, so the race stays in frame */
+function advCam(dt){ var want=(EV&&EV.i<5)?1.2:SPEED; CSPD+=(want-CSPD)*Math.min(1,dt*1.6); CZ+=CSPD*dt; }
 function setCamera(){
   var portrait=H>W*1.05;
   cam.fov=(portrait?70:52)*Math.PI/180;
-  var hy=portrait?0.19:0.205;
+  var hy=TAB?0.03:portrait?0.1:0.205;
   TANY=Math.tan(cam.fov/2); ASP=W/H;
   var pitch=Math.atan((1-2*hy)*TANY)+scrollP*0.13+ptrS.y*0.022;
   var yaw=0.032*Math.sin(CLOCK*0.047)+ptrS.x*0.055;
-  cam.z=((Z0+CLOCK*SPEED)%TILE+TILE)%TILE;
-  cam.x=RIGHT*(-30+26*Math.sin(CLOCK*0.041));
-  cam.y=(portrait?185:150)+5*Math.sin(CLOCK*0.07)+scrollP*45;
+  cam.z=((Z0+CZ)%TILE+TILE)%TILE;
+  cam.x=portrait?ART0+RIGHT*(-70+20*Math.sin(CLOCK*0.041)):RIGHT*(-30+26*Math.sin(CLOCK*0.041)); /* phones: over the arterial, so traffic calls fit the narrow frame */
+  cam.y=(TAB?430:portrait?185:150)+5*Math.sin(CLOCK*0.07)+scrollP*45;
   cam.yaw=yaw; cam.pitch=pitch;
   var f=[Math.sin(yaw)*Math.cos(pitch),-Math.sin(pitch),Math.cos(yaw)*Math.cos(pitch)];
   var e=[cam.x,cam.y,cam.z];
@@ -1941,11 +1943,11 @@ function hull(pts){
   up.pop(); lo.pop(); return lo.concat(up);
 }
 function tag(x,y,txt,col,a){
-  hud.globalAlpha=a; hud.font='600 10px "IBM Plex Mono", ui-monospace, monospace';
-  var w=hud.measureText(txt).width+14;
+  hud.globalAlpha=a; hud.font='600 11px "IBM Plex Mono", ui-monospace, monospace';
+  var w=hud.measureText(txt).width+16;
   if(x+w>W-12) x=Math.max(12,x-w-36);
-  hud.fillStyle='rgba(6,9,16,.86)'; hud.fillRect(x,y-16,w,19);
-  hud.fillStyle=col; hud.fillRect(x,y-16,2,19);
+  hud.fillStyle='rgba(6,9,16,.9)'; hud.fillRect(x,y-17,w,21);
+  hud.fillStyle=col; hud.fillRect(x,y-17,3,21);
   hud.fillText(txt,x+8,y-3); hud.globalAlpha=1;
 }
 function rgba(c,a){ return 'rgba('+c[0]+','+c[1]+','+c[2]+','+a.toFixed(3)+')'; }
@@ -1955,31 +1957,46 @@ var GOLD=[246,214,140], TEAL=[91,237,226], RED=[255,92,80], BLUE=[140,170,255], 
    TRAFFIC  a collision on the arterial: launch, transit, overwatch, units arrive, reroute, return
    SAR      a missing person: launch, transit, expanding-square search, thermal contact, team guided in, return */
 var EV=null, NEXT_EV=2.6, OPS=null, UNIT=4, KIND=0;
-var PH={traffic:[2.0,1.3,3.2,3.6,2.6,2.6], sar:[2.0,1.3,3.0,4.6,3.0,2.6]};
+var PH={traffic:[1.6,1.2,4.2,4.8,3.0,2.6], sar:[1.6,1.2,4.0,5.4,3.4,2.6]};
 var CRUISE=15.6, LAUNCH_S=22;   /* 35 mph, and a 22-second launch, as in the response-gap calculator */
-var COPYT=1e9;
-function measureOps(){ var cp=document.querySelector('.aa-hero-copy'); if(cp){ COPYT=cp.getBoundingClientRect().top-host.getBoundingClientRect().top; } var o=document.getElementById('aaOps'); if(!o||!o.offsetParent){ OPS=null; return; } var a=o.getBoundingClientRect(), b=host.getBoundingClientRect(); OPS={l:a.left-b.left,t:a.top-b.top}; }
+var COPYT=1e9, COPYB=0;
+function measureOps(){
+  var hb=host.getBoundingClientRect(), cp=document.querySelector('.aa-hero-copy'), rc=document.getElementById('aaRace');
+  if(cp){ var cr=cp.getBoundingClientRect(); COPYT=cr.top-hb.top; COPYB=cr.bottom-hb.top; }
+  var o=document.getElementById('aaOps');
+  if(!o||!o.offsetParent) OPS=null; else { var a=o.getBoundingClientRect(); OPS={l:a.left-hb.left,t:a.top-hb.top,b:a.bottom-hb.top,r:a.right-hb.left}; }
+  /* tall tablets: copy on top, dispatch panel lower left; the call plays out beside the panel, the race card sits under it */
+  TAB=H>W*1.05&&COPYT<H*0.3;
+  if(rc){ 
+    if(TAB&&OPS&&OPS.b+120<H-40){ rc.style.top=(OPS.b+16)+'px'; rc.style.left=OPS.l+'px'; rc.style.right='auto'; rc.style.width=(OPS.r-OPS.l)+'px'; }
+    else rc.style.top=rc.style.left=rc.style.right=rc.style.width=''; }
+}
 var LOGQ=[];
 function log(cls,txt,ago){ LOGQ.push([cls,txt,ago||0]); }
 function mmss(s){ s=Math.round(s); return Math.floor(s/60)+':'+('0'+s%60).slice(-2); }
-function inFrame(p,port){
+function inFrame(p,port,wide){
   if(!p) return false;
-  if(port) return p[0]>W*0.24&&p[0]<W*0.76&&p[1]>COPYT*0.64&&p[1]<COPYT-36;
-  if(p[0]<W*0.56||p[0]>W*0.80||p[1]<H*0.30||p[1]>H*0.52) return false;
-  if(OPS&&p[0]>OPS.l-60&&p[1]>OPS.t-150) return false;
+  /* tall tablets: copy on top, dispatch panel lower down; the open city sits between them */
+  if(TAB) return p[0]>(OPS?OPS.r+30:W*0.3)&&p[0]<W*0.86&&p[1]>COPYB+50&&p[1]<(OPS?OPS.b-30:H*0.8);
+  if(port) return p[0]>W*(wide?0.14:0.3)&&p[0]<W*(wide?0.86:0.62)&&p[1]>COPYT*0.66&&p[1]<COPYT-50;
+  if(p[0]<W*0.53||p[0]>W*(wide?0.88:0.82)||p[1]<H*0.36||p[1]>H*0.62) return false;
+  if(OPS&&p[0]>OPS.l-(wide?10:90)&&p[1]>OPS.t-(wide?70:190)) return false;
   return true;
 }
 function startEvent(){
   var port=H>W*1.05, kind=(KIND++%2)?'sar':'traffic', spot=null;
-  for(var zr=port?700:520; zr<(port?4200:1300)&&!spot; zr+=40){
+  for(var zr=TAB?100:port?200:300; zr<(port?4200:1300)&&!spot; zr+=30){
     var z=cam.z+zr;
-    var xs=kind==='traffic'?[ART0+RIGHT*5,ART0-RIGHT*5]:[ART0-RIGHT*170,ART0+RIGHT*150,ART0-RIGHT*240,ART0+RIGHT*260,ART0-RIGHT*90,ART0+RIGHT*90,ART0-RIGHT*320,ART0+RIGHT*360];
-    for(var i=0;i<xs.length;i++){ var p=proj(xs[i],0,z); if(inFrame(p,port)){ spot={x:xs[i],z:z}; break; } }
+    var xs=kind==='traffic'?[ART0+RIGHT*5,ART0-RIGHT*5]:[ART0-RIGHT*170,ART0+RIGHT*150,ART0-RIGHT*240,ART0+RIGHT*260,ART0-RIGHT*90,ART0+RIGHT*90,ART0-RIGHT*320,ART0+RIGHT*360,ART0+RIGHT*60,ART0-RIGHT*50,ART0+RIGHT*110];
+    for(var i=0;i<xs.length;i++){ var p=proj(xs[i],0,z); if(inFrame(p,port,kind==='traffic')){ spot={x:xs[i],z:z}; break; } }
   }
   if(!spot) return false;
   var dock=null;
+  function seen(x,z){ var q=proj(x,1.5,z); if(!q) return false;
+    if(TAB) return q[0]>W*0.06&&q[0]<W*0.94&&q[1]>COPYB+10&&q[1]<H*0.95&&!(OPS&&q[0]<OPS.r+20&&q[1]>OPS.t-20&&q[1]<OPS.b+20);
+    return port?(q[0]>W*0.08&&q[0]<W*0.92&&q[1]>COPYT*0.3&&q[1]<COPYT-20):(q[0]>W*0.42&&q[0]<W*0.95&&q[1]>H*0.22&&q[1]<H*0.8&&!(OPS&&q[0]>OPS.l-20&&q[1]>OPS.t-20)); }
   for(var c=0;c<2;c++) DOCKS.forEach(function(d){
-    var dz=d.z+c*TILE, zr=dz-cam.z, gap=spot.z-dz; if(zr<120||gap<140||gap>(port?1900:900)) return;
+    var dz=d.z+c*TILE, zr=dz-cam.z, gap=spot.z-dz; if(zr<70||gap<160||gap>(port?1900:900)||!seen(d.x,dz)) return;
     var dist=Math.hypot(spot.x-d.x,spot.z-dz);
     if(!dock||dist<dock.dist) dock={d:d,x:d.x,z:dz,dist:dist};
   });
@@ -2036,14 +2053,61 @@ function unitPos(){
   /* responders on the ground: down the arterial; the SAR team then walks in to the subject */
   if(EV.i<2) return null;
   var ph=PH[EV.kind], total=ph[2]+ph[3]+(EV.kind==='sar'?ph[4]:0), el=EV.i===2?EV.t:EV.i===3?ph[2]+EV.t:EV.i===4&&EV.kind==='sar'?ph[2]+ph[3]+EV.t:total, k=clamp(el/total,0,1);
-  var ax=ART0+RIGHT*(EV.kind==='traffic'?-6:6), z0=EV.iz-760, z1=EV.kind==='traffic'?EV.iz-14:EV.sz;
-  var tx=EV.kind==='traffic'?ax:EV.sx;
+  /* traffic: up the arterial to the wreck. SAR: in along the neighbourhood street toward the subject, so it stays in view */
+  var sar=EV.kind!=='traffic', ax=sar?EV.sx+RIGHT*34:ART0+RIGHT*-6, z0=EV.iz-Math.min(sar?420:520,Math.max(260,EV.iz-cam.z-40)), z1=sar?EV.sz:EV.iz-14;
+  var tx=sar?EV.sx:ax;
+  EV.uk=k;
   var seg1=Math.abs(z1-z0), seg2=Math.abs(tx-ax), L=seg1+seg2, s2=ease(k)*L;
   if(s2<=seg1) return [ax,0.8,z0+s2];
   return [lerp(ax,tx,(s2-seg1)/Math.max(seg2,1)),0.8,z1];
 }
 
 function dot(pt,r,col,a){ hud.fillStyle=rgba(col,a); hud.beginPath(); hud.arc(pt[0],pt[1],r,0,6.2832); hud.fill(); }
+/* a vehicle drawn to scale (exaggerated so it reads from the air): body, roof, and a light bar */
+function vehicle(x,z,hx,hz,len,wid,body,kind,lit){
+  var l=Math.hypot(hx,hz)||1; hx/=l; hz/=l; var px=-hz, pz=hx, c=[];
+  [[1,1],[1,-1],[-1,-1],[-1,1]].forEach(function(m){ var q=proj(x+hx*len/2*m[0]+px*wid/2*m[1],0.9,z+hz*len/2*m[0]+pz*wid/2*m[1]); if(q) c.push(q); });
+  if(c.length<4) return null;
+  hud.fillStyle='rgba(4,6,12,.55)'; hud.beginPath(); c.forEach(function(q,i){ var o=[q[0]+2,q[1]+3]; if(i) hud.lineTo(o[0],o[1]); else hud.moveTo(o[0],o[1]); }); hud.closePath(); hud.fill();
+  hud.fillStyle=body; hud.strokeStyle='rgba(6,8,14,.95)'; hud.lineWidth=1.4; path(c); hud.closePath(); hud.fill(); hud.stroke();
+  var cen=proj(x,1.6,z), sp=Math.hypot(c[0][0]-c[2][0],c[0][1]-c[2][1]);
+  if(kind==='police'&&cen){ /* black hood and trunk, white doors, light bar */
+    var f=proj(x+hx*len*0.36,1.0,z+hz*len*0.36), b=proj(x-hx*len*0.36,1.0,z-hz*len*0.36);
+    if(f&&b){ hud.strokeStyle='rgba(10,12,18,.95)'; hud.lineWidth=Math.max(2,sp*0.22); hud.beginPath(); hud.moveTo(f[0],f[1]); hud.lineTo(f[0]+(cen[0]-f[0])*0.3,f[1]+(cen[1]-f[1])*0.3); hud.moveTo(b[0],b[1]); hud.lineTo(b[0]+(cen[0]-b[0])*0.3,b[1]+(cen[1]-b[1])*0.3); hud.stroke(); }
+  }
+  if(lit&&cen){
+    var on=(CLOCK*7|0)%2, r=Math.max(2.4,sp*0.13);
+    var L=proj(x+px*wid*0.3,1.8,z+pz*wid*0.3), Rr=proj(x-px*wid*0.3,1.8,z-pz*wid*0.3);
+    if(L&&Rr){
+      hud.globalCompositeOperation='lighter';
+      var g1=hud.createRadialGradient(L[0],L[1],0,L[0],L[1],r*7), g2=hud.createRadialGradient(Rr[0],Rr[1],0,Rr[0],Rr[1],r*7);
+      g1.addColorStop(0,on?'rgba(255,60,60,.75)':'rgba(255,60,60,.15)'); g1.addColorStop(1,'rgba(255,60,60,0)');
+      g2.addColorStop(0,on?'rgba(70,120,255,.15)':'rgba(70,120,255,.8)'); g2.addColorStop(1,'rgba(70,120,255,0)');
+      hud.fillStyle=g1; hud.beginPath(); hud.arc(L[0],L[1],r*7,0,6.2832); hud.fill();
+      hud.fillStyle=g2; hud.beginPath(); hud.arc(Rr[0],Rr[1],r*7,0,6.2832); hud.fill();
+      hud.globalCompositeOperation='source-over';
+      dot(L,r,on?[255,70,70]:[120,30,30],1); dot(Rr,r,on?[40,60,140]:[90,140,255],1);
+    }
+  }
+  return {c:cen,size:sp};
+}
+/* the aircraft seen from above and behind: four rotors on an X frame, with its shadow on the ground */
+function aircraft(dp,gp,sz,heading){
+  if(gp){ hud.fillStyle='rgba(4,6,12,.32)'; hud.beginPath(); hud.ellipse(gp[0],gp[1],sz*1.5,sz*0.55,0,0,6.2832); hud.fill(); }
+  var a=heading||0, ca=Math.cos(a), sa=Math.sin(a);
+  function rot(u,v){ return [dp[0]+u*ca-v*sa, dp[1]+(u*sa+v*ca)*0.62]; }
+  var arms=[[1,1],[1,-1],[-1,-1],[-1,1]].map(function(m){ return rot(m[0]*sz,m[1]*sz); });
+  /* halo so it reads against bright ground */
+  var g=hud.createRadialGradient(dp[0],dp[1],0,dp[0],dp[1],sz*3.2); g.addColorStop(0,'rgba(255,255,255,.55)'); g.addColorStop(1,'rgba(255,255,255,0)');
+  hud.fillStyle=g; hud.beginPath(); hud.arc(dp[0],dp[1],sz*3.2,0,6.2832); hud.fill();
+  hud.strokeStyle='rgba(14,16,22,1)'; hud.lineWidth=Math.max(2,sz*0.3); hud.beginPath(); hud.moveTo(arms[0][0],arms[0][1]); hud.lineTo(arms[2][0],arms[2][1]); hud.moveTo(arms[1][0],arms[1][1]); hud.lineTo(arms[3][0],arms[3][1]); hud.stroke();
+  arms.forEach(function(q,i){ var spin=0.55+0.45*Math.abs(Math.sin(CLOCK*40+i));
+    hud.fillStyle='rgba(20,24,32,'+(0.35+0.25*spin).toFixed(2)+')'; hud.strokeStyle='rgba(240,244,248,.85)'; hud.lineWidth=1;
+    hud.beginPath(); hud.ellipse(q[0],q[1],sz*0.62,sz*0.38,0,0,6.2832); hud.fill(); hud.stroke(); });
+  hud.fillStyle='#14171F'; hud.strokeStyle='rgba(244,226,176,.95)'; hud.lineWidth=1.4; hud.beginPath(); hud.ellipse(dp[0],dp[1],sz*0.48,sz*0.34,0,0,6.2832); hud.fill(); hud.stroke();
+  dot(arms[1],Math.max(1.6,sz*0.16),[255,60,50],1); dot(arms[0],Math.max(1.6,sz*0.16),[60,255,140],1);
+  if((CLOCK*0.9%1)<0.08) dot([dp[0],dp[1]-sz*0.2],sz*0.55,[255,255,255],1);
+}
 function drawHud(){
   hud.setTransform(DPR,0,0,DPR,0,0);
   hud.clearRect(0,0,W,H);
@@ -2063,13 +2127,23 @@ function drawHud(){
     var T=EV.kind==='traffic', ph=PH[EV.kind];
     var ip=proj(EV.ix,0.6,EV.iz);
     if(ip){
+      var fin=EV.i===0?clamp(EV.t/0.8,0,1):EV.i>=5?clamp(1-EV.t/ph[5],0,1):1;
+      var rad=port?Math.max(W*0.42,150):Math.max(W*0.17,210);
+      hud.save(); hud.globalCompositeOperation='source-over';
+      var fg=hud.createRadialGradient(ip[0],ip[1]-rad*0.15,rad*0.35,ip[0],ip[1]-rad*0.15,rad*1.6);
+      fg.addColorStop(0,'rgba(5,7,12,0)'); fg.addColorStop(1,'rgba(5,7,12,'+(0.42*fin).toFixed(3)+')');
+      hud.fillStyle=fg; hud.fillRect(0,0,W,H); hud.restore();
+    }
+    if(ip){
       if(T){
         /* the wreck: three stopped vehicles across the lanes, and the queue behind */
-        [[-3,-2],[2,1],[5,-3]].forEach(function(v,n){ var vp=proj(EV.ix+v[0]*RIGHT,0.8,EV.iz+v[1]); if(vp){ dot(vp,3.6,[4,8,20],0.8); dot(vp,2.4,n===1?[255,255,255]:[255,170,60],1); } });
-        if(EV.i<5) for(var q=1;q<9;q++){ var qp=proj(EV.ix+RIGHT*(q%2?4:8),0.8,EV.iz-10-q*9); if(qp){ dot(qp,2.6,[4,8,20],0.55); dot(qp,1.6,[255,70,60],0.9); } }
+        if(EV.i<5) for(var q=1;q<8;q++){ vehicle(EV.ix+RIGHT*(q%2?4:9),EV.iz-16-q*13,0,1,9,4.4,['#5E6875','#8A94A0','#3F4752','#A9B0B8'][q%4],'car',false); }
+        vehicle(EV.ix-RIGHT*4,EV.iz-3,0.55,1,10,4.6,'#E07A3A','car',false);
+        vehicle(EV.ix+RIGHT*3,EV.iz+2,-0.9,0.6,10,4.6,'#D9DDE2','car',false);
+        vehicle(EV.ix+RIGHT*8,EV.iz-6,0.2,1,10,4.6,'#B83A32','car',false);
       }
       var hot=EV.i<3?1:0.55;
-      for(var q2=0;q2<2;q2++){ var pr=((CLOCK*0.8+q2*0.5)%1), rg=ringPts(EV.ix,EV.iz,4+pr*(T?30:44),0.6,26); if(rg){ hud.lineWidth=1.8; hud.strokeStyle=rgba(RED,(1-pr)*0.95*hot); path(rg); hud.stroke(); } }
+      for(var q2=0;q2<2;q2++){ var pr=((CLOCK*0.8+q2*0.5)%1), rg=ringPts(EV.ix,EV.iz,6+pr*(T?40:56),0.6,30); if(rg){ hud.lineWidth=2.6; hud.strokeStyle=rgba(RED,(1-pr)*0.95*hot); path(rg); hud.stroke(); } }
       if(!T&&EV.i===3){ /* the search box */
         var sb=ringPts(EV.ix+7,EV.iz+7,34,0.6,4); if(sb){ hud.setLineDash([3,5]); hud.lineWidth=1.2; hud.strokeStyle=rgba(GOLD,0.85); path(sb); hud.stroke(); hud.setLineDash([]); }
         hud.lineWidth=1.6; hud.strokeStyle=rgba(TEAL,0.9); hud.beginPath();
@@ -2084,43 +2158,49 @@ function drawHud(){
       if(sp2){ var pu=0.6+0.4*Math.sin(CLOCK*6); hud.lineWidth=2; hud.strokeStyle=rgba([255,255,255],0.95); hud.strokeRect(sp2[0]-9,sp2[1]-12,18,18); dot(sp2,3.4,[255,220,90],pu);
         labels.push([sp2[0]+16,sp2[1]-18,EV.i===4?'SUBJECT · THERMAL 98%':'SUBJECT · TEAM ON SITE',[255,226,140],1]); }
     }
-    /* responders */
-    var up=unitPos();
-    if(up){ var us=proj(up[0],up[1],up[2]); if(us){
-      var on=(CLOCK*6|0)%2, s0=clamp(2200/us[2],2.2,6);
-      dot(us,s0*1.9,[4,8,20],0.55);
-      dot([us[0]-s0*0.8,us[1]],s0*0.8,on?[255,50,50]:[70,110,255],1); dot([us[0]+s0*0.8,us[1]],s0*0.8,on?[70,110,255]:[255,50,50],1);
-      if(EV.i<(T?4:5)) labels.push([us[0]+14,us[1]+18,T?'ENGINE '+EV.unit+' · EN ROUTE':'TEAM '+EV.unit+' · EN ROUTE',BLUE,0.95]);
-    } }
+    /* responders: the patrol car (traffic) or the search team's truck (SAR), with the road still ahead of it */
+    var up=unitPos(), unitScreen=null;
+    if(up){
+      var prev=EV.lastUp||up, hx=up[0]-prev[0], hz=up[2]-prev[2]; if(Math.hypot(hx,hz)<0.01){ hx=EV.lastH?EV.lastH[0]:0; hz=EV.lastH?EV.lastH[1]:1; }
+      EV.lastUp=up; EV.lastH=[hx,hz];
+      var arrived=EV.i>=(T?4:5);
+      if(!arrived){ /* the route still to drive */
+        var z1=T?EV.iz-14:EV.sz, ax=up[0], pts=[proj(up[0],0.6,up[2])];
+        if(up[2]<z1-1) pts.push(proj(ax,0.6,z1));
+        if(!T) pts.push(proj(EV.sx,0.6,EV.sz));
+        if(pts.every(function(q){ return q; })){ hud.setLineDash([6,6]); hud.lineDashOffset=CLOCK*24; hud.lineWidth=3.2; hud.strokeStyle='rgba(6,10,24,.5)'; path(pts); hud.stroke(); hud.lineWidth=1.8; hud.strokeStyle=rgba(BLUE,0.95); path(pts); hud.stroke(); hud.setLineDash([]); }
+      }
+      var vv=vehicle(up[0],up[2],hx,hz,T?13:15,T?6:6.6,T?'#F4F6F8':'#C8D2E2',T?'police':'truck',!arrived||CLOCK%2<1.4);
+      if(vv&&vv.c){ unitScreen=vv.c;
+        var ueta=Math.max(0,EV.tts*2.4*(1-clamp(EV.uk||0,0,1)));
+        if(!arrived) labels.push([vv.c[0]+14,vv.c[1]+20,(T?'PATROL UNIT '+EV.unit+'A':'SEARCH TEAM '+EV.unit)+' · ETA '+mmss(ueta),BLUE,1]);
+        else labels.push([vv.c[0]+14,vv.c[1]+20,(T?'UNIT '+EV.unit+'A':'TEAM '+EV.unit)+' · ON SCENE',BLUE,1]); }
+    }
     /* the aircraft */
-    var dr=dronePos(), ds=proj(dr.p[0],dr.p[1],dr.p[2]);
+    var dr=dronePos(), ds=proj(dr.p[0],dr.p[1],dr.p[2]), dg=proj(dr.p[0],0.5,dr.p[2]);
     if(EV.i===2){
       var a0=proj(EV.dock.x,40,EV.dock.z), a1=proj(EV.ix,58,EV.iz);
-      if(a0&&a1){ hud.setLineDash([5,7]); hud.lineDashOffset=-CLOCK*30; hud.lineWidth=3; hud.strokeStyle='rgba(4,8,20,.35)'; hud.beginPath(); hud.moveTo(a0[0],a0[1]); hud.lineTo(a1[0],a1[1]); hud.stroke(); hud.lineWidth=1.6; hud.strokeStyle=rgba(GOLD,0.95); hud.beginPath(); hud.moveTo(a0[0],a0[1]); hud.lineTo(a1[0],a1[1]); hud.stroke(); hud.setLineDash([]); }
+      if(a0&&a1){ hud.setLineDash([7,7]); hud.lineDashOffset=-CLOCK*40; hud.lineWidth=4; hud.strokeStyle='rgba(4,8,20,.4)'; hud.beginPath(); hud.moveTo(a0[0],a0[1]); hud.lineTo(a1[0],a1[1]); hud.stroke(); hud.lineWidth=2.2; hud.strokeStyle=rgba(GOLD,1); hud.beginPath(); hud.moveTo(a0[0],a0[1]); hud.lineTo(a1[0],a1[1]); hud.stroke(); hud.setLineDash([]); }
     }
     if(ds&&dr.on){
       if(dr.t){
-        var ep=ringPts(dr.t[0],dr.t[2],dr.search?8:10,0.5,18);
+        var ep=ringPts(dr.t[0],dr.t[2],dr.search?9:12,0.5,22);
         if(ep){ var cen=proj(dr.t[0],0.5,dr.t[2]); var hl=hull(ep.concat([ds]));
-          var gr=hud.createLinearGradient(ds[0],ds[1],cen[0],cen[1]); gr.addColorStop(0,rgba([255,255,255],0.42)); gr.addColorStop(1,rgba(TEAL,0.18));
+          var gr=hud.createLinearGradient(ds[0],ds[1],cen[0],cen[1]); gr.addColorStop(0,rgba([255,255,255],0.5)); gr.addColorStop(1,rgba(TEAL,0.24));
           hud.fillStyle=gr; path(hl); hud.closePath(); hud.fill();
-          hud.lineWidth=1.4; hud.strokeStyle=rgba(TEAL,0.9); path(ep); hud.stroke(); }
+          hud.lineWidth=2; hud.strokeStyle=rgba(TEAL,1); path(ep); hud.stroke(); }
       }
-      var sz=clamp(2600/ds[2],3,9);
-      /* by day the aircraft is a dark airframe with strobes, ringed so it reads against the ground */
-      dot(ds,sz*2.6,[255,255,255],0.22); hud.lineWidth=1.4; hud.strokeStyle='rgba(255,255,255,.95)'; hud.beginPath(); hud.arc(ds[0],ds[1],sz*2.0,0,6.2832); hud.stroke();
-      dot(ds,sz*0.9,[18,22,30],1);
-      [[-1,-1],[1,-1],[1,1],[-1,1]].forEach(function(m){ dot([ds[0]+m[0]*sz*1.05,ds[1]+m[1]*sz*0.7],sz*0.42,[30,34,44],1); });
-      dot([ds[0]-sz*1.15,ds[1]],sz*0.28,[255,60,50],1); dot([ds[0]+sz*1.15,ds[1]],sz*0.28,[60,255,140],1);
-      if((CLOCK*0.9%1)<0.08) dot([ds[0],ds[1]-sz*0.5],sz*0.9,[255,255,255],1);
-      var st=EV.kind==='traffic'?['',' · LAUNCH',' · EN ROUTE '+mmss(EV.tts*clamp(dr.k||0,0,1)),' · OVERWATCH · 4K',' · OVERWATCH · REROUTE',' · RETURNING']
-                                :['',' · LAUNCH',' · EN ROUTE '+mmss(EV.tts*clamp(dr.k||0,0,1)),' · SEARCH · THERMAL',' · OVER SUBJECT',' · RETURNING'];
-      labels.push([ds[0]+sz*2.4+8,ds[1]-sz*1.2,'XR-1'+st[EV.i],TEAL,0.95]);
+      var sz=clamp(3400/ds[2],7,17);
+      var head=EV.i===2?Math.atan2((proj(EV.ix,58,EV.iz)||ds)[1]-ds[1],(proj(EV.ix,58,EV.iz)||ds)[0]-ds[0])*0.3:Math.sin(CLOCK*0.8)*0.4;
+      aircraft(ds,dg,sz,head);
+      var st=EV.kind==='traffic'?['',' · LAUNCH',' · EN ROUTE '+mmss(EV.tts*clamp(dr.k||0,0,1)),' · ON SCENE · LIVE 4K',' · OVERWATCH · REROUTE',' · RETURNING']
+                                :['',' · LAUNCH',' · EN ROUTE '+mmss(EV.tts*clamp(dr.k||0,0,1)),' · SEARCHING · THERMAL',' · OVER SUBJECT',' · RETURNING'];
+      labels.push([ds[0]+sz*2.2+8,ds[1]-sz*0.9,'XR-1 AIRCRAFT'+st[EV.i],TEAL,1]);
     }
   }
   /* labels never sit on top of each other: a clash moves the later one up a row, or drops it */
   var placed=[];
-  hud.font='600 10px "IBM Plex Mono", ui-monospace, monospace';
+  hud.font='600 11px "IBM Plex Mono", ui-monospace, monospace';
   function clash(x,y,w){ for(var k=0;k<placed.length;k++){ var q=placed[k]; if(x<q[0]+q[2]+6&&x+w+6>q[0]&&y-17<q[1]+3&&y+3>q[1]-17) return true; } return false; }
   labels.forEach(function(l){
     if(l[0]<10||l[0]>W-30) return;
@@ -2129,7 +2209,8 @@ function drawHud(){
     var w=hud.measureText(l[2]).width+14, x=l[0]+w>W-12?Math.max(12,l[0]-w-36):l[0], y=l[1], tries=0;
     while(clash(x,y,w)&&tries<3){ y-=22; tries++; }
     if(tries>=3||y<90) return;
-    if(port&&y>COPYT-14) return;
+    if(port&&!TAB&&y>COPYT-14) return;
+    if(TAB&&(y<COPYB+24||(OPS&&x<OPS.r+8&&y>OPS.t-4&&y<OPS.b+20)||y>H-60)) return;
     placed.push([x,y,w]);
     hud.strokeStyle=rgba(l[3],0.8*l[4]); hud.lineWidth=1.2; hud.beginPath(); hud.moveTo(l[0]-8,l[1]+2); hud.lineTo(l[0],y-6); hud.stroke();
     tag(x,y,l[2],rgba(l[3],1),l[4]);
@@ -2139,6 +2220,7 @@ function drawHud(){
 /* ---------- the dispatch panel and telemetry ---------- */
 var opsLog=document.getElementById('opsLog'), opsClock=document.getElementById('opsClock'), opsUnits=document.getElementById('opsUnits'), opsTts=document.getElementById('opsTts');
 var teleAlt=document.getElementById('teleAlt'), teleHdg=document.getElementById('teleHdg');
+var raceEl=document.getElementById('aaRace'), raceA=document.getElementById('raceA'), raceU=document.getElementById('raceU'), raceAt=document.getElementById('raceAt'), raceUt=document.getElementById('raceUt'), raceUn=document.getElementById('raceUn'), raceH=document.getElementById('raceH');
 function pad(n){ return (n<10?'0':'')+n; }
 function simTime(ago){ var s=Math.floor(10*3600+24*60+15+CLOCK-(ago||0)); return pad(Math.floor(s/3600)%24)+':'+pad(Math.floor(s/60)%60)+':'+pad(s%60); }
 var uiT=0, lastTts='—';
@@ -2159,6 +2241,19 @@ function flushUI(dt){
     else if(EV&&EV.i>=3) lastTts=mmss(EV.tts);
     else if(EV&&EV.i<2) lastTts='0:00';
     opsTts.textContent=lastTts; opsTts.className=EV&&EV.i>=3?'live':(EV?'alert':'');
+  }
+  /* the race: aircraft against the ground unit, in the call's own time */
+  if(raceEl){
+    if(EV&&EV.i>=1&&EV.i<5){
+      var T2=EV.kind==='traffic', ph2=PH[EV.kind], gT=EV.tts*2.4;
+      var dk=EV.i===1?0:EV.i===2?clamp(ease(EV.t/ph2[2]),0,1):1, uk=clamp(EV.uk||0,0,1);
+      raceEl.className='aa-race on'+(dk>=1?' won':'');
+      raceA.style.width=(dk*100).toFixed(1)+'%'; raceU.style.width=(uk*100).toFixed(1)+'%';
+      raceAt.textContent=dk>=1?'ON SCENE '+mmss(EV.tts):mmss(EV.tts*dk);
+      raceUt.textContent=uk>=1?'ON SCENE '+mmss(gT):'ETA '+mmss(gT*(1-uk));
+      raceUn.textContent=T2?'PATROL UNIT '+EV.unit+'A':'SEARCH TEAM '+EV.unit;
+      raceH.textContent=dk>=1?'AIRCRAFT FIRST BY '+mmss(gT-EV.tts):(T2?'P1 · TRAFFIC COLLISION':'P1 · MISSING PERSON');
+    } else raceEl.className='aa-race';
   }
   if(teleAlt) teleAlt.textContent='ALT '+Math.round(cam.y*3.281/5)*5+' FT';
   if(teleHdg){ var hd=((-cam.yaw*180/Math.PI)%360+360)%360; teleHdg.textContent='HDG '+('00'+Math.round(hd)).slice(-3)+'°'; }
@@ -2181,7 +2276,7 @@ var raf=0, last=0, visible=true, alive=false;
 function frame(now){
   raf=0; if(!alive) return;
   var dt=last?Math.min(0.05,(now-last)/1000):0; last=now;
-  if(!REDUCE) CLOCK+=dt;
+  if(!REDUCE){ CLOCK+=dt; advCam(dt); }
   if(dt>0){ slowT+=dt; slowN++; if(slowN>=90){ if(slowT/slowN>0.034&&SCALE>0.55){ SCALE*=0.8; resize(); } slowT=0; slowN=0; } }
   ptrS.x=lerp(ptrS.x,ptr.x,0.04); ptrS.y=lerp(ptrS.y,ptr.y,0.04);
   setCamera();
@@ -2210,7 +2305,7 @@ function start(){
     resize(); onScroll();
     frame(performance.now());
     if(!REDUCE) kick();
-    window.__aaSeek=function(t){ while(CLOCK<t){ CLOCK+=0.1; setCamera(); stepEvent(0.1); } setCamera(); drawWorld(); var sv=DPR; DPR=HUDR; drawHud(); DPR=sv; flushUI(1); };
+    window.__aaSeek=function(t){ while(CLOCK<t){ CLOCK+=0.1; advCam(0.1); setCamera(); stepEvent(0.1); } setCamera(); drawWorld(); var sv=DPR; DPR=HUDR; drawHud(); DPR=sv; flushUI(1); };
     window.__aaStats={lite:LITE,view:VIEW,nearDepth:NEAR,ncopy:NCOPY,lights:CNT.L,cars:CNT.C,trees:CNT.T,ground:CNT.G,streets:CNT.S,near:CNT.N,buildings:BANDS.reduce(function(t,b){ return t+(b?b[1]:0); },0),houses:HOUSES.length,docks:DOCKS.length};
     window.__aaDbg=function(){ return {ev:EV?[EV.kind,EV.i]:null,next:NEXT_EV,kind:KIND,COPYT:COPYT,W:W,H:H}; };
     requestAnimationFrame(function(){ host.classList.add('ready'); window.__aaReady=true; });
