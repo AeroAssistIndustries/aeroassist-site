@@ -1794,3 +1794,10 @@ body:not(.pg-index) .aa-next-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
 .foot-col .h5{font-weight:600;line-height:1.4}
 /* gallery: seven photos fill the grid with no hole in the last row */
 @media(min-width:1101px){.gal > .shot:nth-child(n+6){grid-column:span 2;aspect-ratio:2/1}}
+/* Phone/tablet menu: once the page is scrolled, the pinned header's blur and slide-up
+   made it the frame for the drawer, so the drawer shrank to the header's height.
+   While the menu is open the header drops both, and the drawer fills the screen again. */
+@media(max-width:1100px){
+  html.nav-locked .site-head,html.nav-locked .site-head.pinned{transform:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;background:rgba(6,8,12,.98)}
+  html.nav-locked .nav.mm-nav.open{top:calc(var(--head-h) + var(--cmd-h));height:auto;max-height:none}
+}
