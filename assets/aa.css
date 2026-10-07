@@ -1845,3 +1845,9 @@ body:not(.pg-index) .aa-next-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
   .aa-race-h{font-size:9.5px;margin-bottom:6px}
 }
 @media (prefers-reduced-motion:reduce){.aa-race-h i{animation:none}}
+
+/* links inside running text are underlined so they stand out without relying on colour */
+.fd-bio a,.vf-note a,.aa-sub .lead a,.fd-all a{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}
+
+/* phones: keep small labels at a legible 12px minimum */
+@media(max-width:560px){.kicker,.rule,.aa-crumbs,.alg-seal>span,.aa-comp .tx em,.aa-comp .tx small,.site-foot .h5,.aa-compliance .h4,.field label{font-size:12px}}

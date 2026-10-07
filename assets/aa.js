@@ -13,6 +13,16 @@ var rand=function(a){return a[Math.floor(Math.random()*a.length)];};
 var clamp=function(v,a,b){return Math.max(a,Math.min(b,v));};
 
 /* ---------- toast ---------- */
+/* ---------- menu photos: fetched when the menu is first used, or once the page has settled ---------- */
+(function(){
+  var done=false;
+  function load(){ if(done) return; done=true; $$('.mm-img[data-bg]').forEach(function(e){ e.style.backgroundImage='url("'+e.getAttribute('data-bg')+'")'; e.removeAttribute('data-bg'); }); }
+  var hd=document.getElementById('head');
+  if(hd){ ['pointerover','focusin','touchstart'].forEach(function(t){ hd.addEventListener(t,load,{once:true,passive:true}); }); }
+  function later(){ setTimeout(function(){ if('requestIdleCallback' in window) requestIdleCallback(load,{timeout:4000}); else load(); },4000); }
+  if(document.readyState==='complete') later(); else addEventListener('load',later);
+})();
+
 var toastT, toastEl=$('#toast');
 function toast(m){if(!toastEl)return;toastEl.textContent=m;toastEl.classList.add('on');clearTimeout(toastT);toastT=setTimeout(function(){toastEl.classList.remove('on');},1900);}
 
