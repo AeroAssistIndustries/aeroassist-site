@@ -437,6 +437,7 @@ function wireReimb(){
   ['dragleave','drop'].forEach(function(e){drop.addEventListener(e,function(){drop.classList.remove('over');});});
   var d=new Date();document.getElementById('rbDate').value=d.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
   f.addEventListener('input',function(e){if(e.target.classList)e.target.classList.remove('bad');});
+  window.addEventListener('pageshow',function(){var b=document.getElementById('rbSend');if(b){b.disabled=false;b.textContent='Submit request';}});
   var WP=!!window.AA_REIMB; if(!WP){MAXT=10*1024*1024;var sp=drop.querySelector('span');if(sp)sp.textContent='PDF, JPG, PNG or HEIC. Up to 8 files, 10 MB in total.';}
   var box=document.getElementById('rbStatus');
   function status(ok,title,text,ref){box.hidden=false;box.className=ok?'rb-status':'rb-status err';box.innerHTML='';var b=document.createElement('b');b.textContent=title;box.appendChild(b);
@@ -459,22 +460,23 @@ function wireReimb(){
     var a=document.createElement('a');a.className='btn btn-line';a.style.marginTop='14px';a.textContent='Download a copy';a.download=ref+'.txt';a.href=URL.createObjectURL(new Blob([txt],{type:'text/plain'}));var p=document.createElement('p');p.style.margin='14px 0 0';p.appendChild(a);box.appendChild(p);}
   function viaEmail(v,t){
     var d=new Date(),ref='AA-R-'+String(d.getFullYear()).slice(2)+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2)+'-'+Math.random().toString(16).slice(2,6).toUpperCase();
-    var L=summary(ref,v,t),fd=new FormData();
-    fd.append('_subject','Reimbursement request '+ref+' - '+val('name')+' - '+usd(t));
-    if(f.getAttribute('data-cc'))fd.append('_cc',f.getAttribute('data-cc'));
-    fd.append('_replyto',val('email'));fd.append('_template','table');fd.append('_captcha','false');fd.append('_honey',val('aa_website'));
-    L.forEach(function(x){fd.append(x[0],x[1]);});
-    [].slice.call(files.files).forEach(function(x,i){fd.append('attachment'+(i+1),x,x.name);});
+    var L=summary(ref,v,t);
+    try{sessionStorage.setItem('aaRbCopy',JSON.stringify({ref:ref,L:L}));}catch(e){}
+    var h=document.createElement('form');h.method='POST';h.enctype='multipart/form-data';h.style.display='none';
+    h.action='https://formsubmit.co/'+f.getAttribute('data-fs');
+    function add(n,val){var i=document.createElement(String(val).indexOf('\n')>-1?'textarea':'input');if(i.tagName==='INPUT')i.type='hidden';i.name=n;i.value=val;h.appendChild(i);}
+    add('_subject','Reimbursement request '+ref+' - '+val('name')+' - '+usd(t));
+    if(f.getAttribute('data-cc'))add('_cc',f.getAttribute('data-cc'));
+    add('_replyto',val('email'));add('_template','table');add('_captcha','false');add('_honey',val('aa_website'));
+    add('_next',location.origin+location.pathname+'?reimb=sent&ref='+encodeURIComponent(ref)+'#reimburse');
+    L.forEach(function(x){add(x[0],x[1]);});
+    if(files.files.length){var fi=document.createElement('input');fi.type='file';fi.name='attachment';fi.multiple=true;
+      try{var dt=new DataTransfer();[].slice.call(files.files).forEach(function(x){dt.items.add(x);});fi.files=dt.files;h.appendChild(fi);}
+      catch(e){files.name='attachment';h.appendChild(files);}}
+    document.body.appendChild(h);
     var b=document.getElementById('rbSend');b.disabled=true;b.textContent='Sending\u2026';
-    fetch('https://formsubmit.co/ajax/'+encodeURIComponent(f.getAttribute('data-fs')),{method:'POST',body:fd,headers:{Accept:'application/json'}})
-     .then(function(r){return r.json().catch(function(){return {success:r.ok};});})
-     .then(function(j){var ok=j&&(j.success===true||j.success==='true');
-       if(ok){f.hidden=true;status(true,'Request received','It has been sent to our CEO and CFO. Download a copy for your records; we reply within 5 business days.',ref);copy(ref,L);return;}
-       var m=String((j&&j.message)||'');
-       if(/activat/i.test(m)){status(false,'Form not activated yet','The form is being set up. Please try again later or email '+f.getAttribute('data-fs')+'.');}
-       else{status(false,'Not sent',(m?m+' ':'')+'Please try again, or email '+f.getAttribute('data-fs')+' with your receipts.');}
-       b.disabled=false;b.textContent='Submit request';})
-     .catch(function(){status(false,'Not sent','Check your connection and try again, or email '+f.getAttribute('data-fs')+' with your receipts.');b.disabled=false;b.textContent='Submit request';});
+    msg.textContent='Uploading\u2026 this can take up to a minute with large receipts. Please keep this page open.';msg.style.color='#3A4556';
+    h.submit();
   }
   f.addEventListener('submit',function(e){
     msg.textContent='';
@@ -492,7 +494,10 @@ function wireReimb(){
   if(st){var ref=(q.get('ref')||'').replace(/[^A-Z0-9-]/gi,''),why=q.get('why')||'';
     var E={code:'Your access session expired. The page has been reopened; please submit again.',fields:'Some required details were missing or invalid. Please check the form and submit again.',files:'One of the files could not be accepted (type or size). Please check the files and submit again.',limit:'Several requests were just sent from this connection. Please wait an hour or email the CFO directly.',save:'The request could not be saved. Please try again or email the CFO.'};
     box.hidden=false;
-    if(st==='sent'){box.className='rb-status';box.innerHTML='<b>Request received</b>Your reference number is <code></code>. A confirmation has been emailed to you. Keep the reference for any follow-up.';box.querySelector('code').textContent=ref;f.hidden=true;}
+    if(st==='sent'){f.hidden=true;
+      if(WP){box.className='rb-status';box.innerHTML='<b>Request received</b>Your reference number is <code></code>. A confirmation has been emailed to you. Keep the reference for any follow-up.';box.querySelector('code').textContent=ref;}
+      else{status(true,'Request received','It has been sent to our CEO and CFO. Download a copy for your records; we reply within 5 business days.',ref);
+        try{var cp=JSON.parse(sessionStorage.getItem('aaRbCopy')||'null');if(cp&&cp.ref===ref){copy(ref,cp.L);sessionStorage.removeItem('aaRbCopy');}}catch(e){}}}
     else{box.className='rb-status err';box.innerHTML='<b>Not sent</b>';box.appendChild(document.createTextNode(E[why]||E.save));}
     setTimeout(function(){box.scrollIntoView({block:'center'});},80);
     if(history.replaceState)history.replaceState(null,'',location.pathname+'#reimburse');}
