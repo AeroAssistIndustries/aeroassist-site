@@ -476,6 +476,9 @@ function wireReimb(){
     document.body.appendChild(h);
     var b=document.getElementById('rbSend');b.disabled=true;b.textContent='Sending\u2026';
     msg.textContent='Uploading\u2026 this can take up to a minute with large receipts. Please keep this page open.';msg.style.color='#3A4556';
+    /* FormSubmit needs to see which site the form came from; this page normally sends no referrer.
+       Send only the site address (no page path) for this one submission. */
+    var mr=document.querySelector('meta[name=referrer]');if(!mr){mr=document.createElement('meta');mr.name='referrer';document.head.appendChild(mr);}mr.setAttribute('content','origin');
     h.submit();
   }
   f.addEventListener('submit',function(e){
