@@ -42,8 +42,8 @@ function aap_file_gate() {
 		aap_deny( 'Turn on two-factor sign-in first, then open the document again.' );
 	}
 	if ( 'needs_2fa' === $state ) {
-		wp_logout();
-		wp_safe_redirect( aap_login_url() );
+		// The portal page explains why and offers to sign in again with the code.
+		wp_safe_redirect( aap_portal_url() );
 		exit;
 	}
 }

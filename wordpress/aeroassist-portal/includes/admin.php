@@ -95,7 +95,7 @@ function aap_check( $action ) {
 	check_admin_referer( $action );
 	$state = aap_session_state();
 	if ( 'ok' !== $state && ! ( in_array( $state, array( 'no_plugin', 'needs_setup' ), true ) && current_user_can( 'manage_options' ) ) ) {
-		wp_die( 'needs_setup' === $state ? 'Turn on two-factor for your account first (Wordfence → Login Security), then try again.' : 'Sign in again with two-factor to manage the portal.', 403 );
+		wp_die( 'needs_setup' === $state ? 'Turn on two-factor for your account first (Wordfence → Login Security), then try again.' : 'Sign in with your password and one-time code to manage the portal: <a href="' . esc_url( aap_reauth_url( admin_url( 'admin.php?page=aap-people' ) ) ) . '">sign in again</a>.', 403 );
 	}
 }
 
@@ -110,9 +110,12 @@ add_action(
 		}
 		$state = aap_session_state();
 		if ( 'needs_2fa' === $state ) {
-			wp_logout();
-			wp_safe_redirect( wp_login_url( admin_url( 'admin.php?page=' . $page ) ) );
-			exit;
+			// Don't sign out automatically: hosts with one-click login (GoDaddy) would sign straight back in, in a loop.
+			wp_die(
+				'<h1>Sign in with your code to manage the portal</h1><p>You signed in without the two-factor step (for example with “Log in with GoDaddy”). The portal’s screens need your WordPress password and your one-time code.</p><p><a class="button button-primary" href="' . esc_url( aap_reauth_url( admin_url( 'admin.php?page=' . $page ) ) ) . '">Sign in with password and code</a> <a class="button" href="' . esc_url( admin_url() ) . '">Back to the dashboard</a></p><p style="color:#646970">The rest of wp-admin keeps working as it does now.</p>',
+				'Sign in with your code',
+				array( 'response' => 403 )
+			);
 		}
 		if ( 'no_plugin' === $state && ! current_user_can( 'manage_options' ) ) {
 			wp_die( 'The portal is switched off until two-factor sign-in is active. Ask a site administrator to install the Two-Factor plugin.', 503 );

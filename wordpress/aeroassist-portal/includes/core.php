@@ -390,6 +390,21 @@ function aap_login_url() {
 	return add_query_arg( 'wpaas-standard-login', '1', wp_login_url( aap_portal_url() ) );
 }
 
+/**
+ * Sign out, then sign in again on the password + code form, returning to $return. Used when a
+ * session skipped two-factor (e.g. GoDaddy's one-click login). Unescaped; escape when printing.
+ */
+function aap_reauth_url( $return ) {
+	$login = add_query_arg(
+		array(
+			'wpaas-standard-login' => '1',
+			'redirect_to'          => rawurlencode( $return ),
+		),
+		site_url( 'wp-login.php', 'login' )
+	);
+	return html_entity_decode( wp_logout_url( $login ) );
+}
+
 function aap_portal_url( $args = array() ) {
 	$page = (int) get_option( 'aap_page_id' );
 	$url  = $page ? get_permalink( $page ) : home_url( '/portal/' );

@@ -31,12 +31,6 @@ add_action(
 		if ( ! aap_is_portal_page() ) {
 			return;
 		}
-		if ( is_user_logged_in() && 'needs_2fa' === aap_session_state() ) {
-			// Signed in before two-factor applied: sign in again with the second step.
-			wp_logout();
-			wp_safe_redirect( aap_login_url() );
-			exit;
-		}
 		// Never cache the portal: page-cache plugins, the host's cache and Cloudflare all honour one of these.
 		if ( ! defined( 'DONOTCACHEPAGE' ) ) {
 			define( 'DONOTCACHEPAGE', true );

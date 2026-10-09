@@ -67,6 +67,11 @@ $aap_out = isset( $_GET['signed_out'] ) ? sanitize_key( $_GET['signed_out'] ) : 
 			<h1>No portal access</h1>
 			<p class="ip-lead">You're signed in as <?php echo esc_html( $aap_user->display_name ); ?>, but this account doesn't have access to the portal. If you think it should, email <a href="mailto:<?php echo esc_attr( aap_setting( 'help_email' ) ); ?>"><?php echo esc_html( aap_setting( 'help_email' ) ); ?></a>.</p>
 			<p><a class="ip-btn" href="<?php echo esc_url( wp_logout_url( aap_portal_url( array( 'signed_out' => 1 ) ) ) ); ?>">Sign out</a></p>
+		<?php elseif ( is_user_logged_in() && 'needs_2fa' === $aap_state ) : ?>
+			<h1>One more step</h1>
+			<p class="ip-lead">You're signed in without the two-factor step (for example with “Log in with GoDaddy”). Documents only open after your password and your one-time code.</p>
+			<p><a class="ip-btn pri ip-signin" href="<?php echo esc_url( aap_reauth_url( aap_portal_url() ) ); ?>">Sign in with password and code</a></p>
+			<p class="ip-fine">This signs you out and straight back in on the password form. Forgot your WordPress password? Use “Lost your password?” on that page.</p>
 		<?php elseif ( is_user_logged_in() && 'needs_setup' === $aap_state ) : ?>
 			<h1>Turn on two-factor</h1>
 			<p class="ip-lead">One more step before your documents open: protect your account with an authenticator app (Google Authenticator, Microsoft Authenticator, 1Password or similar). It takes about a minute.</p>
