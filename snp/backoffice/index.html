@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="same-origin">
+<title>SNP Records · Staging</title>
+<link rel="icon" href="assets/logo.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;1,700&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="assets/app.css?v=3.0.1">
+<style>
+.staging-bar{display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap;padding:8px 20px;background:#181415;color:#F2EEEE;font-size:13px}
+.staging-bar strong{font-family:var(--f-mono);letter-spacing:.12em;color:#FFB020}
+.staging-bar .sb-text{opacity:.85}
+.staging-bar .sb-role{margin-left:auto;display:flex;align-items:center;gap:6px}
+.staging-bar select,.staging-bar button{font:inherit;color:#181415;background:#F2EEEE;border:0;border-radius:5px;padding:4px 8px;cursor:pointer}
+.staging-bar ~ .appbar{top:0}
+@media (max-width:700px){ .staging-bar .sb-text{display:none} .staging-bar{padding:8px 16px} }
+</style>
+</head>
+<body>
+<header class="appbar">
+  <button class="nav-toggle" id="navToggle" type="button" aria-controls="nav" aria-expanded="false" aria-label="Menu"><span></span><span></span><span></span></button>
+  <a class="brandmark" href="#home"><img alt="" src="assets/logo.jpg"><span><b>SNP</b> Records</span></a>
+  <div class="who" id="who"></div>
+</header>
+<div class="app">
+  <nav class="nav" id="nav" aria-label="Sections"></nav>
+  <main class="main" id="main"></main>
+</div>
+<div id="layer"></div>
+<div class="toast" id="toast" role="status" hidden></div>
+<script src="staging-data.js?v=3.0.1"></script>
+<script src="sample-data.js?v=3.0.1"></script>
+<script src="mock-api.js?v=3.0.1"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
+<script src="assets/core.js?v=3.0.1" defer></script>
+<script src="assets/home.js?v=3.0.1" defer></script>
+<script src="assets/crm.js?v=3.0.1" defer></script>
+<script src="assets/sales.js?v=3.0.1" defer></script>
+<script src="assets/oil.js?v=3.0.1" defer></script>
+<script src="assets/buy.js?v=3.0.1" defer></script>
+<script src="assets/tasks.js?v=3.0.1" defer></script>
+<script src="assets/records.js?v=3.0.1" defer></script>
+<script src="assets/admin.js?v=3.0.1" defer></script>
+</body>
+</html>
