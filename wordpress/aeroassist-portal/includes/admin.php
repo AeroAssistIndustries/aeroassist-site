@@ -1135,7 +1135,7 @@ function aap_probe_storage() {
 	$dir  = aap_storage_dir();
 	$name = 'probe-' . wp_generate_password( 8, false ) . '.txt';
 	@file_put_contents( "$dir/$name", 'aap-probe' ); // phpcs:ignore
-	$rel = ltrim( str_replace( wp_normalize_path( untrailingslashit( ABSPATH ) ), '', wp_normalize_path( $dir ) ), '/' );
+	$rel = ltrim( str_replace( wp_normalize_path( untrailingslashit( realpath( ABSPATH ) ) ), '', wp_normalize_path( realpath( $dir ) ) ), '/' );
 	$res = wp_remote_get( site_url( $rel . '/' . $name ), array( 'timeout' => 5, 'sslverify' => false ) );
 	wp_delete_file( "$dir/$name" );
 	$state = is_wp_error( $res ) ? 'unknown' : ( 'aap-probe' === trim( wp_remote_retrieve_body( $res ) ) ? 'open' : 'blocked' );

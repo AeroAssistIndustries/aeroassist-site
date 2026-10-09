@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en-US">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Admin screens — AeroAssist portal demo</title>
+<link rel="icon" href="../images/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../wordpress/aeroassist-portal/assets/portal.css">
+<script>document.write('<style>.ip{--mark:url('+new URL('../wordpress/aeroassist-portal/assets/mark.png',location.href).href+')}<\/style>');</script>
+<style>
+.dm-pick{list-style:none;margin:18px 0 0;padding:0;display:flex;flex-direction:column;gap:10px}
+.dm-pick a{display:flex;gap:14px;align-items:center;border:1px solid var(--line2);border-radius:10px;padding:14px 16px;text-decoration:none;color:var(--ink);background:#fff}
+.dm-pick a:hover{border-color:var(--navy);background:var(--raise)}
+.dm-pick b{display:block;font-weight:600;color:var(--ink)}
+.dm-pick small{display:block;font-size:13.5px;color:var(--muted)}
+.dm-pick i{margin-left:auto;font-style:normal;color:var(--gold);font-weight:600}
+.dm-av{width:36px;height:36px;flex:none;border-radius:50%;display:grid;place-items:center;background:var(--navy);color:#fff;font-weight:600;font-size:13px}
+.dm-bar{position:fixed;right:16px;bottom:16px;z-index:40;display:flex;gap:8px;align-items:center;background:#14213d;color:#fff;border-radius:999px;padding:6px 8px 6px 14px;font:500 13px 'IBM Plex Sans',system-ui,sans-serif;box-shadow:0 8px 24px -8px rgba(11,18,32,.45)}
+.dm-bar select{border:0;border-radius:999px;padding:6px 10px;font:500 13px 'IBM Plex Sans',system-ui,sans-serif;background:#fff;color:#0b1220}
+.ip-auth-card.wide{max-width:560px}
+</style>
+</head>
+<body class="aap-body">
+<style>.dm-shot img{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:8px;margin-top:12px}.dm-shot p{margin:0;max-width:80ch}.dm-nav{display:flex;flex-wrap:wrap;gap:6px}.dm-nav a{font-size:13px;padding:6px 10px;border:1px solid var(--line2);border-radius:6px;background:#fff;text-decoration:none;color:var(--ink)}.dm-shot{scroll-margin-top:16px}</style>
+<div class="ip"><main class="ip-main" id="ipMain" style="margin:0 auto">
+<div class="ip-head"><div><p class="ip-k">Portal demo · WordPress admin</p><h1>Jay’s admin screens</h1></div><div class="ip-actions"><a class="ip-btn pri" href="./">Back to the portal demo</a></div></div>
+<p class="ip-note">Screenshots from the plugin running on a test WordPress site with made-up people and documents. On aeroassist.us these live under wp-admin → AeroAssist Portal.</p>
+<nav class="dm-nav" aria-label="Screens"><a href="#signin">Sign in</a><a href="#code">One-time code</a><a href="#people">People</a><a href="#person">One person</a><a href="#documents">Documents</a><a href="#transactions">Transactions</a><a href="#log">Activity log</a><a href="#settings">Settings</a></nav>
+<div class="ip-view"><section class="ip-card dm-shot" id="signin"><h2>Sign in</h2><p>Everyone signs in with their own email and password at /portal/.</p><a href="admin/signin.png" target="_blank" rel="noopener"><img src="admin/signin.png" alt="Sign in screen" loading="lazy"></a></section><section class="ip-card dm-shot" id="code"><h2>One-time code</h2><p>Then a one-time code from their email or authenticator app. Nobody can skip this step. People can add an authenticator app and backup codes from their profile.</p><a href="admin/code.png" target="_blank" rel="noopener"><img src="admin/code.png" alt="One-time code screen" loading="lazy"></a></section><section class="ip-card dm-shot" id="people"><h2>People</h2><p>Everyone with a sign-in, their role, two-factor method, last sign-in and holdings. Adding a person emails them a link to choose their password.</p><a href="admin/people.png" target="_blank" rel="noopener"><img src="admin/people.png" alt="People screen" loading="lazy"></a></section><section class="ip-card dm-shot" id="person"><h2>One person</h2><p>Edit details, email a new password link, reset two-factor after a lost phone, sign them out everywhere or remove access instantly. Upload their K-1 and record transactions here too.</p><a href="admin/person.png" target="_blank" rel="noopener"><img src="admin/person.png" alt="One person screen" loading="lazy"></a></section><section class="ip-card dm-shot" id="documents"><h2>Documents</h2><p>Upload to the library by audience (everyone, investors and prospects, unit holders, team, administrators) or to one person. Files are encrypted and stored outside the public website; the Opened column counts views and downloads.</p><a href="admin/documents.png" target="_blank" rel="noopener"><img src="admin/documents.png" alt="Documents screen" loading="lazy"></a></section><section class="ip-card dm-shot" id="transactions"><h2>Transactions</h2><p>Purchases, transfers, gifts and distributions. Each person sees theirs on My investment and in their PDF statement.</p><a href="admin/transactions.png" target="_blank" rel="noopener"><img src="admin/transactions.png" alt="Transactions screen" loading="lazy"></a></section><section class="ip-card dm-shot" id="log"><h2>Activity log</h2><p>Every sign-in, failed sign-in, view, download and administrator change, with filters and CSV export.</p><a href="admin/log.png" target="_blank" rel="noopener"><img src="admin/log.png" alt="Activity log screen" loading="lazy"></a></section><section class="ip-card dm-shot" id="settings"><h2>Settings</h2><p>Unit price and history, announcements, tax note, company facts and contacts, plus the security checks.</p><a href="admin/settings.png" target="_blank" rel="noopener"><img src="admin/settings.png" alt="Settings screen" loading="lazy"></a></section></div>
+<footer class="ip-foot"><p><a href="./">Portal demo</a> · <a href="../index.html">aeroassist.us (staging)</a></p></footer>
+</main></div>
+</body>
+</html>

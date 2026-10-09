@@ -12,7 +12,8 @@ defined( 'ABSPATH' ) || exit;
 /** The storage folder (no trailing slash). */
 function aap_storage_dir() {
 	if ( defined( 'AAP_STORAGE_DIR' ) && AAP_STORAGE_DIR ) {
-		return untrailingslashit( AAP_STORAGE_DIR );
+		$real = realpath( AAP_STORAGE_DIR );
+		return untrailingslashit( $real ? $real : AAP_STORAGE_DIR );
 	}
 	$saved = get_option( 'aap_storage_dir' );
 	if ( $saved ) {
@@ -61,8 +62,9 @@ function aap_protect_dir( $dir ) {
 
 /** Whether the storage folder sits inside the public WordPress folder. */
 function aap_storage_in_webroot() {
-	$dir  = wp_normalize_path( aap_storage_dir() );
-	$root = wp_normalize_path( untrailingslashit( ABSPATH ) );
+	$real = aap_storage_dir() ? realpath( aap_storage_dir() ) : false;
+	$dir  = wp_normalize_path( $real ? $real : aap_storage_dir() );
+	$root = wp_normalize_path( untrailingslashit( realpath( ABSPATH ) ? realpath( ABSPATH ) : ABSPATH ) );
 	return $dir && 0 === strpos( $dir . '/', $root . '/' );
 }
 

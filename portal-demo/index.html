@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en-US">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Portal demo — AeroAssist Industries</title>
+<link rel="icon" href="../images/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../wordpress/aeroassist-portal/assets/portal.css">
+<script>document.write('<style>.ip{--mark:url('+new URL('../wordpress/aeroassist-portal/assets/mark.png',location.href).href+')}<\/style>');</script>
+<style>
+.dm-pick{list-style:none;margin:18px 0 0;padding:0;display:flex;flex-direction:column;gap:10px}
+.dm-pick a{display:flex;gap:14px;align-items:center;border:1px solid var(--line2);border-radius:10px;padding:14px 16px;text-decoration:none;color:var(--ink);background:#fff}
+.dm-pick a:hover{border-color:var(--navy);background:var(--raise)}
+.dm-pick b{display:block;font-weight:600;color:var(--ink)}
+.dm-pick small{display:block;font-size:13.5px;color:var(--muted)}
+.dm-pick i{margin-left:auto;font-style:normal;color:var(--gold);font-weight:600}
+.dm-av{width:36px;height:36px;flex:none;border-radius:50%;display:grid;place-items:center;background:var(--navy);color:#fff;font-weight:600;font-size:13px}
+.dm-bar{position:fixed;right:16px;bottom:16px;z-index:40;display:flex;gap:8px;align-items:center;background:#14213d;color:#fff;border-radius:999px;padding:6px 8px 6px 14px;font:500 13px 'IBM Plex Sans',system-ui,sans-serif;box-shadow:0 8px 24px -8px rgba(11,18,32,.45)}
+.dm-bar select{border:0;border-radius:999px;padding:6px 10px;font:500 13px 'IBM Plex Sans',system-ui,sans-serif;background:#fff;color:#0b1220}
+.ip-auth-card.wide{max-width:560px}
+</style>
+</head>
+<body class="aap-body">
+<div id="dmRoot"></div>
+<script src="data.js"></script>
+<script>
+(function(){
+var q=new URLSearchParams(location.search),as=q.get('as'),D=window.AAP_DEMO||{},root=document.getElementById('dmRoot');
+var VIEWS=[['investor','Alex Rivera','Unit holder','Capital account, K-1s, certificates, holder reports','AR'],
+           ['prospect','Priya Shah','Prospective investor','Investor documents and company materials only','PS'],
+           ['employee','Sam Chen','AeroAssist team','Manuals, policies and their own offer letter','SC'],
+           ['admin','Jordan Avery','Administrator (the CFO)','Everything, plus who has access and the activity feed','JA']];
+if(!as||!D[as]){
+  var h='<div class="ip ip-auth"><main class="ip-auth-card wide" id="ipMain"><div class="ip-brand"><span class="ip-mark" aria-hidden="true"></span><span><b>AeroAssist Industries</b><i>Investor and team portal · demo</i></span></div>'
+   +'<h1>See the portal as…</h1>'
+   +(q.get('signed_out')?'<p class="ip-msg" role="status">Signed out. In the real portal you would be signed out after 30 minutes without activity.</p>':'')
+   +'<p class="ip-lead">Everyone here is made up, and so are the figures and documents. On the real site each person signs in with their own password and a one-time code, and sees only what their role allows.</p><ul class="dm-pick">';
+  VIEWS.forEach(function(v){h+='<li><a href="?as='+v[0]+'#overview"><span class="dm-av">'+v[4]+'</span><div><b>'+v[1]+' · '+v[2]+'</b><small>'+v[3]+'</small></div><i>Open&nbsp;→</i></a></li>';});
+  h+='</ul><p class="ip-fine" style="margin-top:18px"><a href="admin.html">Jay’s admin screens in WordPress</a> · <a href="admin.html#signin">Sign-in and one-time code screens</a></p><p class="ip-fine ip-back"><a href="../index.html">← aeroassist.us (staging)</a></p></main></div>';
+  root.innerHTML=h;return;
+}
+root.innerHTML='<a class="ip-skip" href="#ipMain">Skip to content</a><div class="ip" id="ptApp"><header class="ip-top"><div class="ip-brand"><span class="ip-mark" aria-hidden="true"></span><span><b>AeroAssist Industries</b><i>Investor portal</i></span></div><div class="ip-user"><span class="ip-asof" id="dbAsOf"></span><span class="ip-av" id="dbAv" aria-hidden="true">A</span><span class="ip-who"><b id="dbName">Welcome</b><i id="dbRole">Portal</i></span><a class="ip-out" id="ptOut" href="./?signed_out=1">Sign out</a></div></header><div class="ip-body"><nav class="ip-nav" id="dbNav" aria-label="Portal sections"></nav><main class="ip-main" id="ipMain"><div class="ip-head"><div><p class="ip-k" id="dbKicker"></p><h1 id="dbTitle">Overview</h1></div><div class="ip-actions" id="dbActions"></div></div><p class="ip-note" id="dbNote" hidden></p><div id="dbView" class="ip-view"></div><footer class="ip-foot"><p>Figures are company records and unaudited; your subscription and operating agreements control. Indicative values use the current round price per unit and are not an appraisal, a tax valuation, or an offer to buy or sell units.</p><p>AeroAssist Industries · 4750 S 44th Pl, Suite E18, Phoenix, AZ 85040 · <a href="../index.html">aeroassist.us</a></p></footer></main></div></div>'
+ +'<div class="dm-bar" role="region" aria-label="Demo controls">Demo · view as <select id="dmAs" aria-label="View the demo as">'+VIEWS.map(function(v){return '<option value="'+v[0]+'"'+(v[0]===as?' selected':'')+'>'+v[1]+' ('+v[2].replace(/ \(.*\)/,'')+')</option>';}).join('')+'</select></div>';
+document.getElementById('dmAs').onchange=function(){location.href='?as='+this.value+'#overview';};
+window.AAP=D[as];
+var s=document.createElement('script');s.src='../wordpress/aeroassist-portal/assets/portal.js';document.body.appendChild(s);
+})();
+</script>
+</body>
+</html>
