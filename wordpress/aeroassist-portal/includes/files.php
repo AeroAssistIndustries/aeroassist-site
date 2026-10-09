@@ -11,7 +11,7 @@ add_action( 'admin_post_nopriv_aap_file', 'aap_require_signin' );
 add_action( 'admin_post_nopriv_aap_zip', 'aap_require_signin' );
 
 function aap_require_signin() {
-	wp_safe_redirect( wp_login_url( aap_portal_url() ) );
+	wp_safe_redirect( aap_login_url() );
 	exit;
 }
 
@@ -43,7 +43,7 @@ function aap_file_gate() {
 	}
 	if ( 'needs_2fa' === $state ) {
 		wp_logout();
-		wp_safe_redirect( wp_login_url( aap_portal_url() ) );
+		wp_safe_redirect( aap_login_url() );
 		exit;
 	}
 }

@@ -381,6 +381,15 @@ function aap_twofa_status( $user_id ) {
 	return 'No 2FA plugin';
 }
 
+/**
+ * WordPress's own sign-in page, returning to the portal. Signing in there (rather than through a
+ * form on the portal page) keeps Wordfence, Two-Factor, captchas and host login screens working.
+ */
+function aap_login_url() {
+	// GoDaddy Managed WordPress hides the username/password form behind this flag; elsewhere it is ignored.
+	return add_query_arg( 'wpaas-standard-login', '1', wp_login_url( aap_portal_url() ) );
+}
+
 function aap_portal_url( $args = array() ) {
 	$page = (int) get_option( 'aap_page_id' );
 	$url  = $page ? get_permalink( $page ) : home_url( '/portal/' );

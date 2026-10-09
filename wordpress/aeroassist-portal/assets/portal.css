@@ -147,3 +147,4 @@ html,body.aap-body{margin:0;background:#f4f5f8}
 .ip-act li:first-child{border-top:0;padding-top:0}
 .ip-act span{color:var(--faint);white-space:nowrap;font-variant-numeric:tabular-nums}
 @media (max-width:520px){.ip-auth-card{padding:24px 20px 18px}}
+.ip-signin{justify-content:center;width:100%;height:46px;font-size:15px;margin-top:4px}

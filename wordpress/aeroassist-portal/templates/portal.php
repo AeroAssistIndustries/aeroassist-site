@@ -90,16 +90,9 @@ $aap_out = isset( $_GET['signed_out'] ) ? sanitize_key( $_GET['signed_out'] ) : 
 			<?php elseif ( $aap_out ) : ?>
 				<p class="ip-msg" role="status">You're signed out.</p>
 			<?php endif; ?>
-			<form class="ip-form" method="post" action="<?php echo esc_url( site_url( 'wp-login.php', 'login_post' ) ); ?>">
-				<label for="ipUser">Email or username</label>
-				<input id="ipUser" name="log" type="text" autocomplete="username" autocapitalize="off" spellcheck="false" required>
-				<label for="ipPass">Password</label>
-				<input id="ipPass" name="pwd" type="password" autocomplete="current-password" required>
-				<input type="hidden" name="redirect_to" value="<?php echo esc_url( aap_portal_url() ); ?>">
-				<button class="ip-btn pri" type="submit">Continue</button>
-			</form>
+			<p><a class="ip-btn pri ip-signin" id="ipSignIn" href="<?php echo esc_url( aap_login_url() ); ?>">Sign in</a></p>
 			<p class="ip-fine"><a href="<?php echo esc_url( wp_lostpassword_url( aap_portal_url() ) ); ?>">Forgot your password?</a></p>
-			<p class="ip-fine">After your password we'll ask for a one-time code from your email or authenticator app. Need access? Email <a href="mailto:<?php echo esc_attr( aap_setting( 'help_email' ) ); ?>"><?php echo esc_html( aap_setting( 'help_email' ) ); ?></a>.</p>
+			<p class="ip-fine">You'll sign in with your email and password, then a one-time code from your email or authenticator app. Need access? Email <a href="mailto:<?php echo esc_attr( aap_setting( 'help_email' ) ); ?>"><?php echo esc_html( aap_setting( 'help_email' ) ); ?></a>.</p>
 		<?php endif; ?>
 		<p class="ip-fine ip-back"><a href="<?php echo esc_url( home_url( '/' ) ); ?>">← aeroassist.us</a></p>
 	</main>
