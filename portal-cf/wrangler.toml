@@ -4,6 +4,8 @@ name = "aeroassist-portal"
 main = "src/worker.js"
 compatibility_date = "2026-09-01"
 workers_dev = true
+# No public preview links for older versions of the portal.
+preview_urls = false
 
 [assets]
 directory = "./public"
