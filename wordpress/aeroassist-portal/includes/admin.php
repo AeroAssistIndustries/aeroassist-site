@@ -1093,8 +1093,31 @@ function aap_screen_settings() {
 	aap_security_status();
 	echo '</div></div>';
 	submit_button( 'Save settings' );
-	echo '</form></div>';
+	echo '</form>';
+	$me = wp_get_current_user();
+	echo '<div class="aap-card" style="max-width:640px"><h2>Test email</h2><p>Two-factor codes and invitations go by email. Send yourself a test before switching two-factor on.</p><form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+	wp_nonce_field( 'aap_test_email' );
+	echo '<input type="hidden" name="action" value="aap_test_email"><button class="button">Send a test email to ' . esc_html( $me->user_email ) . '</button></form></div></div>';
 }
+
+add_action(
+	'admin_post_aap_test_email',
+	function () {
+		if ( ! current_user_can( 'aap_manage' ) ) {
+			wp_die( 'Not allowed.', 403 );
+		}
+		check_admin_referer( 'aap_test_email' );
+		$err = '';
+		$catch = function ( $e ) use ( &$err ) {
+			$err = $e->get_error_message();
+		};
+		add_action( 'wp_mail_failed', $catch );
+		$me = wp_get_current_user();
+		$ok = wp_mail( $me->user_email, 'AeroAssist portal test email', "This is a test from the AeroAssist portal on " . home_url( '/' ) . ".\n\nIf it arrived in your inbox (not spam), sign-in codes and invitations will reach people too.\n" );
+		aap_flash( $ok ? 'Test email sent to ' . esc_html( $me->user_email ) . '. Check that it arrived in the inbox, not spam.' : 'WordPress could not send the email' . ( $err ? ': ' . esc_html( $err ) : '' ) . '. Set up an SMTP plugin before switching on two-factor.', $ok ? 'success' : 'error' );
+		aap_back( 'aap-settings' );
+	}
+);
 
 function aap_security_status() {
 	$dir    = aap_storage_dir();
