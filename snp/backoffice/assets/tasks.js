@@ -8,21 +8,31 @@ function newTask(defaults={}){ return editTask(null, defaults); }
 function editTask(id=null, defaults={}){
   const t = id ? SNP.item("task",id) : null;
   const owner = SNP.can("task","rw");
-  if (!owner && t){ // assignee view: status + notes only
-    const notes=el("textarea",{rows:4,id:"tk-notes"}); notes.value=t.data.notes||"";
-    const err=el("div",{class:"err",role:"alert"}), save=el("button",{class:"btn primary",type:"button"},"Save notes");
-    const body=el("div",{class:"stack"}, el("p",{}, t.data.due?"Due "+fmtDate(t.data.due):"No due date", t.data.relatedLabel?" · "+t.data.relatedLabel:""),
-      el("div",{class:"field full"}, el("label",{for:"tk-notes"},"Notes"), notes), err, el("div",{class:"row-actions"}, save));
-    const d=SNP.drawer(t.data.title,"Task", body);
-    save.onclick=async()=>{ save.disabled=true; try{ await SNP.saveItem("task",t.id,{notes:notes.value}); SNP.toast("Saved."); SNP.closePanel(d); SNP.refresh(true); }catch(e){ err.textContent=e.message; save.disabled=false; } };
-    return d;
-  }
+  if (!owner) return selfTask(t, defaults);
   return SNP.editRecord({type:"task", id, title:id?"Task":"New task", eyebrow:"Tasks",
     defaults:Object.assign({status:"Open",priority:"Normal",assigneeId:S.me&&S.me.id},defaults),
     fields:[{key:"title",label:"Task",full:true,placeholder:"e.g. Renew Arizona TPT license"},{key:"assigneeId",label:"Assigned to",type:"user"},{key:"due",label:"Due",type:"date"},
       {key:"priority",label:"Priority",type:"select",options:["Normal","High"]},{key:"status",label:"Status",type:"select",options:["Open","Done"]},
       {key:"notes",label:"Notes",type:"textarea"}],
     after:(d,it)=>{ const lbl=(it&&it.data.relatedLabel)||defaults.relatedLabel; if(lbl) d.querySelector(".d-body .stack").prepend(el("p",{class:"muted small"},"Linked to: "+lbl)); }});
+}
+/* People without full task access: add and edit their own tasks; tasks an owner assigned take notes and status only. */
+function selfTask(t, defaults={}){
+  const own=!t||t.createdBy===(S.me&&S.me.id);
+  const err=el("div",{class:"err",role:"alert"}), save=el("button",{class:"btn primary",type:"button"}, t?"Save":"Add task");
+  const v=Object.assign({status:"Open",priority:"Normal"},defaults,t?t.data:{});
+  const f=SNP.form(own?[{key:"title",label:"Task",full:true,placeholder:"e.g. Call back about the pallet order"},{key:"due",label:"Due",type:"date"},
+      {key:"priority",label:"Priority",type:"select",options:["Normal","High"]},...(t?[{key:"status",label:"Status",type:"select",options:["Open","Done"]}]:[]),{key:"notes",label:"Notes",type:"textarea"}]
+    :[{key:"status",label:"Status",type:"select",options:["Open","Done"]},{key:"notes",label:"Notes",type:"textarea",rows:4}], v);
+  const body=el("div",{class:"stack"},
+    t&&!own?el("p",{}, t.data.due?"Due "+fmtDate(t.data.due):"No due date", t.data.relatedLabel?" · "+t.data.relatedLabel:"", " · assigned by "+(nameOf(t.createdBy)||"an owner")):null,
+    f, err, el("div",{class:"row-actions"}, save));
+  const d=SNP.drawer(t?(own?"Task":t.data.title):"New task","Tasks", body);
+  save.onclick=async()=>{ const data=SNP.readForm(f); if(own&&!String(data.title||"").trim()){ err.textContent="Give the task a name."; return; }
+    save.disabled=true; err.textContent="";
+    try{ await SNP.saveItem("task",t?t.id:null,t?data:Object.assign({status:"Open",assigneeId:S.me&&S.me.id},defaults,data)); SNP.toast(t?"Saved.":"Task added."); SNP.closePanel(d); SNP.refresh(true); }
+    catch(e){ err.textContent=e.message; save.disabled=false; } };
+  return d;
 }
 async function toggle(t){
   try{ await SNP.saveItem("task",t.id,SNP.can("task","rw")?Object.assign({},t.data,{status:t.data.status==="Done"?"Open":"Done"}):{status:t.data.status==="Done"?"Open":"Done"});
@@ -57,10 +67,10 @@ function renderTasks(main){
   const groups=groupTasks(list), done=list.filter(t=>t.data.status==="Done").sort((a,b)=>(b.data.doneAt||"").localeCompare(a.data.doneAt||""));
   const body=el("div");
   groups.forEach(([label,ts])=>{ if(ts.length) body.append(el("section",{class:"task-group"}, el("h3",{class:label==="Overdue"?"bad-t":""}, `${label} · ${ts.length}`), el("ul",{class:"tasks"}, ts.map(taskRow)))); });
-  if (!body.children.length) body.append(el("div",{class:"empty"}, el("b",{},"Nothing open"), owner?"Add a task, or create one from a customer, deal or company record.":"You have no open tasks."));
+  if (!body.children.length) body.append(el("div",{class:"empty"}, el("b",{},"Nothing open"), owner?"Add a task, or create one from a customer, deal or company record.":"You have no open tasks. Add one for yourself with + Task."));
   const doneBtn=el("button",{class:"btn small ghost",type:"button",onclick:()=>{TF.showDone=!TF.showDone;SNP.refresh(true);}}, TF.showDone?"Hide completed":`Show completed (${done.length})`);
   main.append(SNP.pageHead("Tasks", S.settings&&S.settings.reminders!==false?"Everyone gets a 7 a.m. email when they have tasks due.":"Daily reminder emails are off in Settings.",
-      owner?el("button",{class:"btn primary",type:"button",onclick:()=>newTask()},"+ Task"):null),
+      el("button",{class:"btn primary",type:"button",onclick:()=>newTask()},"+ Task")),
     owner?SNP.toolbar(SNP.selectEl([["me","My tasks"],["all","Everyone's tasks"],...SNP.peopleWithAccess().filter(p=>p.id!==me).map(p=>[String(p.id),p.name])],TF.who,v=>{TF.who=v;SNP.refresh(true);},"Whose tasks")):null,
     body, done.length?doneBtn:null, TF.showDone&&done.length?el("ul",{class:"tasks"}, done.slice(0,100).map(taskRow)):null);
 }

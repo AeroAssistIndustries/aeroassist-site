@@ -138,7 +138,7 @@ function renderCustomer(main, id){
     const list=interactionsFor(c.id);
     tl.replaceChildren(list.length?el("ol",{class:"timeline"}, list.map(i=>el("li",{},
       el("div",{class:"tl-h"}, badge(i.data.kind,"neutral"), el("span",{class:"muted small"}, fmtDate(i.data.date)+" · "+nameOf(i.createdBy)),
-        SNP.confirmBtn("Delete","Delete this note?",async()=>{ await SNP.deleteItem("interaction",i.id); drawTimeline(); })),
+        S.perms.deleteAny?SNP.confirmBtn("Delete","Delete this note?",async()=>{ await SNP.deleteItem("interaction",i.id); drawTimeline(); }):null),
       el("p",{class:"pre"}, i.data.summary)))):el("p",{class:"muted small"},"No calls or notes logged yet."));
   };
   const nf=SNP.form([{key:"kind",label:"Type",type:"select",options:["Call","Email","Meeting","WhatsApp","Note"]},{key:"date",label:"Date",type:"date"},{key:"summary",label:"What happened",type:"textarea",rows:2}],{kind:"Call",date:today()});

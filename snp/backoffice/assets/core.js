@@ -70,7 +70,7 @@ function applyState(st){
   S.docs=new Map((st.docs||[]).map(d=>[String(d.id),d]));
   S.tpls=new Map((st.templates||[]).map(t=>[t.key,t]));
   S.people=st.people||[]; S.activity=st.activity||[];
-  S.items=st.items||{}; reindex();
+  S.items=st.items||{}; reindex(); S.scopeNames=st.scopeNames||null;
   S.loaded=true; S.failed="";
 }
 function reindex(){ S.byId={}; for (const [type,list] of Object.entries(S.items)){ S.byId[type]=new Map(list.map(i=>[i.id,i])); } }
@@ -100,7 +100,7 @@ async function load(){
   if (loading) return; loading=true;
   try { applyState(await api("state")); }
   catch(e){ if(!S.loaded) S.failed=e.message||"The back office couldn't load."; }
-  finally { loading=false; renderShell(); renderView(); modules.forEach(m=>m.onData&&m.onData()); }
+  finally { loading=false; renderShell(); renderView(); tickClock(); modules.forEach(m=>m.onData&&m.onData()); }
 }
 
 /* ---------- panels (drawers and modals, stacked) ---------- */
@@ -164,6 +164,7 @@ function field(def, value, ro){
     case "number": input=el("input",{type:"number",id,step:def.step||"any",inputmode:"decimal",value:value??"",disabled:dis}); break;
     case "date": input=el("input",{type:"date",id,value:value||"",disabled:dis}); break;
     case "month": input=el("input",{type:"month",id,value:value||"",disabled:dis,placeholder:"YYYY-MM"}); break;
+    case "time": input=el("input",{type:"time",id,value:value||"",disabled:dis,step:"300"}); break;
     default: input=el("input",{type:def.type==="email"?"email":"text",id,value:value??"",placeholder:def.placeholder||null,disabled:dis,autocomplete:"off"});
   }
   input.dataset.key=def.key; input.dataset.type=def.type||"text";
@@ -206,7 +207,7 @@ function editRecord({type, id=null, title, eyebrow="", fields, defaults={}, afte
   const body=el("div",{class:"stack"}, f, err);
   const actions=el("div",{class:"row-actions"});
   if (!ro) actions.append(save);
-  if (it && can(type,"rw")) actions.append(confirmBtn("Delete","Delete this permanently?", async()=>{ await deleteItem(type,it.id); closePanel(d); toast("Deleted."); onDeleted&&onDeleted(); refresh(); }));
+  if (it && can(type,"rw") && S.perms.deleteAny) actions.append(confirmBtn("Delete","Delete this permanently?", async()=>{ await deleteItem(type,it.id); closePanel(d); toast("Deleted."); onDeleted&&onDeleted(); refresh(); }));
   body.append(actions);
   if (it) body.append(el("div",{class:"foot"}, el("span",{}, "Last updated by "+nameOf(it.updatedBy)+" · "+fmtWhen(it.updatedAt))));
   if (extra && it) body.append(extra(it));
@@ -283,6 +284,74 @@ function companyBlock(){
   return `<div class="co"><img src="${esc(CFG.logo)}" alt=""><div><b>${esc(s.companyName)}</b><div class="muted">${nl2br(s.companyAddress)}<br>${esc(s.companyPhone)} · ${esc(s.companyEmail)}<br>${esc(s.companyWebsite)}</div></div></div>`;
 }
 
+/* ---------- clocks & business hours ---------- */
+const HQ_TZ="America/Phoenix";
+function timeIn(tz, opts={}){ return new Intl.DateTimeFormat(undefined,Object.assign({hour:"numeric",minute:"2-digit",timeZone:tz},opts)).format(new Date()); }
+function partsIn(tz){ const p=Object.fromEntries(new Intl.DateTimeFormat("en-US",{timeZone:tz,weekday:"short",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(new Date()).map(x=>[x.type,x.value]));
+  return {dow:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].indexOf(p.weekday), mins:Number(p.hour)*60+Number(p.minute)}; }
+/* Open/closed for SNP's hours (Settings), in Arizona time. */
+function bizStatus(){
+  const st=S.settings||{}, open=st.hoursOpen||"08:00", close=st.hoursClose||"17:00", days=st.workdays||[1,2,3,4,5];
+  const toM=t=>{ const [h,m]=t.split(":").map(Number); return h*60+m; };
+  const {dow,mins}=partsIn(HQ_TZ), o=toM(open), c=toM(close);
+  const isOpen=days.includes(dow)&&mins>=o&&mins<c;
+  const fmt=t=>{ const [h,m]=t.split(":").map(Number); return new Date(2000,0,1,h,m).toLocaleTimeString(undefined,{hour:"numeric",minute:m?"2-digit":undefined}); };
+  let label;
+  if (isOpen){ const left=c-mins; label=left<=60?`Closes in ${left} min`:`Open until ${fmt(close)}`; }
+  else { const next=days.includes(dow)&&mins<o?"today":"next business day"; label=`Closed · opens ${fmt(open)} ${next}`; }
+  return {isOpen,label,open,close};
+}
+function tickClock(){
+  const c=$("#clock"); if(!c) return;
+  const b=bizStatus();
+  c.replaceChildren(el("span",{class:"clk-time"}, timeIn(HQ_TZ)), el("span",{class:"clk-zone"},"AZ"), el("span",{class:"clk-dot "+(b.isOpen?"on":"off"),title:b.label}), el("span",{class:"clk-lbl"}, b.isOpen?"Open":"Closed"));
+}
+
+/* ---------- search everything (Ctrl+K, ⌘K or /) ---------- */
+function searchIndex(){
+  const out=[], add=(group,title,sub,go,extra="")=>out.push({group,title:title||"",sub:sub||"",go,hay:`${title} ${sub} ${extra}`.toLowerCase()});
+  if (can("customer","rw")) items("customer").forEach(c=>add("Customers",c.data.name,[c.data.contactName,c.data.state||c.data.country].filter(Boolean).join(" · "),()=>go("customers",c.id),`${c.data.email} ${c.data.phone}`));
+  if (can("lead")) items("lead").forEach(l=>add("Leads",l.data.company||l.data.name,`${l.data.status} · ${l.data.name}`,()=>{ go("leads"); setTimeout(()=>SNP.leads&&SNP.leads.open(l.id),50); },`${l.data.email} ${l.data.phone}`));
+  if (can("deal","rw")) items("deal").forEach(d=>add("Deals",d.data.title,`${d.data.stage} · ${customerName(d.data.customerId)}`,()=>SNP.crm.editDeal(d.id)));
+  ["quote","invoice","po"].forEach(t=>{ if(!can(t)) return; items(t).forEach(x=>add({quote:"Quotes",invoice:"Invoices",po:"Purchase orders"}[t],x.data.number,`${t==="po"?supplierName(x.data.supplierId):customerName(x.data.customerId)} · ${money(x.data.total)}`,()=>SNP.sales.openDoc(t,x.id))); });
+  if (can("product")) items("product").forEach(p=>add("Products",p.data.name,[p.data.sku,p.data.grade,money(p.data.price)].filter(Boolean).join(" · "),()=>SNP.products.edit(p.id)));
+  if (can("supplier","rw")) items("supplier").forEach(x=>add("Suppliers",x.data.name,x.data.contactName,()=>SNP.buy.editSupplier(x.id)));
+  if (can("oil_order")) items("oil_order").forEach(o=>add("Oil orders",o.data.description||"Oil order",`${fmtDate(o.data.date)} · ${customerName(o.data.customerId)}`,()=>SNP.oil.editOrder(o.id)));
+  items("task").forEach(t=>add("Tasks",t.data.title,t.data.due?"Due "+fmtDate(t.data.due):"",()=>SNP.tasks.editTask(t.id)));
+  items("note").forEach(n=>add("Notes",n.data.title||n.data.body.slice(0,60),n.data.title?n.data.body.slice(0,80):"",()=>SNP.notes.edit(n.id),n.data.body));
+  [...S.docs.values()].forEach(d=>add("Company records",`${d.code} ${d.title}`,d.status,()=>{ go("records"); setTimeout(()=>SNP.records.openDoc(d.id),50); }));
+  [...S.tpls.values()].forEach(t=>add("Templates",t.name,"Template",()=>go("templates")));
+  return out;
+}
+function openSearch(){
+  if (stack.some(e=>e.node.classList.contains("search-modal"))) return;
+  const idx=searchIndex();
+  const input=el("input",{type:"search",placeholder:"Search customers, invoices, products, records…","aria-label":"Search everything",autofocus:true});
+  const list=el("div",{class:"sr-list",role:"listbox"});
+  let results=[], sel=0;
+  const draw=()=>{
+    const q=input.value.trim().toLowerCase();
+    results = q ? idx.filter(r=>q.split(/\s+/).every(w=>r.hay.includes(w))).slice(0,40) : [];
+    sel=Math.min(sel,Math.max(0,results.length-1));
+    list.replaceChildren();
+    if (!q){ list.append(el("p",{class:"muted small sr-hint"},"Type a name, number, email, phone or product. Press Enter to open the highlighted result.")); return; }
+    if (!results.length){ list.append(el("p",{class:"muted small sr-hint"},"No matches.")); return; }
+    let group="";
+    results.forEach((r,i)=>{ if(r.group!==group){ group=r.group; list.append(el("div",{class:"sr-group"},group)); }
+      list.append(el("button",{type:"button",class:"sr-item"+(i===sel?" on":""),role:"option","aria-selected":String(i===sel),onclick:()=>pick(i),onmousemove:()=>{ if(sel!==i){ sel=i; draw(); } }},
+        el("span",{class:"sr-t"},r.title), r.sub?el("span",{class:"sr-s"},r.sub):null)); });
+  };
+  const pick=i=>{ const r=results[i]; if(!r) return; closePanel(m); r.go(); };
+  input.addEventListener("input",()=>{ sel=0; draw(); });
+  input.addEventListener("keydown",e=>{
+    if (e.key==="ArrowDown"){ e.preventDefault(); sel=Math.min(results.length-1,sel+1); draw(); list.querySelector(".on")?.scrollIntoView({block:"nearest"}); }
+    else if (e.key==="ArrowUp"){ e.preventDefault(); sel=Math.max(0,sel-1); draw(); list.querySelector(".on")?.scrollIntoView({block:"nearest"}); }
+    else if (e.key==="Enter"){ e.preventDefault(); pick(sel); }
+  });
+  const m=el("div",{class:"modal search-modal",role:"dialog","aria-modal":"true","aria-label":"Search"}, el("div",{class:"sr-head"}, input, el("kbd",{},"Esc")), list);
+  pushPanel(m); draw(); setTimeout(()=>input.focus(),0);
+}
+
 /* ---------- layout ---------- */
 function module(def){ modules.push(def); }
 function visibleModules(){ return modules.filter(m=>!m.visible||m.visible()); }
@@ -320,7 +389,14 @@ const busy = () => S.pending>0 || stack.length>0 || isFocusedIn("#main input, #m
 
 function start(){
   window.addEventListener("hashchange", ()=>{ closeAll(); renderView(); });
-  document.addEventListener("keydown",e=>{ if(e.key!=="Escape"||!stack.length) return; const top=stack[stack.length-1].node; if(top.matches("[role=alertdialog],[data-noesc]")) return; closeTop(); });
+  document.addEventListener("keydown",e=>{ if(e.key!=="Escape"||!stack.length) return; const top=stack[stack.length-1].node; if(top.matches("[role=alertdialog]")) return; if(top.matches("[data-noesc]")){ if(top._esc) top._esc(); return; } closeTop(); });
+  document.addEventListener("keydown",e=>{
+    const typing=e.target.closest&&e.target.closest("input,textarea,select,[contenteditable]");
+    if ((e.key==="k"||e.key==="K")&&(e.metaKey||e.ctrlKey)){ e.preventDefault(); openSearch(); }
+    else if (e.key==="/"&&!typing&&!stack.length){ e.preventDefault(); openSearch(); }
+  });
+  const sb=$("#searchBtn"); if (sb) sb.addEventListener("click",openSearch);
+  tickClock(); setInterval(tickClock, 20000);
   $("#navToggle").addEventListener("click",()=>{ const n=$("#nav"); const open=n.classList.toggle("open"); $("#navToggle").setAttribute("aria-expanded",String(open)); });
   $("#nav").addEventListener("click",e=>{ if(e.target.closest("a")){ $("#nav").classList.remove("open"); $("#navToggle").setAttribute("aria-expanded","false"); } });
   setInterval(()=>{ if(document.visibilityState==="visible"&&!busy()) load(); }, 30000);
@@ -332,5 +408,5 @@ return { CFG, S, el, $, pad, today, addDays, thisMonth, fmtDate, fmtMonth, fmtWh
   toast, api, url, fail, load, items, item, can, customerName, supplierName, putItem, dropItem, saveItem, deleteItem,
   pushPanel, closeTop, closePanel, closeAll, drawer, modal, confirmBtn, field, form, readForm, peopleWithAccess, editRecord,
   table, badge, kpi, toolbar, search, selectEl, subtabs, pageHead, saveBlob, csv, copyText, esc, nl2br, printHTML, companyBlock,
-  module, go, refresh, renderShell, start, get current(){ return current; } };
+  module, go, refresh, renderShell, start, openSearch, bizStatus, timeIn, HQ_TZ, get current(){ return current; } };
 })();

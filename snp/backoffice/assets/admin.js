@@ -2,7 +2,8 @@
 (() => {
 "use strict";
 const { S, el, api, toast, fail, fmtWhen, nameOf } = SNP;
-const ROLE_OPTIONS = [["snp_owner","Owner"],["snp_accountant","Accountant"],["snp_attorney","Attorney"]];
+const ROLE_OPTIONS = [["snp_owner","Owner"],["snp_sales","Sales"],["snp_accountant","Accountant"],["snp_attorney","Attorney"]];
+const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 let lastLink=null;
 
 function linkBox(res, name){
@@ -37,14 +38,41 @@ function renderPeople(main){
   assSave.onclick=async()=>{ assSave.disabled=true; try{ const r=await api("settings",{method:"POST",body:{assignees:ass.value.split("\n")}}); S.assignees=r.assignees; toast("Names saved."); }catch(e){ fail(e); } finally{ assSave.disabled=false; } };
   main.append(SNP.pageHead("People","Everyone signs in at snpwholesale.com/owners with their own login."),
     el("section",{class:"panel"}, el("h3",{},"Add someone"),
-      el("p",{class:"sub"},"They get an email with a link to set their own password. Owners see everything: sales, customers, money and records. ",
-        `Accountants see invoices and oil rewards (view only) and ${S.scopes.accountant||"tax and finance records"}. Attorneys see ${S.scopes.attorney||"contract and compliance records"} and can edit templates. Everyone sees the tasks assigned to them.`),
+      el("p",{class:"sub"},"They get an email with a link to set their own password. Owners see everything: sales, costs, customers, money and records. ",
+        "Sales see customers, leads, deals, quotes and invoices, and the price list without costs or profit; they can email quotes and invoices but not delete anything. ",
+        `Accountants see invoices, profit reports and oil rewards (view only) and ${S.scopes.accountant||"tax and finance records"}. Attorneys see ${S.scopes.attorney||"contract and compliance records"} and can edit templates. Everyone has notes and their own tasks.`),
       f, err, el("div",{class:"row-actions"}, add), lastLink?linkBox(lastLink.res,lastLink.name):null),
     el("section",{class:"panel"}, el("h3",{},"Who has access"),
       el("div",{class:"tbl-wrap"}, el("table",{class:"list"}, el("thead",{}, el("tr",{}, el("th",{},"Name"), el("th",{},"Email"), el("th",{},"Access"), el("th",{}))), el("tbody",{}, rows)))),
     el("section",{class:"panel"}, el("h3",{},"Names for company records"),
       el("p",{class:"sub"},"The \"Assigned to\" list on company records, one per line. Keep the accountant's and attorney's names exactly as they are: records assigned to them are what those logins can see."),
-      ass, el("div",{class:"row-actions"}, assSave)));
+      ass, el("div",{class:"row-actions"}, assSave)),
+    targetsPanel(), scopePanel());
+}
+
+/* Monthly sales targets for owners and salespeople (shown on Home and in Reports). */
+function targetsPanel(){
+  const reps=S.people.filter(p=>["owner","sales"].includes(p.role));
+  if (!reps.length) return null;
+  const tg=(S.settings&&S.settings.targets)||{};
+  const inputs=reps.map(p=>{ const i=el("input",{type:"number",min:"0",step:"100",inputmode:"decimal",id:"tg-"+p.id,value:tg[p.id]||"",placeholder:"No target"}); i.dataset.uid=p.id; return i; });
+  const save=el("button",{class:"btn small primary",type:"button"},"Save targets");
+  save.onclick=async()=>{ const t={}; inputs.forEach(i=>{ const v=Number(i.value)||0; if(v>0) t[i.dataset.uid]=v; });
+    save.disabled=true; try{ S.settings=await api("app-settings",{method:"POST",body:{targets:t}}); toast("Targets saved."); SNP.refresh(true); }catch(e){ fail(e); } finally{ save.disabled=false; } };
+  return el("section",{class:"panel"}, el("h3",{},"Monthly sales targets"),
+    el("p",{class:"sub"},"Sales before tax and shipping, from invoices where the person is the sales rep. Each salesperson sees only their own target; owners see the whole team."),
+    el("div",{class:"fields cols3"}, reps.map((p,i)=>el("div",{class:"field"}, el("label",{for:"tg-"+p.id}, `${p.name} (${p.label||p.role})`), inputs[i]))),
+    el("div",{class:"row-actions"}, save));
+}
+/* The accountant and attorney logins see records assigned to these names. */
+function scopePanel(){
+  const sn=S.scopeNames||{accountant:"Accountant",attorney:"Attorney"};
+  const f=SNP.form([{key:"accountant",label:"Accountant's name on company records"},{key:"attorney",label:"Attorney's name on company records"}], sn);
+  const save=el("button",{class:"btn small",type:"button"},"Save");
+  save.onclick=async()=>{ save.disabled=true; try{ const r=await api("settings",{method:"POST",body:{scopeNames:SNP.readForm(f)}}); S.scopeNames=r.scopeNames; toast("Saved. Reload for the accountant and attorney views to pick it up."); }catch(e){ fail(e); } finally{ save.disabled=false; } };
+  return el("section",{class:"panel"}, el("h3",{},"Who sees which records"),
+    el("p",{class:"sub"},"Accountant logins see company records assigned to the first name; attorney logins see records assigned to the second. Use the same spelling as in the list above."),
+    f, el("div",{class:"row-actions"}, save));
 }
 
 function renderActivity(main){
@@ -68,12 +96,16 @@ function renderSettings(main){
     {section:"Oil rewards"},
     {key:"partnerName",label:"Profit-share partner"},{key:"partnerShare",label:"Partner's share %",type:"number",step:"0.001"},
     {key:"costsBeforeSplit",label:"Deduct program costs before the split",type:"checkbox"},
-    {key:"memberships",label:"Sam's Club memberships (one per line, nicknames only, never card numbers)",type:"textarea",rows:3},
+    {key:"programName",label:"Purchasing program name",hint:"Shown on the oil pages."},
+    {key:"memberships",label:"Program memberships (one per line, nicknames only, never card numbers)",type:"textarea",rows:3},
+    {section:"Business hours (Arizona time; shown by the clock at the top)"},
+    {key:"hoursOpen",label:"Opens",type:"time"},{key:"hoursClose",label:"Closes",type:"time"},
+    {key:"workdays",label:"Open on",type:"multi",options:DAYS},
     {section:"Reminders"},
     {key:"reminders",label:"Send each person a 7 a.m. email when they have tasks due (owners also get overdue invoices, follow-ups and records due)",type:"checkbox"}],
-    Object.assign({},s,{memberships:(s.memberships||[]).join("\n")}));
+    Object.assign({},s,{memberships:(s.memberships||[]).join("\n"),workdays:(s.workdays||[1,2,3,4,5]).map(d=>DAYS[d])}));
   const err=el("div",{class:"err",role:"alert"}), save=el("button",{class:"btn primary",type:"button"},"Save settings");
-  save.onclick=async()=>{ const v=SNP.readForm(f); v.memberships=String(v.memberships||"").split("\n");
+  save.onclick=async()=>{ const v=SNP.readForm(f); v.memberships=String(v.memberships||"").split("\n"); v.workdays=(v.workdays||[]).map(d=>DAYS.indexOf(d)).filter(d=>d>=0);
     save.disabled=true; err.textContent="";
     try{ S.settings=await api("app-settings",{method:"POST",body:v}); toast("Settings saved."); SNP.refresh(true); }catch(e){ err.textContent=e.message; } finally{ save.disabled=false; } };
   main.append(SNP.pageHead("Settings","Company details and defaults for the whole back office."), el("section",{class:"panel"}, f, err, el("div",{class:"row-actions"}, save)));

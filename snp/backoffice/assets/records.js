@@ -268,7 +268,7 @@ async function downloadWord(t){
 }
 
 SNP.records = { isDone, isOver, openDoc };
-SNP.module({ id:"records", label:"Company records", group:"Company", render:renderRecords, onData:sync,
+SNP.module({ id:"records", label:"Company records", group:"Company", visible:()=>S.perms.records!==false, render:renderRecords, onData:sync,
   badge:()=>[...S.docs.values()].filter(isOver).length });
 SNP.module({ id:"templates", label:"Templates", group:"Company", render:renderTemplates });
 })();

@@ -1,4 +1,4 @@
-/* Oil brokerage: Sam's Club orders, rewards, monthly partner statements, program costs, payouts. */
+/* Oil brokerage: purchasing-program orders, rewards, monthly partner statements, program costs, payouts. */
 (() => {
 "use strict";
 const { S, el, items, item, money, money0, fmtDate, fmtMonth, badge, today, round2, esc } = SNP;
@@ -8,6 +8,7 @@ const OF = { month:"", status:"", tab:"orders", stMonth:"" };
 const memberships = () => (S.settings&&S.settings.memberships)||[];
 const share = () => Number(S.settings&&S.settings.partnerShare)||0;
 const partner = () => (S.settings&&S.settings.partnerName)||"Partner";
+const program = () => (S.settings&&S.settings.programName)||"purchasing program";
 const monthAdd = (ym, n) => { const [y,m]=ym.split("-").map(Number); const d=new Date(y,m-1+n,1); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"); };
 
 function orderFields(){
@@ -28,7 +29,7 @@ function editOrder(id=null, defaults={}){
     defaults:Object.assign({date:today(),rewardStatus:"Pending"},defaults)});
 }
 const editCost = (id=null) => SNP.editRecord({type:"oil_cost", id, title:id?"Program cost":"New program cost", eyebrow:"Oil rewards",
-  fields:[{key:"month",label:"Month",type:"month"},{key:"amount",label:"Amount",type:"money"},{key:"description",label:"What it was",full:true,placeholder:"e.g. Sam's Plus renewal, membership #2"}],
+  fields:[{key:"month",label:"Month",type:"month"},{key:"amount",label:"Amount",type:"money"},{key:"description",label:"What it was",full:true,placeholder:"e.g. Membership renewal, membership #2"}],
   defaults:{month:OF.stMonth||SNP.thisMonth()}});
 const editPayout = (id=null, defaults={}) => SNP.editRecord({type:"payout", id, title:id?"Payout":"Record payout to "+partner(), eyebrow:"Oil rewards",
   fields:[{key:"month",label:"For month",type:"month"},{key:"amount",label:"Amount paid",type:"money"},{key:"paidDate",label:"Paid on",type:"date"},{key:"method",label:"Method",type:"select",options:["Wire","ACH","Zelle","Check","Cash","Other"]},{key:"reference",label:"Reference",full:true},{key:"notes",label:"Notes",type:"textarea",rows:2}],
@@ -58,7 +59,7 @@ function renderOil(main){
   const m=SNP.thisMonth(), cur=statement(m);
   const pending=items("oil_order").filter(o=>["Pending","Earned"].includes(o.data.rewardStatus));
   const ordersM=items("oil_order").filter(o=>(o.data.date||"").slice(0,7)===m);
-  main.append(SNP.pageHead("Oil orders & rewards", `Every Sam's Club order, the rewards it earns, and the ${share()}/${100-share()} split with ${partner()}.`,
+  main.append(SNP.pageHead("Oil orders & rewards", `Every ${program()} order, the rewards it earns, and the ${share()}/${100-share()} split with ${partner()}.`,
       el("button",{class:"btn ghost",type:"button",onclick:exportOrders},"Export CSV"),
       rw?el("button",{class:"btn primary",type:"button",onclick:()=>editOrder()},"+ Order"):null),
     el("div",{class:"kpis"}, SNP.kpi(`${ordersM.length} · ${money0(ordersM.reduce((s,o)=>s+(o.data.amount||0),0))}`,"Orders this month"),
@@ -82,7 +83,7 @@ function ordersTab(main){
   const draw=()=>{
     const rows=items("oil_order").filter(o=>(!OF.month||(o.data.date||"").startsWith(OF.month))&&(!OF.status||o.data.rewardStatus===OF.status))
       .sort((a,b)=>(b.data.date||"").localeCompare(a.data.date||"")||b.id-a.id);
-    box.replaceChildren(SNP.table({rows,onRow:o=>editOrder(o.id),empty:items("oil_order").length?"No orders match.":"No oil orders logged yet. Log each Sam's Club order to track the reward it earns.",columns:[
+    box.replaceChildren(SNP.table({rows,onRow:o=>editOrder(o.id),empty:items("oil_order").length?"No orders match.":`No oil orders logged yet. Log each ${program()} order to track the reward it earns.`,columns:[
       {label:"Date",value:o=>fmtDate(o.data.date)},{label:"Customer",value:o=>SNP.customerName(o.data.customerId)||"—"},{label:"Membership",value:o=>o.data.membership||"—"},
       {label:"Order",value:o=>o.data.description||"—"},{label:"Amount",cls:"num",value:o=>money(o.data.amount)},{label:"Reward",cls:"num",value:o=>money(o.data.rewardAmount)},
       {label:"Reward status",value:o=>rewardSelect(o)},{label:"Deposited",value:o=>fmtDate(o.data.depositDate)||"—"}],
