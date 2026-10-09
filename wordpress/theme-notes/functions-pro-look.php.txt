@@ -1,0 +1,99 @@
+
+
+/* ---------- "pro" visual polish ----------
+ * AA_PRO_MODE: 'preview' = only signed-in admins, or anyone with ?look=pro in the address;
+ *              'live' = every visitor; 'off' = never.
+ */
+if ( ! defined( 'AA_PRO_MODE' ) ) {
+	define( 'AA_PRO_MODE', 'preview' );
+}
+function aa_pro_look_on() {
+	if ( 'live' === AA_PRO_MODE ) {
+		return true;
+	}
+	if ( 'off' === AA_PRO_MODE ) {
+		return false;
+	}
+	return current_user_can( 'edit_theme_options' ) || ( isset( $_GET['look'] ) && 'pro' === $_GET['look'] );
+}
+add_filter( 'body_class', function ( $classes ) {
+	if ( aa_pro_look_on() ) {
+		$classes[] = 'aa-pro';
+	}
+	return $classes;
+} );
+add_action( 'wp_enqueue_scripts', function () {
+	if ( ! aa_pro_look_on() ) {
+		return;
+	}
+	wp_enqueue_style( 'aa-pro-font', 'https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap', array(), null );
+	wp_add_inline_style( 'aa-pro-font', <<<'AAPROCSS'
+/* AeroAssist "pro" polish. Quiet, institutional, spec-sheet. Everything is scoped to body.aa-pro. */
+body.aa-pro{
+  --pro-ink:#0B1016; --pro-panel:#121922; --pro-line:#26303B; --pro-text:#E7EAEE; --pro-muted:#A1AAB6;
+  --pro-brass:#BE9F68; --pro-brass-hi:#D3B886; --pro-steel:#9DB0C4;
+  --abyss:var(--pro-ink); --deep:#0E141B; --nx-ink:var(--pro-ink); --nx-ink-2:#0F151C; --hull:var(--pro-panel); --hull-2:#17202A;
+  --gold:var(--pro-brass); --gold-hi:var(--pro-brass-hi); --signal:var(--pro-steel); --nx-cyan-hi:#C3CFDC; --nx-blue-hi:#C3CFDC;
+  --gold-grad:linear-gradient(var(--pro-brass),var(--pro-brass)); --gold-grad-lite:linear-gradient(#CBB48A,#CBB48A);
+  --metal-gold:linear-gradient(var(--pro-brass),var(--pro-brass)); --metal-gold-text:linear-gradient(var(--pro-brass-hi),var(--pro-brass-hi));
+  --metal-silver:linear-gradient(#3A4552,#3A4552); --metal-silver-text:linear-gradient(#F1F3F6,#F1F3F6);
+  --nx-grad:var(--metal-gold-text); --nx-spectrum:linear-gradient(var(--pro-brass),var(--pro-brass));
+  --nx-card:var(--pro-panel); --nx-edge:linear-gradient(rgba(255,255,255,.09),rgba(255,255,255,.09));
+  --nx-edge-soft:linear-gradient(rgba(255,255,255,.07),rgba(255,255,255,.07)); --nx-edge-hot:linear-gradient(rgba(190,159,104,.6),rgba(190,159,104,.6));
+  --nx-shadow:none; --edge-gold:rgba(190,159,104,.38);
+  --bars:linear-gradient(var(--pro-brass),var(--pro-brass)) top/100% 2px no-repeat;
+  --pro-disp:'Archivo','IBM Plex Sans',system-ui,sans-serif;
+}
+
+/* One serious display face instead of the techno one */
+body.aa-pro :is(h1,h2,h3,h4,.h4,.btn,.ro .v,.ctrl-top output,.calc-verdict .big,.pstat .v,.seg button,.tab,.craft-name,.craft-specs dd,.compare thead th,.compare td,.con-top .t,.pri,.call-t,.dispatch-bar .info .v,.btn-sm,.pchip,.tel .v,.kpi .v,.est-row .v,.est-tier .v,.ct-item .nm,.ct-name,.ct-score .v,.roi-card .big,.roi-rows b,.rd .t,.fq-q,.gt h4,.gt .h4,.cls .v,.shot .ph b,.ts b,#tourBar button,.mcard span,.mdetail .app b,.alg-h,.skip,.mm-btn,.mm-solo a,.mm-col li a b,.mm-feat b,.aa-cred b,.aa-ops-stats b,.aa-stat .v,.aa-craft b,.aa-pt b,.mk-call,.mk-tel b,.aa-band-go,.aa-next-card b,.aa-subnav a,.aa-aud b,.aa-sol-calls b,.aa-help-list b,.aa-pol b,.aa-dash-kpis b,.aa-ready-q b,.aa-ready-meter b,.aa-ready-next a b,.aa-lib-group a b){
+  font-family:var(--pro-disp)!important; font-stretch:88%;
+}
+body.aa-pro :is(h1,h2,h3){font-weight:650;letter-spacing:-.022em;line-height:1.04}
+body.aa-pro :is(h4,.h4){font-weight:600;letter-spacing:-.01em}
+
+/* Nothing glows, shines or shimmers */
+body.aa-pro *{text-shadow:none!important}
+body.aa-pro :is(.aa-hero h1,.aa-sub h1,.aa-hero h1 .g,.aa-sub h1 .g,.aa-grad,.btn-primary,.btn-primary:hover){animation:none!important;filter:none!important}
+body.aa-pro :is(.aa-cred .seal,.alg-seal .seal,.mm-feat .mm-seal svg,.ds-shield svg,.aa-asda-seal svg){filter:none!important}
+
+/* Headlines: sentence case, one colour */
+body.aa-pro :is(.aa-hero h1,.aa-sub h1){text-transform:none;font-weight:650;letter-spacing:-.028em;line-height:1.02}
+body.aa-pro .aa-hero h1{font-size:clamp(40px,min(4.6vw,7vh),68px);max-width:15ch}
+body.aa-pro :is(.aa-hero h1 .g,.aa-sub h1 .g){background-image:var(--metal-silver-text)!important;display:inline}
+body.aa-pro .aa-hero .lead{color:#D5DAE1;max-width:54ch}
+
+/* Labels above sections: smaller, steadier */
+body.aa-pro .kicker{letter-spacing:.12em;color:#B9C3CF}
+body.aa-pro .aa-hero .kicker{color:#C9D2DC}
+
+/* Buttons: square, flat, plain */
+body.aa-pro .btn{clip-path:none!important;border-radius:2px;letter-spacing:.06em;font-weight:600;font-size:13.5px;padding:15px 24px}
+body.aa-pro .btn-primary{background:var(--pro-brass)!important;color:#0B1016!important;box-shadow:none!important;border-color:var(--pro-brass)}
+body.aa-pro .btn-primary:hover{background:var(--pro-brass-hi)!important}
+body.aa-pro .btn-line{border:1px solid rgba(231,234,238,.34)!important;border-image:none!important;background:transparent!important;color:var(--pro-text)!important;-webkit-backdrop-filter:none;backdrop-filter:none}
+body.aa-pro .btn-line:hover{background:rgba(255,255,255,.06)!important;border-color:rgba(231,234,238,.6)!important}
+body.aa-pro .btn::before,body.aa-pro .btn::after{display:none!important}
+
+/* Navigation */
+body.aa-pro :is(.mm-btn,.mm-solo a){letter-spacing:.07em;font-weight:600;font-size:13px}
+
+/* Hero: the real photograph, no simulation layer */
+body.aa-pro :is(#aaWorld,#aaHud,.aa-frame,.aa-tele,.aa-race,.aa-cmd-clock){display:none!important}
+body.aa-pro .aa-sky{background:#0B1016 url(/wp-content/themes/aeroassist/images/hero.jpg) 62% 40%/cover no-repeat;filter:saturate(.72) contrast(1.04)}
+body.aa-pro .aa-grade{background:linear-gradient(90deg,rgba(11,16,22,.94) 0%,rgba(11,16,22,.84) 34%,rgba(11,16,22,.42) 62%,rgba(11,16,22,.12) 100%),linear-gradient(180deg,rgba(11,16,22,.5) 0%,rgba(11,16,22,0) 18%,rgba(11,16,22,0) 74%,#0B1016 100%)!important}
+body.aa-pro .aa-ops{background:rgba(11,16,22,.9)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;border:1px solid var(--pro-line)!important;box-shadow:none!important;border-radius:2px}
+body.aa-pro .aa-cred .seal{opacity:.9}
+
+/* Panels and cards: flat surfaces, hairline edges */
+body.aa-pro :is(.aa-stat,.aa-craft,.aa-next-card,.aa-tier,.roi-card,.est-tier,.ct-item,.mcard){box-shadow:none!important}
+body.aa-pro .aa-stat .v{background:none!important;-webkit-text-fill-color:currentColor!important;color:#F1F3F6!important}
+
+@media (max-width:860px){
+  body.aa-pro .aa-grade{background:linear-gradient(180deg,rgba(11,16,22,.55) 0%,rgba(11,16,22,.35) 22%,rgba(11,16,22,.82) 48%,rgba(11,16,22,.94) 70%,#0B1016 100%)!important}
+  body.aa-pro .aa-hero h1{max-width:none}
+}
+@media (prefers-reduced-motion:reduce){body.aa-pro *{scroll-behavior:auto}}
+AAPROCSS
+	);
+}, 120 );
