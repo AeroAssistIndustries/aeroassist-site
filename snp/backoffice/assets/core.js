@@ -45,13 +45,13 @@ function toast(msg, ms=4500){ const t=$("#toast"); t.textContent=msg; t.hidden=f
 function url(path, query){ let u=CFG.rest+path; if(query) u+=(u.includes("?")?"&":"?")+query; return u; }
 let expiredShown=false;
 async function api(path, {method="GET", body, form}={}){
-  const opt={method, credentials:"same-origin", headers:{"X-WP-Nonce":CFG.nonce}};
+  const opt={method, credentials:"same-origin", headers:CFG.csrf?{"X-CSRF-Token":CFG.csrf}:{"X-WP-Nonce":CFG.nonce}};
   if (form) opt.body=form; else if (body!==undefined){ opt.headers["Content-Type"]="application/json"; opt.body=JSON.stringify(body); }
-  let r; try { r=await fetch(url(path), opt); } catch(e){ throw {code:"network", message:"Can't reach snpwholesale.com. Check your connection and try again."}; }
+  let r; try { r=await fetch(url(path), opt); } catch(e){ throw {code:"network", message:"Can't reach SNP Records. Check your connection and try again."}; }
   let j=null; try { j=await r.json(); } catch(e){}
   if (!r.ok){
     const code=(j&&j.code)||("http_"+r.status);
-    if ((code==="rest_cookie_invalid_nonce"||r.status===401) && !expiredShown){ expiredShown=true; sessionExpired(); }
+    if ((["rest_cookie_invalid_nonce","session_expired","csrf_invalid"].includes(code)||r.status===401) && !expiredShown){ expiredShown=true; sessionExpired(); }
     throw {code, status:r.status, message:(j&&j.message)||"Something went wrong. Try again."};
   }
   return j;
@@ -286,7 +286,7 @@ const nl2br = s => esc(s).replace(/\n/g,"<br>");
 /* Opens a print-ready page (Print, or Save as PDF from the print dialog). */
 function printHTML(title, bodyHTML){
   const w=window.open("","_blank");
-  if (!w){ toast("Allow pop-ups for snpwholesale.com to print."); return; }
+  if (!w){ toast("Allow pop-ups for this site to print."); return; }
   w.document.open();
   w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title><meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
@@ -302,8 +302,10 @@ td{padding:8px 6px;border-bottom:1px solid #E1DBDC;vertical-align:top}.r{text-al
 @media print{body{padding:0}.noprint{display:none}}
 .noprint{position:sticky;top:0;background:#fff;padding:10px 0;margin-bottom:12px;border-bottom:1px solid #E1DBDC;display:flex;gap:8px}
 .noprint button{font:600 14px Arial;padding:8px 14px;border-radius:6px;border:1px solid #181415;background:#181415;color:#fff;cursor:pointer}.noprint button.alt{background:#fff;color:#181415}
-</style></head><body><div class="sheet"><div class="noprint"><button onclick="print()">Print / Save as PDF</button><button class="alt" onclick="close()">Close</button></div>${bodyHTML}</div></body></html>`);
+</style></head><body><div class="sheet"><div class="noprint"><button type="button" data-act="print">Print / Save as PDF</button><button type="button" class="alt" data-act="close">Close</button></div>${bodyHTML}</div></body></html>`);
   w.document.close();
+  // Buttons are wired from here: the page's security policy doesn't allow inline handlers.
+  w.document.querySelectorAll("[data-act]").forEach(b=>b.addEventListener("click",()=>{ if(b.dataset.act==="print") w.print(); else w.close(); }));
   setTimeout(()=>{ try{ w.focus(); w.print(); }catch(e){} }, 500);
 }
 function companyBlock(){

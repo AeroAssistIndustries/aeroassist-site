@@ -111,8 +111,9 @@ function openCampaign(id=null){
     catch(x){ err.textContent=x.message; } finally{ b.disabled=false; } }},"Send…");
   const run=async(s, pdf)=>{ let first=true;
     while(true){ const r=await SNP.api(`campaigns/${s.id}/send`,{method:"POST",body:first?pdf:{}}); first=false; SNP.putItem(r.item); saved=r.item; showProgress(r.item);
+      if (r.busy){ await new Promise(res=>setTimeout(res,3000)); continue; } // another window or the schedule is sending this batch
       if (!r.remaining){ SNP.toast(`Campaign sent to ${r.item.data.stats.sent} people.`); break; }
-      if (r.limitReached){ prog.append(el("p",{class:"warn-t"},`Today's sending limit (${r.dailyLimit}) is reached. ${r.remaining} left. Open this campaign tomorrow and press Resume.`)); break; } }
+      if (r.limitReached){ prog.append(el("p",{class:"warn-t"},SNP.CFG.csrf?`Today's sending limit (${r.dailyLimit}) is reached. The other ${r.remaining} go out automatically tomorrow.`:`Today's sending limit (${r.dailyLimit}) is reached. ${r.remaining} left. Open this campaign tomorrow and press Resume.`)); break; } }
     SNP.refresh(true); };
   const showProgress=it=>{ const st=it.data.stats||{}; const pct=st.total?Math.round((st.sent+st.failed+st.skipped)/st.total*100):0;
     prog.replaceChildren(el("div",{class:"meter"}, el("i",{class:"h-good",style:`width:${pct}%`})), el("p",{class:"small"},`${st.sent||0} sent · ${st.failed||0} failed · ${st.skipped||0} skipped (unsubscribed) of ${st.total||0}`)); };

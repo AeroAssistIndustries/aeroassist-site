@@ -154,7 +154,7 @@ function portalPanel(c){
   const people=SNP.crm.contactsOf(c.id).filter(p=>p.data.email&&!users.some(u=>u.email.toLowerCase()===p.data.email.toLowerCase()));
   const box=el("section",{class:"panel"}, el("div",{class:"panel-h"}, el("h3",{},"Customer portal")));
   if (!on){ box.append(el("p",{class:"muted small"},"The customer portal is off. An owner can turn it on in Settings.")); return box; }
-  box.append(el("p",{class:"muted small"},"Portal logins see only this company's quotes and invoices, download PDFs and accept quotes online at snpwholesale.com/portal."));
+  box.append(el("p",{class:"muted small"},"Portal logins see only this company's quotes and invoices, download PDFs and accept quotes online at "+location.host+"/portal."));
   if (users.length) box.append(el("ul",{class:"attn"}, users.map(u=>el("li",{}, el("span",{}, el("strong",{},u.name), el("span",{class:"muted small"}," · "+u.email+(u.lastLogin?" · last visit "+SNP.fmtWhen(u.lastLogin):" · hasn't signed in yet"))),
     SNP.confirmBtn("Remove access","Remove portal access?",async()=>{ await api("portal/revoke",{method:"POST",body:{userId:u.id}}); await SNP.load(); SNP.toast("Access removed."); })))));
   const sel=SNP.selectEl([["","Choose a contact…"],...people.map(p=>[String(p.id),`${p.data.name} · ${p.data.email}`]),["__new","Someone else…"]],"",v=>{ other.hidden=v!=="__new"; },"Contact to invite");

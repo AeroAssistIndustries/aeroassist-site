@@ -9,7 +9,7 @@ let lastLink=null;
 function linkBox(res, name){
   if (!res.link) return null;
   return el("div",{class:"linkbox"},
-    el("div",{style:"margin-bottom:6px"}, res.emailed?`Email sent to ${name}. If it doesn't arrive, send them this setup link (works for 24 hours):`:`The email couldn't be sent from this site. Send ${name} this setup link yourself (works for 24 hours):`),
+    el("div",{style:"margin-bottom:6px"}, res.emailed?`Email sent to ${name}. If it doesn't arrive, send them this setup link (works for 3 days):`:`The email couldn't be sent. Send ${name} this setup link yourself (works for 3 days):`),
     el("code",{}, res.link), el("div",{style:"margin-top:8px"}, el("button",{class:"btn small",type:"button",onclick:()=>SNP.copyText(res.link)},"Copy link")));
 }
 function renderPeople(main){
@@ -22,8 +22,14 @@ function renderPeople(main){
       s.onchange=async()=>{ s.disabled=true; try{ const r=await api("people/"+p.id,{method:"POST",body:{role:s.value}}); toast(s.value==="none"?`${p.name} no longer has access.`:`${p.name} is now ${r.person.label}.`); await SNP.load(); }catch(e){ fail(e); s.value=p.snpRole||"none"; } finally{ s.disabled=false; } };
       ctrl=s; }
     const resend=(!p.isAdmin&&!p.isMe&&p.role)?el("button",{class:"btn small ghost",type:"button",onclick:async e=>{ const b=e.currentTarget; b.disabled=true;
-      try{ const r=await api("people/"+p.id,{method:"POST",body:{resend:true}}); lastLink={res:r,name:p.name}; SNP.refresh(true); }catch(err){ fail(err); b.disabled=false; } }},"Send new setup link"):null;
-    return el("tr",{}, el("td",{"data-label":"Name"}, el("strong",{},p.name)), el("td",{"data-label":"Email"}, p.email), el("td",{"data-label":"Access"}, ctrl), el("td",{}, resend));
+      try{ const r=await api("people/"+p.id,{method:"POST",body:{resend:true}});
+        if (r.link){ lastLink={res:r,name:p.name}; SNP.refresh(true); }
+        else { toast(r.emailed?`Emailed ${p.name} a link to choose a new password.`:`The email to ${p.name} couldn't be sent. They can use "Forgot your password?" on the sign-in page.`); b.disabled=false; } }
+      catch(err){ fail(err); b.disabled=false; } }},p.invited===false?"Email a password link":"Send new setup link"):null;
+    const mfaOff=(p.mfa&&!p.isMe)?el("button",{class:"btn small ghost",type:"button",title:"For when someone loses their phone",onclick:async e=>{ const btn=e.currentTarget; btn.disabled=true;
+      try{ await api("people/"+p.id,{method:"POST",body:{resetMfa:true}}); toast(`Two-step sign-in is off for ${p.name}. They can turn it on again from Account.`); await SNP.load(); }catch(err){ fail(err); btn.disabled=false; } }},"Turn off two-step"):null;
+    return el("tr",{}, el("td",{"data-label":"Name"}, el("strong",{},p.name), p.invited?el("div",{class:"muted small"},"Hasn't set a password yet"):null, p.mfa?el("div",{class:"muted small"},"Two-step sign-in on"):null),
+      el("td",{"data-label":"Email"}, p.email), el("td",{"data-label":"Access"}, ctrl), el("td",{}, resend, mfaOff));
   });
   const f=SNP.form([{key:"name",label:"Name",placeholder:"Full name"},{key:"email",label:"Email",type:"email",placeholder:"name@example.com"},{key:"role",label:"Access",type:"select",options:ROLE_OPTIONS}],{role:"snp_owner"});
   f.classList.add("cols3");
@@ -36,7 +42,7 @@ function renderPeople(main){
   const ass=el("textarea",{id:"p-assignees",rows:"4"}); ass.value=S.assignees.join("\n");
   const assSave=el("button",{class:"btn small",type:"button"},"Save names");
   assSave.onclick=async()=>{ assSave.disabled=true; try{ const r=await api("settings",{method:"POST",body:{assignees:ass.value.split("\n")}}); S.assignees=r.assignees; toast("Names saved."); }catch(e){ fail(e); } finally{ assSave.disabled=false; } };
-  main.append(SNP.pageHead("People","Everyone signs in at snpwholesale.com/owners with their own login."),
+  main.append(SNP.pageHead("People",`Everyone signs in at ${location.host} with their own login.`),
     el("section",{class:"panel"}, el("h3",{},"Add someone"),
       el("p",{class:"sub"},"They get an email with a link to set their own password. Owners see everything: sales, costs, customers, money and records. ",
         "Sales see customers, leads, deals, quotes and invoices, and the price list without costs or profit; they can email quotes and invoices but not delete anything. ",
@@ -103,7 +109,7 @@ function renderSettings(main){
     {key:"workdays",label:"Open on",type:"multi",options:DAYS},
     {section:"CRM"},
     {key:"defaultReorderDays",label:"Expect customers to reorder every (days), until they have 3 orders",type:"number",step:"1"},
-    {key:"emailDailyLimit",label:"Most campaign emails to send in a day",type:"number",step:"10",hint:"Most hosts cap outgoing email (GoDaddy's basic limit is a few hundred a day). Raise it if you connect an email service."},
+    {key:"emailDailyLimit",label:"Most campaign emails to send in a day",type:"number",step:"10",hint:"Keeps campaigns within what the email service allows in a day. Cloudflare Email Service includes 3,000 emails a month on the Workers Paid plan."},
     {key:"portalEnabled",label:"Customer portal on (customers can sign in at /portal to see quotes and invoices)",type:"checkbox"},
     {section:"Reminders"},
     {key:"reminders",label:"Send each person a 7 a.m. email when they have tasks due (owners also get overdue invoices, follow-ups and records due)",type:"checkbox"}],
@@ -113,7 +119,19 @@ function renderSettings(main){
     save.disabled=true; err.textContent="";
     try{ S.settings=await api("app-settings",{method:"POST",body:v}); toast("Settings saved."); SNP.refresh(true); }catch(e){ err.textContent=e.message; } finally{ save.disabled=false; } };
   main.append(SNP.pageHead("Settings","Company details and defaults for the whole back office."), el("section",{class:"panel"}, f, err, el("div",{class:"row-actions"}, save)),
-    pipelinesPanel(), customFieldsPanel(), listsPanel());
+    pipelinesPanel(), customFieldsPanel(), listsPanel(), backupPanel());
+}
+/* A copy of everything, for safekeeping (only on the standalone server; WordPress has its own backups). */
+function backupPanel(){
+  if (!SNP.CFG.csrf) return null;
+  const btn=el("button",{class:"btn",type:"button"},"Download a backup");
+  btn.onclick=async()=>{ btn.disabled=true;
+    try{ const r=await fetch(SNP.url("export"),{credentials:"same-origin"}); if(!r.ok) throw new Error("backup");
+      SNP.saveBlob(`snp-records-backup-${SNP.today()}.json`, await r.blob()); toast("Backup downloaded. Keep it somewhere private."); }
+    catch(e){ toast("The backup didn't download. Try again."); } finally{ btn.disabled=false; } };
+  return el("section",{class:"panel"}, el("h3",{},"Backup"),
+    el("p",{class:"sub"},"Cloudflare keeps 30 days of history and can put the whole database back to any minute in that time. For your own copy, download everything here (customers, deals, quotes, invoices, records, settings) as one file. Uploaded files stay in storage and passwords aren't included."),
+    el("div",{class:"row-actions"}, btn));
 }
 const saveSetting=async(body, btn, msg)=>{ btn.disabled=true; try{ S.settings=await api("app-settings",{method:"POST",body}); toast(msg||"Saved."); SNP.refresh(true); }catch(e){ fail(e); } finally{ btn.disabled=false; } };
 
