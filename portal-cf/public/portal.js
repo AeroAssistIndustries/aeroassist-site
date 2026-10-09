@@ -7,7 +7,7 @@ var OUT=+D.unitsOutstanding||10000,ROUND_UNITS=+D.roundUnits||0,ROUND=D.roundNam
 var GROUPS={company:['prospect','investor','employee','admin'],investors:['prospect','investor','admin'],holders:['investor','admin'],team:['employee','admin'],admin:['admin']};
 var ROLES={prospect:'Prospective investor',investor:'Unit holder',employee:'AeroAssist team',admin:'Administrator'};
 var PCATS={tax:'Tax (K-1)',certificates:'Certificate',agreements:'Agreement',updates:'Investor update',team:'Employment',other:'Other'};
-var ACT={view:'viewed',download:'downloaded',zip:'downloaded (zip)',signin:'signed in',signin_failed:'failed sign-in',denied:'was refused'};
+var ACT={round_view:'opened the round page',view:'viewed',download:'downloaded',zip:'downloaded (zip)',signin:'signed in',signin_failed:'failed sign-in',denied:'was refused'};
 var ICON={
  overview:'<path d="M4 13h6V4H4zM14 20h6v-9h-6zM4 20h6v-3H4zM14 7h6V4h-6z"/>',
  investment:'<path d="M4 19h16M7 15v-4M12 15V7M17 15v-6"/>',
@@ -28,7 +28,8 @@ var ICON={
  gear:'<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/>',
  opportunity:'<path d="M4 17l6-6 4 4 6-7"/><path d="M15 8h5v5"/>',
  mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
- arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>'
+ arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>',
+ raise:'<path d="M4 20h16"/><path d="M6 16l4-5 3 3 5-7"/><circle cx="18" cy="7" r="1.6"/>'
 };
 var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function $(i){return document.getElementById(i);}
@@ -68,6 +69,7 @@ function views(){
   if(m.role==='admin'){
     v.push(['Administration'],['investors','Investors and access',(m.roster||[]).length],['people','People'],['library','Manage documents'],['txns','Transactions'],['log','Activity log'],['settings','Settings'],['import','Import']);
   }
+  if(m.raise&&EXTRA.raise)v.push(['Fundraising'],['raise','Raise tracker']);
   v.push(['Account'],['security','Password and two-factor'],['help','Help']);
   return v;
 }
@@ -297,6 +299,7 @@ function offerHero(teaser){
 }
 function vOpportunity(box,act){
   var o=m.offer;if(!o){box.appendChild(el('p','ip-empty','There is no open round to show.'));return;}
+  if(!S.seenRound&&O.seen){S.seenRound=true;O.seen('round');}
   var n=offerNums();
   if(o.email)act.appendChild(link('Email Sarvesh','mail',mailto('AeroAssist round: question'),true,false));
   box.appendChild(offerHero(false));

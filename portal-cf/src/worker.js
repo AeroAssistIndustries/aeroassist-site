@@ -193,6 +193,19 @@ async function requireAdmin(ctx) {
   await requireMember(ctx);
   if (ctx.user.role !== 'admin') fail(403, 'Administrators only.');
 }
+/* The raise tracker belongs to one person (RAISE_OWNER, default Sarvesh's Landmark address). Everyone else,
+   other administrators included, gets "not found". */
+function raiseOwners(env) { return String(env.RAISE_OWNER || 'sarvesh@landmarkdigi.com').toLowerCase().split(/[\s,;]+/).filter(Boolean); }
+function isRaiseOwner(ctx) { return !!(ctx.user && ctx.user.email && raiseOwners(ctx.env).includes(String(ctx.user.email).toLowerCase())); }
+async function requireRaise(ctx) {
+  await requireMember(ctx);
+  if (!isRaiseOwner(ctx)) fail(404, 'Not found.');
+  if (!raiseReady) {
+    await ctx.env.DB.prepare('CREATE TABLE IF NOT EXISTS raise_people (id TEXT PRIMARY KEY, data TEXT NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)').run();
+    raiseReady = true;
+  }
+}
+let raiseReady = false;
 
 /* ---------------------------------------------------------------- activity log and throttling */
 
@@ -320,6 +333,7 @@ async function portalData(ctx) {
     docs: mine.map(d => docOut(d, true)), lib: lib.map(d => docOut(d, false)),
     transactions: tx.map(t => ({ date: t.tx_date || '', type: t.type, units: t.units, amount: t.amount, note: t.note })),
     urls: { zip: '/api/zip', vendor: '/vendor/', home: 'https://aeroassist.us/' },
+    raise: isRaiseOwner(ctx),
   };
   if (s.offer_on && ['prospect', 'investor', 'admin'].includes(user.role)) {
     out.offer = {
@@ -335,7 +349,7 @@ async function portalData(ctx) {
       twofa: p.totp_secret ? 'Authenticator app' : (p.pw_hash ? 'Not set up yet' : 'Invited'),
       last: p.last_signin ? new Date(p.last_signin * 1000).toISOString().slice(0, 10) : '',
     }));
-    out.activity = await activityRows(env, { limit: 12, types: ['view', 'download', 'zip', 'signin', 'signin_failed', 'denied'] });
+    out.activity = await activityRows(env, { limit: 12, types: ['view', 'download', 'zip', 'round_view', 'signin', 'signin_failed', 'denied'] });
   }
   return out;
 }
@@ -504,6 +518,96 @@ route('POST', '/api/ping', async ctx => { await requireStage(ctx, 'ok'); return 
 
 // ----- the portal itself
 route('GET', '/api/portal', async ctx => { await requireMember(ctx); return json(await portalData(ctx)); });
+// A prospect or holder opened the round page. Logged so the raise tracker can show who is reading it.
+route('POST', '/api/seen', async ctx => {
+  await requireMember(ctx);
+  const b = await body(ctx);
+  if (b.what !== 'round' || !['prospect', 'investor'].includes(ctx.user.role)) return json({ ok: true });
+  await throttle(ctx, 'seen:' + ctx.user.id, 20, 3600);
+  await log(ctx, 'round_view');
+  return json({ ok: true });
+});
+
+/* ---------------------------------------------------------------- raise tracker */
+const RAISE_STATUS = ['to_contact', 'emailed', 'maybe', 'yes', 'committed', 'funded', 'no'];
+const RAISE_TIERS = ['Close', 'Professional', 'Introducer', 'List'];
+function cleanRaise(d) {
+  d = d && typeof d === 'object' ? d : {};
+  const t = (v, n = 300) => str(v, n), dd = v => date(v);
+  const o = {
+    name: t(d.name, 160) || 'Unnamed', email: t(d.email, 200).toLowerCase(), phone: t(d.phone, 60), company: t(d.company, 160), source: t(d.source),
+    tier: RAISE_TIERS.includes(d.tier) ? d.tier : 'Professional', status: RAISE_STATUS.includes(d.status) ? d.status : 'to_contact',
+    priority: ['hot', 'warm', 'cold'].includes(d.priority) ? d.priority : 'warm', accredited: ['unknown', 'yes', 'verified', 'no'].includes(d.accredited) ? d.accredited : 'unknown',
+    soft: Math.max(0, num(d.soft)), committed: Math.max(0, num(d.committed)), funded: Math.max(0, num(d.funded)),
+    next: t(d.next), nextDate: dd(d.nextDate), last: dd(d.last), introBy: t(d.introBy, 60), notes: t(d.notes, 6000),
+    nda: !!d.nda, demo: !!d.demo, docs: !!d.docs, created: num(d.created) || Date.now(), updated: Date.now(),
+    log: (Array.isArray(d.log) ? d.log : []).slice(-300).filter(x => x && (x.x || x.t)).map(x => ({ d: dd(x.d) || new Date().toISOString().slice(0, 10), t: ['email', 'call', 'text', 'meeting', 'note', 'status'].includes(x.t) ? x.t : 'note', x: t(x.x, 1000) })),
+  };
+  return o;
+}
+route('GET', '/api/raise', async ctx => {
+  await requireRaise(ctx);
+  const rows = (await ctx.env.DB.prepare('SELECT id, data FROM raise_people').all()).results;
+  const people = [];
+  for (const r of rows) { try { people.push({ id: r.id, ...JSON.parse(await decryptText(ctx.env, r.data, 'raise:' + r.id)) }); } catch (e) { /* unreadable row: skip */ } }
+  const users = (await ctx.env.DB.prepare('SELECT id, email, name, portal_id, role, active, pw_hash, totp_secret, last_signin FROM users').all()).results;
+  const acts = (await ctx.env.DB.prepare("SELECT user_id, action, COUNT(*) AS n, MAX(created_at) AS last FROM activity WHERE action IN ('round_view','view','download','zip','signin') AND created_at > ? GROUP BY user_id, action").bind(now() - 90 * 86400).all()).results;
+  const recent = (await ctx.env.DB.prepare("SELECT user_id, action, created_at FROM activity WHERE action IN ('round_view','view','download') AND created_at > ? ORDER BY id DESC LIMIT 400").bind(now() - 14 * 86400).all()).results;
+  const portal = {};
+  for (const u of users) {
+    if (!u.email) continue;
+    const a = {}; acts.filter(x => x.user_id === u.id).forEach(x => { a[x.action] = { n: x.n, last: x.last }; });
+    const wk = recent.filter(x => x.user_id === u.id && x.created_at > now() - 7 * 86400);
+    portal[u.email.toLowerCase()] = {
+      uid: u.id, portal_id: u.portal_id, role: u.role, active: !!u.active, ready: !!(u.pw_hash && u.totp_secret), last_signin: u.last_signin || null,
+      round: a.round_view || null, docs: (a.view ? a.view.n : 0) + (a.download ? a.download.n : 0), docsLast: Math.max(a.view ? a.view.last : 0, a.download ? a.download.last : 0) || null,
+      week: { round: wk.filter(x => x.action === 'round_view').length, docs: wk.filter(x => x.action !== 'round_view').length },
+    };
+  }
+  const s = ctx.settings;
+  return json({ people, portal, admin: ctx.user.role === 'admin', round: { raise: s.offer_raise, pre: s.offer_pre, units: s.units_outstanding }, origin: ctx.url.origin });
+});
+route('PUT', '/api/raise/:id', async (ctx, p) => {
+  await requireRaise(ctx);
+  if (!/^[A-Za-z0-9_-]{4,40}$/.test(p.id)) fail(400, 'Bad id.');
+  const d = cleanRaise((await body(ctx)).data);
+  const cnt = await ctx.env.DB.prepare('SELECT COUNT(*) AS n FROM raise_people').first();
+  const ex = await ctx.env.DB.prepare('SELECT created_at FROM raise_people WHERE id = ?').bind(p.id).first();
+  if (!ex && cnt.n >= 5000) fail(400, 'The tracker holds 5,000 people at most.');
+  const enc = await encryptText(ctx.env, JSON.stringify(d), 'raise:' + p.id), t = now();
+  await ctx.env.DB.prepare('INSERT INTO raise_people (id, data, created_at, updated_at) VALUES (?,?,?,?) ON CONFLICT (id) DO UPDATE SET data = excluded.data, updated_at = excluded.updated_at').bind(p.id, enc, t, t).run();
+  return json({ person: { id: p.id, ...d } });
+});
+route('DELETE', '/api/raise/:id', async (ctx, p) => {
+  await requireRaise(ctx);
+  await ctx.env.DB.prepare('DELETE FROM raise_people WHERE id = ?').bind(p.id).run();
+  return json({ ok: true });
+});
+// Give a tracked person a prospective-investor sign-in (or a fresh link if they already have one).
+route('POST', '/api/raise/:id/invite', async (ctx, p) => {
+  await requireRaise(ctx);
+  if (ctx.user.role !== 'admin') fail(403, 'Inviting people needs a portal administrator account.');
+  const r = await ctx.env.DB.prepare('SELECT data FROM raise_people WHERE id = ?').bind(p.id).first();
+  if (!r) fail(404, 'Save this person first.');
+  const d = JSON.parse(await decryptText(ctx.env, r.data, 'raise:' + p.id));
+  const email = cleanEmail(d.email);
+  let u = await ctx.env.DB.prepare('SELECT * FROM users WHERE email = ?').bind(email).first(), created = false;
+  if (u && u.id === ctx.user.id) fail(400, 'That is your own account.');
+  if (!u) {
+    const id = uuid(), pid = await nextPortalId(ctx.env);
+    await ctx.env.DB.prepare('INSERT INTO users (id, email, name, portal_id, role, created_at) VALUES (?,?,?,?,?,?)').bind(id, email, str(d.name, 120) || email, pid, 'prospect', now()).run();
+    await log(ctx, 'person_add', null, (str(d.name, 120) || email) + ' as prospect (from the raise tracker)');
+    u = { id, role: 'prospect' }; created = true;
+  } else if (u.active && u.pw_hash && u.totp_secret) {
+    // Already set up: never replace their password. Send them the sign-in page instead.
+    return json({ link: { url: ctx.url.origin + '/' }, created: false, existing: true, role: u.role || 'prospect' });
+  } else if (!u.role || !u.active) {
+    await ctx.env.DB.prepare("UPDATE users SET role = COALESCE(role, 'prospect'), active = 1 WHERE id = ?").bind(u.id).run();
+  }
+  const link = await makeLink(ctx, u.id);
+  await log(ctx, 'link_issued', null, (str(d.name, 120) || email) + ' (raise tracker)');
+  return json({ link, created, role: u.role || 'prospect' });
+});
 route('GET', '/api/file/:id', async (ctx, p) => {
   await requireMember(ctx);
   const d = await ctx.env.DB.prepare('SELECT * FROM documents WHERE id = ?').bind(+p.id || 0).first();
@@ -742,7 +846,7 @@ route('PUT', '/api/admin/settings', async ctx => {
 route('GET', '/api/admin/activity', async ctx => {
   await requireAdmin(ctx);
   const q = ctx.url.searchParams, map = {
-    files: ['view', 'download', 'zip'], signin: ['signin', 'signin_failed', 'signout', 'timeout', 'password_set', 'password_change', 'twofa_setup'],
+    files: ['view', 'download', 'zip', 'round_view'], signin: ['signin', 'signin_failed', 'signout', 'timeout', 'password_set', 'password_change', 'twofa_setup'],
     denied: ['denied', 'signin_failed', 'error'],
     admin: ['upload', 'replace', 'delete', 'doc_edit', 'person_add', 'person_edit', 'role_change', 'access_removed', 'twofa_reset', 'link_issued', 'signed_out', 'transaction', 'transaction_delete', 'settings'],
   };

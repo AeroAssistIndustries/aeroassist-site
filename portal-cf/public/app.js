@@ -160,9 +160,11 @@
       onSignOut: signOut,
       onIdle: function () { api('POST', '/api/logout').catch(function () {}).then(function () { location.replace('/?signed_out=idle'); }); },
       ping: function () { api('POST', '/api/ping').catch(function (e) { if (e.status === 401 || e.status === 403) location.replace('/?signed_out=idle'); }); },
+      seen: function (what) { api('POST', '/api/seen', { what: what }).catch(function () {}); },
     };
     O.views = { security: securityView(O) };
     if (data.role === 'admin' && window.AAPAdmin) Object.assign(O.views, window.AAPAdmin(O, api));
+    if (data.raise && window.AAPRaise) Object.assign(O.views, window.AAPRaise(O, api));
     window.AAPortal.start(data, O);
   }
   function securityView(O) {

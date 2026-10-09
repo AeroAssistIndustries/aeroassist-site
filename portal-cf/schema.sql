@@ -105,3 +105,11 @@ CREATE TABLE IF NOT EXISTS throttle (
   count       INTEGER NOT NULL DEFAULT 0,
   window      INTEGER NOT NULL
 );
+
+-- The owner-only raise tracker. Each row is one person, encrypted with FILE_KEY. (The worker also creates this table on first use.)
+CREATE TABLE IF NOT EXISTS raise_people (
+  id          TEXT PRIMARY KEY,
+  data        TEXT NOT NULL,
+  created_at  INTEGER NOT NULL,
+  updated_at  INTEGER NOT NULL
+);
