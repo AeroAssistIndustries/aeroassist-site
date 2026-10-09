@@ -1,0 +1,32 @@
+# AeroAssist investor and team portal — Cloudflare Worker.
+# See SETUP.md. Replace database_id with the ID Cloudflare shows for your D1 database.
+name = "aeroassist-portal"
+main = "src/worker.js"
+compatibility_date = "2026-09-01"
+workers_dev = true
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = true
+not_found_handling = "single-page-application"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "aeroassist-portal"
+database_id = "00000000-0000-0000-0000-000000000000"
+
+[[r2_buckets]]
+binding = "FILES"
+bucket_name = "aeroassist-portal-files"
+
+# Nightly clean-up of expired sessions, old links and rate-limit counters.
+[triggers]
+crons = ["17 9 * * *"]
+
+[observability]
+enabled = true
+
+# Secrets (set in Cloudflare → Workers → aeroassist-portal → Settings → Variables and Secrets, type "Secret"):
+#   FILE_KEY        32 random bytes, base64. Encrypts every document and authenticator secret. Keep a copy safe.
+#   BOOTSTRAP_CODE  any long phrase; needed once to create the first administrator. Delete it afterwards.
