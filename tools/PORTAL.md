@@ -43,4 +43,10 @@ Old encrypted files stay in the repository history, readable only with the keys 
 
 ## WordPress (aeroassist.us)
 
-Add a page at `/portal/` using `portal/index.html` as its template and copy `portal/vault/` into the theme. Before the portal script runs, set `window.AA_PORTAL` to the theme's vault URL (ending in `/`). Replace the `/documents/` page with a redirect to `/portal/`. The menu shows "Investor relations" (the raise) and "Investor and team portal", as on the staging site.
+The live site uses the **AeroAssist Portal** WordPress plugin (`wordpress/aeroassist-portal/`), not this static vault. The plugin provides:
+
+- a personal account and two-factor for each person;
+- encrypted storage outside the web root, with every download logged;
+- wp-admin screens that replace these CSV files and the build script.
+
+`wordpress/aeroassist-portal/INSTALL.md` has the install steps and the everyday jobs. Its Import screen takes a zip of `portal-input` once, then the folder can be deleted. The static portal on staging stays only as a preview.

@@ -1,0 +1,40 @@
+/* AeroAssist Portal admin screens: the portal's light palette on standard WordPress UI. */
+.aap-wrap{--ink:#0b1220;--muted:#5a6577;--line:#e3e6ec;--gold:#8a6420;--navy:#14213d;max-width:1400px}
+.aap-wrap h2{margin-top:28px;color:var(--ink)}
+.aap-wrap h3{margin:0 0 10px;color:var(--ink)}
+.aap-sub{color:var(--muted);font-size:14px;max-width:90ch}
+.aap-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:16px;margin:16px 0}
+.aap-card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:18px 20px;box-shadow:0 1px 2px rgba(11,18,32,.04)}
+.aap-card>h2:first-child{margin-top:0}
+.aap-upload{margin:12px 0}
+.aap-form label{font-weight:600;color:var(--ink)}
+.aap-form input[type=text],.aap-form input:not([type]),.aap-form input[type=email],.aap-form input[type=number],.aap-form input[type=date],.aap-form select,.aap-form textarea{font-weight:400;margin-top:4px}
+.aap-form fieldset label{font-weight:400}
+.aap-row{display:flex;flex-wrap:wrap;gap:0 18px}
+.aap-row>p{margin:0 0 12px}
+.aap-grow{flex:1 1 260px}
+.aap-grow input{width:100%}
+.aap-muted{color:var(--muted);font-weight:400}
+.aap-count{display:inline-block;background:#eef0f4;color:var(--muted);border-radius:999px;padding:1px 9px;font-size:12px;vertical-align:2px}
+.aap-table td,.aap-table th{vertical-align:middle}
+.aap-table .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.aap-table .aap-actions{white-space:nowrap;text-align:right}
+.aap-table form{display:inline}
+.aap-pill{display:inline-block;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px;background:#eef0f4;color:#3a4556;white-space:nowrap}
+.aap-pill.good{background:#e8f4ee;color:#1a7046}
+.aap-pill.warn{background:#fdf1e1;color:#9a5b00}
+.aap-kv{border-collapse:collapse;width:100%;margin-bottom:12px}
+.aap-kv th{text-align:left;color:var(--muted);font-weight:500;padding:8px 12px 8px 0;width:190px;vertical-align:top;border-top:1px solid var(--line)}
+.aap-kv td{padding:8px 0;border-top:1px solid var(--line)}
+.aap-kv tr:first-child th,.aap-kv tr:first-child td{border-top:0}
+.aap-key{display:inline-block;margin:6px 0;word-break:break-all;user-select:all}
+.aap-inline{margin:8px 0}
+.aap-danger{color:#b42318!important;border-color:#e7b4ae!important}
+.aap-danger-link{color:#b42318}
+.aap-filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0}
+.aap-report li{margin-bottom:6px}
+.aap-settings textarea{font-family:'IBM Plex Mono',Menlo,monospace;font-size:13px}
+@media (max-width:782px){.aap-cards{grid-template-columns:1fr}.aap-kv th{width:120px}}
+.aap-pill.bad{background:#fdecea;color:#9b1c1c}
+.aap-inline{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px}
+.aap-inline .aap-muted{flex:1 1 240px;font-size:12.5px}

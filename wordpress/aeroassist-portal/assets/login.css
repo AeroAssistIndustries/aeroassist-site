@@ -1,0 +1,16 @@
+/* AeroAssist branding for wp-login.php (password, one-time code, reset). */
+body.login{background:radial-gradient(1200px 600px at 50% -10%,#e9ecf3 0,#f4f5f8 60%);color:#3a4556;font-family:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif}
+.login h1 a{width:56px;height:60px;background-size:contain;background-position:center;margin-bottom:18px}
+.login form{border:1px solid #e3e6ec;border-radius:12px;box-shadow:0 1px 2px rgba(11,18,32,.04),0 12px 32px -12px rgba(11,18,32,.12);padding:26px 24px}
+.login label{color:#0b1220;font-weight:600;font-size:13px}
+.login input[type=text],.login input[type=password],.login input[type=email],.login input[type=tel],.login input.authcode{border:1px solid #d5d9e0;border-radius:8px;box-shadow:none;font-size:16px;padding:6px 12px}
+.login input[type=text]:focus,.login input[type=password]:focus,.login input.authcode:focus{border-color:#14213d;box-shadow:0 0 0 1px #14213d}
+.wp-core-ui .button-primary{background:#14213d;border-color:#14213d;border-radius:6px;box-shadow:none;text-shadow:none;padding:2px 16px}
+.wp-core-ui .button-primary:hover,.wp-core-ui .button-primary:focus{background:#0b1220;border-color:#0b1220}
+.login #nav a,.login #backtoblog a,.login .privacy-policy-page-link a{color:#5a6577}
+.login .message,.login .notice,.login .success{border-left-color:#8a6420;border-radius:6px}
+.login #login_error{border-left-color:#b42318;border-radius:6px}
+.aap-login-help{text-align:center;font-size:13px;color:#5a6577;margin:4px auto 24px;max-width:320px}
+.aap-login-help a{color:#14213d}
+.login .backup-methods-wrap a,.login .two-factor-email-resend input{color:#8a6420}
+.login .two-factor-email-resend .button,.login input[name=two-factor-email-code-resend]{border-color:#d5d9e0;color:#8a6420;border-radius:6px;background:#fff}
