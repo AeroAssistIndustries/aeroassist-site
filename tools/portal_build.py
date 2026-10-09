@@ -1,21 +1,29 @@
 #!/usr/bin/env python3
-"""Build the encrypted AeroAssist investor portal vault.
+"""Build the encrypted AeroAssist investor and team portal vault.
 
 Reads a PRIVATE input folder (never commit it) and writes encrypted files to
-portal/vault/. Each investor gets one encrypted manifest and their own encrypted
-copy of every document they may see. Nothing readable is published: a file opens
-only in the investor's browser with their ID and access code.
+portal/vault/. Each person gets one encrypted manifest and their own encrypted
+copy of every document they may see. The manifest also carries the codes for the
+shared areas their role may open (raise briefing, document library, holder
+reports), so one sign-in opens everything. Nothing readable is published: a file
+opens only in the person's browser with their ID and access code.
 
 Input folder layout (default: ./portal-input, which .gitignore excludes):
 
   portal-input/
-    investors.csv   id,name,units,since           e.g. AA-0007,Raj Tailor,750,2023-04-01
+    people.csv      id,name,role,units,since
+                      role  = prospect | investor | employee | admin
+                      units = units held (investors), else blank
     documents.csv   investor,category,title,date,file
-                      investor = an investor ID, or * for every investor
-                      category = tax | agreements | certificates | updates | other
+                      investor = a portal ID, * for everyone, or @role (e.g. @employee)
+                      category = tax | agreements | certificates | updates | team | other
                       file     = path relative to portal-input
-    settings.json   optional: {"asOf": "2026-10-09", "unitsOutstanding": 10000,
-                               "note": "Text shown to every investor"}
+    settings.json   {"rooms": {"briefing": "<investor page code>",
+                               "library": "<document library code>",
+                               "holders": "<unit-holder code>"},
+                     "asOf": "2026-10-09", "unitsOutstanding": 10000,
+                     "note": "Text shown to everyone"}
+                    Optional "roleRooms" overrides which areas each role opens.
 
 Access codes are kept in portal-input/codes.csv (also private). An investor
 without a code gets a new random one; existing codes are kept, so rebuilding
@@ -31,7 +39,10 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 ITER = 250000                      # must match portal/index.html
 ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"   # no 0/O, 1/I
-CATS = {"tax", "agreements", "certificates", "updates", "other"}
+CATS = {"tax", "agreements", "certificates", "updates", "team", "other"}
+ROLES = {"prospect", "investor", "employee", "admin"}
+ROLE_ROOMS = {"prospect": ["briefing", "library"], "investor": ["briefing", "library", "holders"],
+              "employee": ["library"], "admin": ["briefing", "library", "holders"]}
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 VAULT = os.path.join(ROOT, "portal", "vault")
 
@@ -63,8 +74,15 @@ def main():
     src = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "portal-input"))
     if src.startswith(ROOT + os.sep) and os.path.basename(src) != "portal-input":
         sys.exit("Keep the input folder outside the site or name it portal-input (ignored by git).")
-    with open(os.path.join(src, "investors.csv"), newline="") as f:
+    people_csv = os.path.join(src, "people.csv")
+    if not os.path.exists(people_csv):
+        people_csv = os.path.join(src, "investors.csv")   # older name; role defaults to investor
+    with open(people_csv, newline="") as f:
         investors = [r for r in csv.DictReader(f) if (r.get("id") or "").strip()]
+    for r in investors:
+        r["role"] = (r.get("role") or "investor").strip().lower()
+        if r["role"] not in ROLES:
+            sys.exit(f"Unknown role {r['role']!r} for {r['id']}")
     docs = []
     p = os.path.join(src, "documents.csv")
     if os.path.exists(p):
@@ -96,7 +114,10 @@ def main():
         iid = norm_id(inv["id"])
         code = codes.get(iid) or new_code()
         codes[iid] = code
-        mine = [d for d in docs if d["investor"].strip() in ("*", inv["id"].strip()) or norm_id(d["investor"]) == iid]
+        who = [d["investor"].strip() for d in docs]
+        mine = [d for d, w in zip(docs, who) if w == "*" or w.lower() == "@" + inv["role"] or norm_id(w) == iid]
+        role_rooms = settings.get("roleRooms", {}).get(inv["role"], ROLE_ROOMS[inv["role"]])
+        rooms = {k: v for k, v in settings.get("rooms", {}).items() if k in role_rooms and v}
         listed = []
         for d in mine:
             data = open(os.path.join(src, d["file"]), "rb").read()
@@ -112,25 +133,28 @@ def main():
         manifest = {
             "holder": {"name": inv.get("name", "").strip(), "units": int(float(inv.get("units") or 0)),
                        "since": inv.get("since", "").strip()},
+            "role": inv["role"], "rooms": rooms,
             "unitsOutstanding": int(settings.get("unitsOutstanding", 10000)),
             "asOf": settings.get("asOf", ""), "note": settings.get("note", ""), "docs": listed,
         }
         open(os.path.join(VAULT, vault_name(iid) + ".enc"), "wb").write(seal(json.dumps(manifest).encode(), code))
-        rows.append((iid, inv.get("name", "").strip(), code, len(listed)))
+        rows.append((iid, inv.get("name", "").strip(), code, len(listed), inv["role"], sorted(rooms)))
 
     with open(codes_path, "w", newline="") as f:
         w = csv.writer(f)
         w.writerow(["id", "name", "code"])
-        for iid, name, code, _ in rows:
+        for iid, name, code, *_ in rows:
             w.writerow([iid, name, code])
     # Unused files make the investor count less obvious from the outside.
     for _ in range(max(0, 24 - len(rows))):
         open(os.path.join(VAULT, secrets.token_hex(12) + ".enc"), "wb").write(os.urandom(28 + secrets.randbelow(900) + 64))
 
-    print(f"Built {len(rows)} investor vaults in portal/vault/")
-    for iid, name, _, n in rows:
-        print(f"  {iid:<10} {name:<30} {n} documents")
+    print(f"Built {len(rows)} portal sign-ins in portal/vault/")
+    for iid, name, _, n, role, rms in rows:
+        print(f"  {iid:<10} {name:<28} {role:<9} {n} documents  areas: {', '.join(rms) or 'none'}")
     print(f"Access codes: {codes_path}  (private: send each code separately from the ID)")
+    if not settings.get("rooms"):
+        print("Note: settings.json has no \"rooms\" codes, so nobody gets the briefing or library through the portal.")
 
 
 if __name__ == "__main__":
