@@ -23,7 +23,7 @@
                ['P1', 'Armed subject', 'red'], ['P2', 'Brush fire', 'gold'], ['P3', 'Debris in roadway', 'blue'], ['P2', 'Burglary in progress', 'gold']];
   var DOCKS = [], STATIONS = [];
 
-  var W = 0, H = 0, DPR = 1, cx = 0, hz = 0, f = 0, z0 = 420, camH = 0, narrow = false, avoid = null;
+  var W = 0, H = 0, DPR = 1, cx = 0, hz = 0, f = 0, z0 = 420, camH = 0, narrow = false, avoid = null, panel = null, textR = 0;
   function P(x, z, alt) { var s = f / (z + z0); return [cx + x * s, hz + camH * s - (alt || 0) * s]; }
   function depthA(z) { var t = 1 - z / 1700; return t <= 0 ? 0 : Math.pow(t, 1.1); }
   function inv(sx, sy) { var s = (sy - hz) / camH; return [(sx - cx) / s, f / s - z0]; }
@@ -42,7 +42,8 @@
     [cv, base].forEach(function (c) { c.width = Math.round(W * DPR); c.height = Math.round(H * DPR); });
     cv.style.width = W + 'px'; cv.style.height = H + 'px';
     var ops = document.getElementById('aaOps');
-    if (ops && ops.offsetParent) { var o = ops.getBoundingClientRect(); avoid = [o.left - r.left - 250, o.top - r.top - 110, o.right - r.left + 40, o.bottom - r.top + 30]; } else avoid = null;
+    if (ops && ops.offsetParent) { var o = ops.getBoundingClientRect(); panel = [o.left - r.left - 14, o.top - r.top - 14, o.right - r.left + 14, o.bottom - r.top + 14]; avoid = [panel[0] - 30, panel[1] - 30, panel[2] + 10, panel[3] + 10]; } else { panel = avoid = null; }
+    var cp = document.querySelector('.aa-hero-copy'); textR = (cp && !narrow) ? cp.getBoundingClientRect().right - r.left + 16 : 0;
     drawBase();
   }
 
@@ -109,9 +110,19 @@
     var w = 0; lines.forEach(function (l) { c.font = '500 ' + l[3] + 'px ' + MONO; w = Math.max(w, c.measureText(l[0]).width); });
     try { c.letterSpacing = '0px'; } catch (e) {}
     var pad = 9, lh = 15, bw = w + pad * 2, bh = lines.length * lh + pad * 2 - 4;
-    var bx = left ? sp[0] - 26 - bw : sp[0] + 26, by = sp[1] - bh - 18;
-    if (by < hz + 6) by = sp[1] + 18;
-    bx = Math.max(8, Math.min(W - bw - 8, bx));
+    function hits(x, y) {
+      if (x < 6 || x + bw > W - 6 || y < hz + 4 || y + bh > H - 6) return true;
+      if (!narrow && x < textR) return true;
+      if (panel && x < panel[2] && x + bw > panel[0] && y < panel[3] && y + bh > panel[1]) return true;
+      return false;
+    }
+    var opts = [[left ? -1 : 1, -1], [left ? 1 : -1, -1], [left ? -1 : 1, 1], [left ? 1 : -1, 1]], bx = 0, by = 0, k2 = 0;
+    for (k2 = 0; k2 < 4; k2++) {
+      bx = opts[k2][0] < 0 ? sp[0] - 26 - bw : sp[0] + 26; by = opts[k2][1] < 0 ? sp[1] - bh - 18 : sp[1] + 18;
+      if (!hits(bx, by)) break;
+    }
+    if (k2 === 4) { bx = Math.max(8, Math.min(W - bw - 8, sp[0] + 26)); by = sp[1] - bh - 18; }
+    left = bx < sp[0];
     c.strokeStyle = 'rgba(' + GREY + ',' + (0.35 * a) + ')'; c.lineWidth = 1; c.beginPath(); c.moveTo(sp[0], sp[1]); c.lineTo(left ? bx + bw : bx, by + bh / 2); c.stroke();
     c.fillStyle = 'rgba(6,9,15,' + (0.82 * a) + ')'; c.fillRect(bx, by, bw, bh);
     c.strokeStyle = 'rgba(' + GREY + ',' + (0.18 * a) + ')'; c.strokeRect(bx + 0.5, by + 0.5, bw - 1, bh - 1);
@@ -124,7 +135,7 @@
   function okSpot(x, z) {
     var p = P(x, z);
     if (narrow) { if (p[0] < W * 0.12 || p[0] > W * 0.88 || p[1] < hz + 30 || p[1] > H * 0.42) return false; }
-    else if (p[0] < W * 0.48 || p[0] > W * 0.92 || p[1] < hz + 60 || p[1] > H * 0.84) return false;
+    else if (p[0] < Math.max(W * 0.48, textR + 50) || p[0] > W * 0.94 || p[1] < hz + 60 || p[1] > H * 0.86) return false;
     if (avoid && p[0] > avoid[0] && p[0] < avoid[2] && p[1] > avoid[1] && p[1] < avoid[3]) return false;
     return true;
   }
@@ -132,7 +143,7 @@
   function newCall() {
     var x, z, tries = 0, w;
     do {
-      var sx = narrow ? rnd(0.15, 0.85) * W : rnd(0.5, 0.9) * W, sy = narrow ? rnd(0.24, 0.4) * H : rnd(0.38, 0.82) * H;
+      var sx = narrow ? rnd(0.15, 0.85) * W : rnd(Math.max(0.48 * W, textR + 50), 0.94 * W), sy = narrow ? rnd(0.24, 0.4) * H : rnd(0.3, 0.86) * H;
       w = inv(sx, sy); x = snap(w[0], 25); z = Math.max(40, w[1]); tries++;
     } while ((!okSpot(x, z) || (EV && Math.hypot(EV.x - x, EV.z - z) < 120)) && tries < 80);
     var best = -1, bd = 1e9; DOCKS.forEach(function (d, k) { var dd = Math.hypot(d[0] - x, d[1] - z), p = P(d[0], d[1]); if (dd >= 150 && dd <= 450 && dd < bd && (narrow || p[0] > W * 0.45)) { bd = dd; best = k; } });
