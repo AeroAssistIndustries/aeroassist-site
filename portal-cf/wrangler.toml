@@ -14,7 +14,7 @@ not_found_handling = "single-page-application"
 [[d1_databases]]
 binding = "DB"
 database_name = "aeroassist-portal"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "ffae9568-a2a7-471e-bce7-ab22bac340d0"
 
 [[r2_buckets]]
 binding = "FILES"
