@@ -352,7 +352,26 @@
         F.address = f(g2, 'Address line', 'address', 'text', { value: s.address, full: true });
         F.help_email = f(g2, 'Help email', 'help_email', 'email', { value: s.help_email });
         F.idle_minutes = f(g2, 'Sign out after inactivity (minutes)', 'idle_minutes', 'number', { value: s.idle_minutes });
-        form.appendChild(c1); form.appendChild(c2);
+        var c3 = card('The round (what prospective investors see)'), g3 = grid(c3);
+        F.offer_on = f(g3, 'Show the round to prospects, unit holders and admins', 'offer_on', 'checkbox', { value: s.offer_on !== false, full: true });
+        F.offer_title = f(g3, 'Title in the menu', 'offer_title', 'text', { value: s.offer_title });
+        F.offer_raise = f(g3, 'Raise ($)', 'offer_raise', 'number', { value: s.offer_raise });
+        F.offer_pre = f(g3, 'Pre-money valuation ($)', 'offer_pre', 'number', { value: s.offer_pre, hint: 'Price per unit = pre-money ÷ units outstanding' });
+        F.offer_min = f(g3, 'Minimum investment', 'offer_min', 'text', { value: s.offer_min, hint: 'Blank shows “Ask us”' });
+        F.offer_security = f(g3, 'Security', 'offer_security', 'text', { value: s.offer_security, full: true });
+        F.offer_email = f(g3, 'Email for “Talk to Sarvesh”', 'offer_email', 'email', { value: s.offer_email });
+        F.offer_dilution = f(g3, 'Default later-round dilution (%)', 'offer_dilution', 'number', { value: s.offer_dilution });
+        F.offer_exits = f(g3, 'Example sale prices ($, comma separated)', 'offer_exits', 'text', { value: (s.offer_exits || []).join(', '), full: true });
+        F.offer_lead = f(g3, 'Headline paragraph', 'offer_lead', 'textarea', { value: s.offer_lead, full: true, rows: 3 });
+        F.offer_highlights = f(g3, 'Why AeroAssist (one per line: title | text)', 'offer_highlights', 'textarea', { value: lines(s.offer_highlights), full: true, rows: 5 });
+        F.offer_track = f(g3, 'Track record (one per line: big number | what it means)', 'offer_track', 'textarea', { value: lines(s.offer_track), full: true, rows: 3 });
+        F.offer_use = f(g3, 'Use of funds (one per line: item | amount)', 'offer_use', 'textarea', { value: lines(s.offer_use), full: true, rows: 7 });
+        F.offer_phases = f(g3, 'Phases (one per line: name | amount | when | what)', 'offer_phases', 'textarea', { value: lines(s.offer_phases), full: true, rows: 3 });
+        F.offer_comps = f(g3, 'For scale: comparable deals (one per line: company | event | amount)', 'offer_comps', 'textarea', { value: lines(s.offer_comps), full: true, rows: 4 });
+        F.offer_risks = f(g3, 'Risks (one per line: title | text)', 'offer_risks', 'textarea', { value: lines(s.offer_risks), full: true, rows: 8 });
+        F.offer_steps = f(g3, 'How to invest (one per line: step | text)', 'offer_steps', 'textarea', { value: lines(s.offer_steps), full: true, rows: 4 });
+        F.offer_note = f(g3, 'Legal note at the bottom', 'offer_note', 'textarea', { value: s.offer_note, full: true, rows: 3 });
+        form.appendChild(c1); form.appendChild(c2); form.appendChild(c3);
         var bar = el('div'); var b = formbar(bar, 'Save settings'); form.appendChild(bar);
         form.onsubmit = function (e) {
           e.preventDefault(); b.disabled = true;
@@ -361,6 +380,11 @@
           d.price_history = unlines(F.price_history.value, 3).map(function (r) { return { date: r[0], price: +String(r[1]).replace(/[$,]/g, ''), label: r[2] }; });
           d.announcements = unlines(F.announcements.value, 3).map(function (r) { return { date: r[0], title: r[1], body: r[2] }; });
           d.company_facts = unlines(F.company_facts.value, 2); d.contacts = unlines(F.contacts.value, 4); d.links = unlines(F.links.value, 2);
+          ['offer_title', 'offer_raise', 'offer_pre', 'offer_min', 'offer_security', 'offer_email', 'offer_dilution', 'offer_lead', 'offer_note'].forEach(function (k) { d[k] = F[k].value; });
+          d.offer_on = F.offer_on.checked;
+          d.offer_exits = String(F.offer_exits.value).split(',').map(function (x) { return +x.replace(/[^0-9.]/g, ''); }).filter(function (x) { return x > 0; });
+          d.offer_highlights = unlines(F.offer_highlights.value, 2); d.offer_track = unlines(F.offer_track.value, 2); d.offer_use = unlines(F.offer_use.value, 2);
+          d.offer_phases = unlines(F.offer_phases.value, 4); d.offer_comps = unlines(F.offer_comps.value, 3); d.offer_risks = unlines(F.offer_risks.value, 2); d.offer_steps = unlines(F.offer_steps.value, 2);
           api('PUT', '/api/admin/settings', d).then(function () { banner(holder, 'Settings saved. People see them the next time they open the portal.'); window.scrollTo(0, 0); })
             .catch(function (err) { banner(holder, err.message, 'err'); }).then(function () { b.disabled = false; });
         };

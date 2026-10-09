@@ -25,7 +25,10 @@ var ICON={
  settings:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1l2.1-2.1M17 7l2.1-2.1"/>',
  import:'<path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 17v3h16v-3"/>',
  security:'<rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/>',
- gear:'<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/>'
+ gear:'<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/>',
+ opportunity:'<path d="M4 17l6-6 4 4 6-7"/><path d="M15 8h5v5"/>',
+ mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
+ arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>'
 };
 var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function $(i){return document.getElementById(i);}
@@ -58,6 +61,7 @@ function holder(){return (+((m.holder||{}).units)||0)>0||(m.transactions||[]).le
 /* ---------- shell ---------- */
 function views(){
   var v=[['Portfolio'],['overview','Overview']];
+  if(m.offer)v.push(['opportunity',m.offer.title||'The opportunity']);
   if(holder())v.push(['investment','My investment']);
   v.push(['Documents'],['documents','Documents',allDocs().length],['updates','Updates']);
   v.push(['Company'],['company','Company']);
@@ -91,12 +95,12 @@ function nav(){
 function go(v){S.view=v;try{history.replaceState(null,'','#'+v);}catch(e){}nav();render();window.scrollTo(0,0);var t=$('dbTitle');t.setAttribute('tabindex','-1');t.focus({preventScroll:true});}
 function render(){
   var first=((m.holder||{}).name||'').split(/\s+/)[0];
-  var T={overview:[greeting()+(first?', '+first:'')+'.','Overview'],investment:['My investment','Your units in AeroAssist Industries'],documents:['Documents','Everything shared with you, in one place'],updates:['Updates','News and reports from the company'],company:['AeroAssist Industries','Company profile'],investors:['Investors and access','Administrator'],help:['Help','How the portal works']};
+  var T={overview:[greeting()+(first?', '+first:'')+'.','Overview'],investment:['My investment','Your units in AeroAssist Industries'],documents:['Documents','Everything shared with you, in one place'],updates:['Updates','News and reports from the company'],company:['AeroAssist Industries','Company profile'],investors:['Investors and access','Administrator'],help:['Help','How the portal works'],opportunity:[(m.offer&&m.offer.title)||'The opportunity','Investment opportunity · for prospective investors']};
   Object.keys(EXTRA).forEach(function(k){if(EXTRA[k].title)T[k]=EXTRA[k].title;});
   var t=T[S.view]||T.overview;$('dbTitle').textContent=t[0];$('dbKicker').textContent=t[1];
   var act=$('dbActions');act.textContent='';
   var box=$('dbView');box.textContent='';
-  var V={overview:vOverview,investment:vInvestment,documents:vDocuments,updates:vUpdates,company:vCompany,investors:vInvestors,help:vHelp};
+  var V={overview:vOverview,investment:vInvestment,documents:vDocuments,updates:vUpdates,company:vCompany,investors:vInvestors,help:vHelp,opportunity:vOpportunity};
   Object.keys(EXTRA).forEach(function(k){V[k]=function(b,a){EXTRA[k].render(b,a,m);};});
   (V[S.view]||vOverview)(box,act);
 }
@@ -114,6 +118,7 @@ function table(cols,rows){
 /* ---------- views ---------- */
 function vOverview(box,act){
   var a=acct();
+  if(m.offer&&!holder())box.appendChild(offerHero(true));
   if(holder()){
     act.appendChild(btn('Download statement','dl',true,statement));
     box.appendChild(strip([{label:'Current value (indicative)',value:money(a.value),hi:true},{label:'Paid-in capital',value:a.paid?money(a.paid):'—'},{label:'Distributions',value:money(a.dist)},{label:'Total value',value:money(a.total)},{label:'Multiple (TVPI)',value:a.tvpi?a.tvpi.toFixed(2)+'×':'—',badge:a.paid?'DPI '+a.dpi.toFixed(2)+'×':null}]));
@@ -129,6 +134,7 @@ function vOverview(box,act){
   rc.appendChild(recent.length?docTable(recent,true):el('p','ip-empty','No documents have been shared with you yet.'));
   L.appendChild(rc);
   R.appendChild(actionCard());
+  if(m.offer&&holder()){var oc=card(m.offer.title+' is open'),op=el('p',null,'New units at '+money(offerNums().price)+' each. See the terms, the plan and what it means for your ownership.');op.style.margin='0 0 12px';oc.appendChild(op);oc.appendChild(btn('See the round','arrow',false,function(){go('opportunity');}));R.appendChild(oc);}
   if((m.announcements||[]).length)R.appendChild(annCard(2));
   R.appendChild(factsCard());
   g.appendChild(L);g.appendChild(R);box.appendChild(g);
@@ -265,6 +271,124 @@ function vHelp(box){
    ['Values and multiples','Current value uses the price per unit in the most recent round. TVPI is total value (current value plus distributions) divided by what you paid in; DPI is distributions divided by paid-in. These are indicative, not an appraisal or a tax valuation.']].forEach(function(x){var p=el('p');p.appendChild(el('b',null,x[0]+'. '));p.appendChild(document.createTextNode(x[1]));d.appendChild(p);});
   var pa=el('p');pa.appendChild(btn('Password and two-factor','security',true,function(){go('security');}));d.appendChild(pa);
   c.appendChild(d);box.appendChild(c);box.appendChild(contacts());
+}
+
+/* ---------- the round, for prospective investors ---------- */
+function offerNums(){
+  var o=m.offer||{},pre=+o.pre||0,raise=+o.raise||0,price=pre&&OUT?pre/OUT:(+m.unitPrice||0),units=price?Math.round(raise/price):0;
+  return {pre:pre,raise:raise,post:pre+raise,price:price,units:units,pct:units?units/(OUT+units)*100:0};
+}
+function short$(n){n=+n||0;if(n>=1e9)return '$'+(n/1e9).toFixed(n%1e9?1:0)+'B';if(n>=1e6)return '$'+(n/1e6).toFixed(n%1e6?1:0)+'M';if(n>=1e3)return '$'+Math.round(n/1e3)+'K';return money(n);}
+function libDoc(re){return S.lib.filter(function(d){return re.test(d.title||'');})[0]||null;}
+function mailto(subject){var o=m.offer||{};return 'mailto:'+(o.email||'')+'?subject='+encodeURIComponent(subject);}
+function offerHero(teaser){
+  var o=m.offer,n=offerNums(),h=el('section','ip-hero');
+  h.appendChild(el('div','kick','Now raising · '+(o.title||'')));
+  h.appendChild(el('h2',null,o.lead||''));
+  var g=el('div','nums');
+  [['Raising',short$(n.raise),1],['Pre-money valuation',short$(n.pre)],['Price per unit',money(n.price)],['Units offered',num(n.units)],['Full round buys',n.pct.toFixed(2)+'%']].forEach(function(x){var d=el('div');d.appendChild(el('span',null,x[0]));d.appendChild(el('b',x[2]?'g':null,x[1]));g.appendChild(d);});
+  h.appendChild(g);
+  var c=el('div','cta');
+  if(teaser){var b=btn('See the opportunity','arrow',false,function(){go('opportunity');});b.className='ip-btn gold';c.appendChild(b);}
+  var one=libDoc(/one-?pager/i);if(one){var a=openLink(one,'Read the one-pager');a.className='ip-btn ghost';c.appendChild(a);}
+  if(o.email){var mt=link('Talk to Sarvesh','mail',mailto('AeroAssist round: I’d like to talk'),false,false);mt.className='ip-btn '+(teaser?'ghost':'gold');c.appendChild(mt);}
+  h.appendChild(c);return h;
+}
+function vOpportunity(box,act){
+  var o=m.offer;if(!o){box.appendChild(el('p','ip-empty','There is no open round to show.'));return;}
+  var n=offerNums();
+  if(o.email)act.appendChild(link('Email Sarvesh','mail',mailto('AeroAssist round: question'),true,false));
+  box.appendChild(offerHero(false));
+
+  /* why */
+  if((o.highlights||[]).length){
+    var hw=el('div','ip-hl');
+    o.highlights.forEach(function(x,i){var c=el('section','ip-card');c.appendChild(el('span','idx','0'+(i+1)));c.appendChild(el('h3',null,x[0]));c.appendChild(el('p',null,x[1]));hw.appendChild(c);});
+    box.appendChild(sectionHead('Why AeroAssist, and why now'));box.appendChild(hw);
+  }
+
+  /* track record */
+  if((o.track||[]).length){
+    var tc=el('section','ip-card ip-trackcard');
+    tc.appendChild(el('div','kick','Track record'));
+    tc.appendChild(el('h3',null,'Our earlier investors got their money back, and kept their units.'));
+    var tg=el('div','ip-track');o.track.forEach(function(x){var d=el('div');d.appendChild(el('b',null,x[0]));d.appendChild(el('p',null,x[1]));tg.appendChild(d);});tc.appendChild(tg);
+    tc.appendChild(el('p','fine','That history is real, but it doesn’t make a new investment safe. Units in this round cost '+money(n.price)+', and your money is at risk until there is a sale of the company or a distribution.'));
+    box.appendChild(tc);
+  }
+
+  /* return scenarios */
+  box.appendChild(sectionHead('What an investment could be worth','Illustrative arithmetic, not a forecast'));
+  var g=el('div','ip-grid ip-2'),L=el('div','ip-grid'),R=el('div','ip-grid');
+  var cc=el('section','ip-card ip-calc');
+  var st={amt:100000,dil:+o.dilution||0,custom:''};
+  var ctl=el('div','ctls');
+  var ra=rangeCtl('Investment','amt',25000,1000000,25000,st.amt,function(v){return money(v);});
+  var rd=rangeCtl('Dilution from later rounds before a sale','dil',0,60,5,st.dil,function(v){return v+'%';});
+  ctl.appendChild(ra.w);ctl.appendChild(rd.w);
+  var cw=el('label','ctl'),cs=el('span',null,'Try your own sale price');cw.appendChild(cs);var ci=el('input');ci.type='text';ci.inputMode='numeric';ci.placeholder='e.g. 150,000,000';cw.appendChild(ci);ctl.appendChild(cw);
+  cc.appendChild(ctl);
+  var sum=el('div','ip-calc-sum');cc.appendChild(sum);
+  var rows=el('div','ip-sc-rows');cc.appendChild(rows);
+  cc.appendChild(el('p','fine','Units = investment ÷ '+money(n.price)+', rounded down. Ownership assumes the full '+short$(n.raise)+' is raised ('+num(OUT+n.units)+' units). Later rounds usually reduce everyone’s share; the slider sets by how much. The math ignores taxes, fees, time and any preferences later investors may negotiate. These sale prices are examples, not predictions, and the company may never be sold.'));
+  ra.i.oninput=function(){st.amt=+ra.i.value;ra.o.textContent=money(st.amt);calc();};
+  rd.i.oninput=function(){st.dil=+rd.i.value;rd.o.textContent=st.dil+'%';calc();};
+  ci.oninput=function(){st.custom=ci.value;calc();};
+  function calc(){
+    var units=n.price?Math.floor(st.amt/n.price):0,paid=units*n.price,own=units/(OUT+n.units),own2=own*(1-st.dil/100);
+    sum.textContent='';
+    [['Units',num(units)+(paid!==st.amt?' ('+money(paid)+')':'')],['Ownership after the round',(own*100).toFixed(3)+'%'],['After later rounds',(own2*100).toFixed(3)+'%']].forEach(function(x){var d=el('div');d.appendChild(el('span',null,x[0]));d.appendChild(el('b',null,x[1]));sum.appendChild(d);});
+    var ex=(o.exits||[]).slice(),cv=+String(st.custom).replace(/[^0-9.]/g,'');if(cv>0)ex.push(cv);
+    ex=ex.filter(function(v,i,s){return s.indexOf(v)===i;}).sort(function(a,b){return a-b;});
+    var top=Math.max.apply(null,ex.map(function(e){return own2*e;}).concat([paid,1]));
+    rows.textContent='';
+    var list=[{label:'If the company fails',v:0,fail:true}].concat(ex.map(function(e){return {label:'Sold for '+short$(e),v:own2*e,custom:e===cv};}));
+    list.forEach(function(r){
+      var d=el('div','ip-sc'+(r.fail?' fail':'')+(r.custom?' mine':''));d.appendChild(el('span','lb',r.label));
+      var bar=el('span','bar'),i=el('i');i.style.width=(r.v/top*100).toFixed(2)+'%';bar.appendChild(i);d.appendChild(bar);
+      var v=el('span','v');v.appendChild(el('b',null,money(r.v)));v.appendChild(el('small',null,paid?(r.v/paid).toFixed(1)+'×':'—'));d.appendChild(v);rows.appendChild(d);
+    });
+  }
+  calc();L.appendChild(cc);
+  if((o.comps||[]).length){var cp=card('For scale','Recent deals in public-safety drones'),cl=el('ul','ip-list ip-comps');
+    o.comps.forEach(function(x){var li=el('li'),d=el('div');d.appendChild(el('b',null,x[0]));d.appendChild(el('p',null,x[1]));li.appendChild(d);li.appendChild(el('span','amt',x[2]));cl.appendChild(li);});
+    cp.appendChild(cl);var cf=el('p','ip-empty','Reported figures from public sources. Other companies’ results say nothing certain about ours.');cf.style.marginTop='10px';cp.appendChild(cf);L.appendChild(cp);}
+  var tc2=card('The terms'),dl=el('dl','ip-facts ip-terms');
+  [['Raise',money(n.raise)],['Security',o.security||'—'],['Pre-money valuation',money(n.pre)],['Post-money valuation',money(n.post)],['Price per unit',money(n.price)],['Units outstanding today',num(OUT)],['New units',num(n.units)],['Ownership for the full round',n.pct.toFixed(2)+'%'],['Minimum investment',o.min||'Ask us']].forEach(function(r){dl.appendChild(el('dt',null,r[0]));dl.appendChild(el('dd',null,r[1]));});
+  tc2.appendChild(dl);R.appendChild(tc2);
+  g.appendChild(L);g.appendChild(R);box.appendChild(g);
+
+  /* use of funds */
+  if((o.use||[]).length||(o.phases||[]).length){
+    box.appendChild(sectionHead('Where the money goes'));
+    var g2=el('div','ip-grid ip-2'),L2=el('div','ip-grid'),R2=el('div','ip-grid');
+    if((o.use||[]).length){var uc=card('Use of funds',money(n.raise)),tot=o.use.reduce(function(s,x){return s+(+x[1]||0);},0)||1,mx=Math.max.apply(null,o.use.map(function(x){return +x[1]||0;}))||1,ul=el('div','ip-use');
+      o.use.forEach(function(x){var r=el('div','row');r.appendChild(el('span','lb',x[0]));var b=el('span','bar'),i=el('i');i.style.width=((+x[1]||0)/mx*100).toFixed(1)+'%';b.appendChild(i);r.appendChild(b);var v=el('span','v');v.appendChild(el('b',null,short$(+x[1])));v.appendChild(el('small',null,Math.round((+x[1]||0)/tot*100)+'%'));r.appendChild(v);ul.appendChild(r);});
+      uc.appendChild(ul);L2.appendChild(uc);}
+    if((o.phases||[]).length){var pc=card('Released in phases'),pw=el('div','ip-phases');
+      o.phases.forEach(function(x){var d=el('div');var hd=el('div','hd');hd.appendChild(el('b',null,x[0]));hd.appendChild(el('span','ip-pill gold',short$(+x[1])));d.appendChild(hd);d.appendChild(el('small',null,x[2]));d.appendChild(el('p',null,x[3]));pw.appendChild(d);});
+      pc.appendChild(pw);var pf=el('p','ip-empty','Monthly updates to investors report spending against these milestones.');pf.style.marginTop='12px';pc.appendChild(pf);R2.appendChild(pc);}
+    g2.appendChild(L2);g2.appendChild(R2);box.appendChild(g2);
+  }
+
+  /* risks */
+  if((o.risks||[]).length){var rc=card('The risks, plainly','Read these before you invest'),rl=el('div','ip-risks');
+    o.risks.forEach(function(x){var d=el('div');d.appendChild(el('b',null,x[0]));d.appendChild(el('p',null,x[1]));rl.appendChild(d);});rc.appendChild(rl);box.appendChild(rc);}
+
+  /* next steps */
+  if((o.steps||[]).length){var sc=card('How to invest'),ol=el('ol','ip-steps2');
+    var docFor=[/one-?pager/i,null,/non-?disclosure|nda/i,/subscription/i];
+    o.steps.forEach(function(x,i){var li=el('li');li.appendChild(el('b',null,x[0]));li.appendChild(el('p',null,x[1]));
+      var re=docFor[i],dd=re?libDoc(re):null;if(dd){var a=openLink(dd,['Open the one-pager','','Open the NDA','Open the agreement'][i]);a.classList.add('sm');li.appendChild(a);}
+      else if(i===1&&o.email){var a2=link('Email Sarvesh','mail',mailto('AeroAssist round: let’s set up a call'),false,false);a2.classList.add('sm');li.appendChild(a2);}
+      ol.appendChild(li);});
+    sc.appendChild(ol);box.appendChild(sc);}
+  if(o.note){var nt=el('p','ip-fineprint',o.note);box.appendChild(nt);}
+}
+function sectionHead(t,s){var h=el('div','ip-sec');h.appendChild(el('h2',null,t));if(s)h.appendChild(el('span',null,s));return h;}
+function rangeCtl(label,id,min,max,step,val,fmt){
+  var w=el('label','ctl'),top=el('span');top.appendChild(document.createTextNode(label));var o=el('output',null,fmt(val));top.appendChild(o);w.appendChild(top);
+  var i=el('input');i.type='range';i.min=min;i.max=max;i.step=step;i.value=val;i.setAttribute('aria-label',label);w.appendChild(i);return {w:w,i:i,o:o};
 }
 
 /* ---------- charts ---------- */

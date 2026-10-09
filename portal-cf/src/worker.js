@@ -46,6 +46,57 @@ const DEFAULT_SETTINGS = {
   links: [['Company website', 'https://aeroassist.us/'], ['The $2M round (investor relations)', 'https://aeroassist.us/invest/']],
   address: 'AeroAssist Industries · 4750 S 44th Pl, Suite E18, Phoenix, AZ 85040',
   help_email: 'jay@aeroassist.us', idle_minutes: 30,
+  // The round, as prospective investors see it under "The opportunity". All of it is editable in Settings.
+  offer_on: true,
+  offer_title: 'The $2M round',
+  offer_raise: 2000000, offer_pre: 20000000,
+  offer_security: 'LLC membership units in AeroAssist Industries',
+  offer_min: '',
+  offer_lead: 'AeroAssist is raising $2,000,000 to finish its hybrid powertrain, ready the XR-2 for production and put more stations in front of agencies that now have to buy US-built, compliant aircraft.',
+  offer_highlights: [
+    ['Built, not bought', 'About 50 aircraft designed, fabricated and assembled in our Phoenix shop since 2022. FCC certified and CE marked, built to NDAA §848.'],
+    ['Agencies already fly them', 'Arizona DOT, Phoenix PD, Chandler PD, Prescott PD and Fire, the Mountain Rescue Association and Alpine Rescue Team. Working relationships, not endorsements.'],
+    ['The market just opened', 'More than 1,000 agencies received FAA DFR waivers between April 2025 and February 2026, more than the seven years before. Since December 22, 2025, federal money can’t buy drones from covered foreign makers.'],
+    ['Lean by habit', 'All of this on about $600,000 of outside capital, all of it repaid. No debt. Peers raised $5M to $672M to get to a similar place.'],
+  ],
+  offer_track: [
+    ['$600K', 'raised from outside investors in 2023, at a $4M valuation'],
+    ['100%', 'of that money paid back by April 2024, and those investors still hold their units'],
+    ['$400 → $2,000', 'price per unit in 2023 and in this round'],
+  ],
+  offer_use: [
+    ['Hybrid powertrain and XR-2 production readiness', '550000'], ['Manufacturing scale-up', '400000'], ['Marketing and sales', '250000'],
+    ['Agency deployments', '250000'], ['Team', '200000'], ['Phase 1 validation', '200000'], ['Regulatory, legal and contingency', '150000'],
+  ],
+  offer_phases: [
+    ['Phase 1', '200000', 'Days 0–90', 'Logged flight tests, agency test criteria and one or two paid evaluations: proof of the pilot path.'],
+    ['Phase 2', '1800000', 'Months 4–18', 'Finish the hybrid, ready XR-2 for production, scale manufacturing and deploy stations.'],
+  ],
+  offer_comps: [
+    ['Aerodome', 'Acquired by Flock Safety, 2024, 17 months after founding', 'Reported $300M+'],
+    ['BRINC', 'Round led by Motorola Solutions, 2026', '$125M raised'],
+    ['Skydio', 'Series F, 2026', '$4.4B valuation'],
+  ],
+  offer_risks: [
+    ['You could lose all of it', 'This is an early-stage hardware company. Most startups never return their investors’ money.'],
+    ['You can’t easily sell', 'There is no market for LLC units. Expect to hold them until a sale of the company or distributions, which may never happen.'],
+    ['The hybrid isn’t finished', 'It is the largest use of funds and could take longer or cost more than planned.'],
+    ['Agencies buy slowly', 'Public budgets and grant cycles can stretch a sale over many months.'],
+    ['Big, well-funded rivals', 'Skydio, BRINC and Flock have raised hundreds of millions of dollars.'],
+    ['Rules can change', 'FAA, FCC and federal-funding rules shape what agencies can buy, including rules on components sourced abroad.'],
+    ['More dilution later', 'Future rounds would reduce your percentage of the company.'],
+    ['A small team', 'The company depends on a few key people.'],
+  ],
+  offer_steps: [
+    ['Read the materials', 'The one-pager, subscription agreement and operating agreement summary are under Documents.'],
+    ['Talk to Sarvesh', 'A 30-minute call, or a visit to the Phoenix shop to see the aircraft fly.'],
+    ['Do your diligence', 'Sign the mutual NDA for build records, customer references and financials.'],
+    ['Subscribe', 'Review the subscription agreement with your adviser. The CFO confirms your eligibility and countersigns.'],
+  ],
+  offer_email: 'sarvesh@aeroassist.us',
+  offer_exits: [50000000, 100000000, 250000000, 500000000],
+  offer_dilution: 30,
+  offer_note: 'For discussion with prospective investors only. Not an offer to sell or a solicitation of an offer to buy securities; any offer is made only through the subscription documents. Company figures are company-reported and unaudited.',
 };
 async function getSettings(env) {
   const r = await env.DB.prepare('SELECT data FROM settings WHERE id = 1').first();
@@ -66,6 +117,16 @@ function cleanSettings(d) {
     tax_note: str(d.tax_note), company_facts: rows(d.company_facts, 2), note: str(d.note), about: str(d.about, 3000),
     contacts: rows(d.contacts, 4), links: rows(d.links, 2).filter(l => /^https:\/\/[^/]/.test(l[1]) || /^\/(?!\/)/.test(l[1])),
     address: str(d.address), help_email: str(d.help_email, 200), idle_minutes: Math.min(240, Math.max(5, Math.round(num(d.idle_minutes, 30)))),
+    offer_on: d.offer_on !== false && d.offer_on !== 'false',
+    offer_title: str(d.offer_title, 80) || DEFAULT_SETTINGS.offer_title,
+    offer_raise: Math.max(0, num(d.offer_raise, DEFAULT_SETTINGS.offer_raise)), offer_pre: Math.max(0, num(d.offer_pre, DEFAULT_SETTINGS.offer_pre)),
+    offer_security: str(d.offer_security, 200), offer_min: str(d.offer_min, 120), offer_lead: str(d.offer_lead, 1500),
+    offer_highlights: rows(d.offer_highlights, 2), offer_track: rows(d.offer_track, 2), offer_use: rows(d.offer_use, 2),
+    offer_phases: rows(d.offer_phases, 4), offer_comps: rows(d.offer_comps, 3), offer_risks: rows(d.offer_risks, 2), offer_steps: rows(d.offer_steps, 2),
+    offer_email: str(d.offer_email, 200),
+    offer_exits: (Array.isArray(d.offer_exits) ? d.offer_exits : []).map(Number).filter(v => Number.isFinite(v) && v > 0).slice(0, 6),
+    offer_dilution: Math.min(80, Math.max(0, num(d.offer_dilution, 30))),
+    offer_note: str(d.offer_note, 1500),
   };
   return s;
 }
@@ -257,6 +318,13 @@ async function portalData(ctx) {
     transactions: tx.map(t => ({ date: t.tx_date || '', type: t.type, units: t.units, amount: t.amount, note: t.note })),
     urls: { zip: '/api/zip', vendor: '/vendor/', home: 'https://aeroassist.us/' },
   };
+  if (s.offer_on && ['prospect', 'investor', 'admin'].includes(user.role)) {
+    out.offer = {
+      title: s.offer_title, raise: s.offer_raise, pre: s.offer_pre, security: s.offer_security, min: s.offer_min, lead: s.offer_lead,
+      highlights: s.offer_highlights, track: s.offer_track, use: s.offer_use, phases: s.offer_phases, comps: s.offer_comps,
+      risks: s.offer_risks, steps: s.offer_steps, email: s.offer_email, exits: s.offer_exits, dilution: s.offer_dilution, note: s.offer_note,
+    };
+  }
   if (user.role === 'admin') {
     const people = (await env.DB.prepare('SELECT * FROM users ORDER BY name').all()).results;
     out.roster = people.filter(p => ROLES.includes(p.role) && p.active).map(p => ({
