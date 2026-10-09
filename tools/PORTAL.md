@@ -1,55 +1,45 @@
 # Investor and team portal — how to run it
 
-`/portal/` is the single front door for prospective investors, unit holders and the AeroAssist team. Each person signs in once with a portal ID and an access code. Their role decides what opens:
+`/portal/` is the one place for company documents, unit-holder reports, K-1s and personal paperwork. Each person signs in with a portal ID and an access code. The $2M raise briefing stays separate at `/invest/` with its own code.
 
-| Role | Raise briefing | Document library | Holder reports | Own documents |
+## Who sees what
+
+| Library group | prospect | investor | employee | admin |
 | --- | --- | --- | --- | --- |
-| prospect | yes | yes | no | yes |
-| investor | yes | yes | yes | yes (K-1s, certificates) |
-| employee | no | yes | no | yes (HR papers) |
-| admin | yes | yes | yes | yes |
+| company (agency and sales documents) | yes | yes | yes | yes |
+| investors (one-pager, diligence checklist, operating-agreement summary, subscription agreement, NDA) | yes | yes | no | yes |
+| holders (annual update, financial model, cap table) | no | yes | no | yes |
+| team (manuals, policies, handbook, supply and agency contract templates) | no | no | yes | yes |
+| admin (consents, templates, raise working documents) | no | no | no | yes |
 
-The briefing (`/invest/`) and library (`/docs/`) open already unlocked from the portal, with a "Back to your portal" button. Their old shared codes still work, so nobody who already has one is locked out. Every file is encrypted and opens only in the person's browser; there is no server or database.
+This is enforced by encryption, not by hiding links. Each group has its own random key, and a person's encrypted sign-in file carries only the keys their role allows. Personal documents are encrypted with a key that only that person's sign-in carries.
 
-## Add or update people (CFO)
+## The private folder
 
-1. Make a folder named `portal-input` in the site folder. Git ignores it, so nothing in it is published.
-2. `people.csv`:
+Everything that builds the portal lives in a folder named `portal-input` (git ignores it). Keep it safe and backed up; it is not in the repository.
 
-   ```
-   id,name,role,units,since
-   AA-0001,First Last,investor,125,2023-04-01
-   AA-0101,First Last,employee,,
-   ```
+| File | What it is |
+| --- | --- |
+| `people.csv` | `id,name,role,units,since` (role: prospect, investor, employee, admin) |
+| `library.csv` | `group,category,title,description,date,file`, one row per library document |
+| `library/` | the library files themselves |
+| `documents.csv` | personal files: `investor,category,title,date,file` (investor = a portal ID, `*`, or `@role`) |
+| `settings.json` | `{"asOf": "...", "unitsOutstanding": 10000, "note": "..."}` |
+| `keys.json` | the group keys, made on first build (secret) |
+| `codes.csv` | everyone's access codes, made on first build (secret) |
 
-3. `documents.csv` lists personal and shared files. `investor` is a portal ID, `*` for everyone, or `@employee` / `@investor` / `@prospect` / `@admin` for a whole role:
+## Common jobs
 
-   ```
-   investor,category,title,date,file
-   AA-0001,tax,2025 Schedule K-1,2026-03-15,k1/AA-0001-2025.pdf
-   @investor,updates,Investor update — October 2026,2026-11-15,updates/2026-10.pdf
-   @employee,team,Employee handbook,2026-10-01,hr/handbook.pdf
-   ```
+Run `python3 tools/portal_build.py` after any change (needs `pip install cryptography`), then commit and push `portal/vault/`.
 
-   Categories: `tax`, `agreements`, `certificates`, `updates`, `team`, `other`.
+- **Add a person:** add a row to `people.csv`, build, push, and send their ID and code in two separate messages.
+- **Add a library document:** put the file in `library/`, add a row to `library.csv`, build, push.
+- **Give someone their K-1:** put the file in the folder, add a row to `documents.csv` with their ID, build, push.
+- **New code for one person:** delete their row from `codes.csv`, build, push, send the new code.
+- **Someone leaves:** delete them from `people.csv`. If they could see documents that matter, also delete their groups from `keys.json` so new keys are made, then build and push. Everyone else keeps their code.
 
-4. `settings.json` holds the shared-area codes (keep it private):
-
-   ```
-   {"rooms": {"briefing": "<investor page code>", "library": "<library code>", "holders": "<unit-holder code>"},
-    "asOf": "2026-12-31", "unitsOutstanding": 10000, "note": "Message shown to everyone"}
-   ```
-
-   Add `"roleRooms": {"employee": ["briefing", "library"]}` to change what a role opens.
-
-5. Run `python3 tools/portal_build.py` (needs `pip install cryptography`). It rebuilds `portal/vault/` and writes each person's code to `portal-input/codes.csv`.
-6. Commit and push `portal/vault/` only.
-7. Send each person their ID and code in two separate messages.
-
-Codes are kept on rebuild. To rotate one, delete that person's row from `codes.csv`, rebuild, push and send the new code. To remove someone, delete them from `people.csv` and rebuild. Old files stay in the repository history but open only with the old code.
-
-**Limits to know.** The library and holder reports are each locked with one shared code, which the portal hands to everyone whose role includes them. Hiding the library's internal manuals from investors, or retiring the old shared codes, needs those files re-encrypted under new codes.
+Old encrypted files stay in the repository history, readable only with the keys and codes of that time.
 
 ## WordPress (aeroassist.us)
 
-Install it the same way as `/invest/` and `/documents/`: a page at `/portal/` using `portal/index.html` as its template, with `portal/vault/` copied into the theme. Before the portal script runs, set `window.AA_PORTAL` to the theme's vault URL (ending in `/`) and `window.AA_PORTAL_LINKS = {briefing: "/invest/", library: "/documents/"}`. Replace the menu's "Investor relations" and "Company documents" items with one "Investor and team portal" item, as on the staging site.
+Add a page at `/portal/` using `portal/index.html` as its template and copy `portal/vault/` into the theme. Before the portal script runs, set `window.AA_PORTAL` to the theme's vault URL (ending in `/`). Replace the `/documents/` page with a redirect to `/portal/`. The menu shows "Investor relations" (the raise) and "Investor and team portal", as on the staging site.

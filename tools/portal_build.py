@@ -1,48 +1,61 @@
 #!/usr/bin/env python3
-"""Build the encrypted AeroAssist investor and team portal vault.
+"""Build the encrypted AeroAssist investor and team portal.
 
-Reads a PRIVATE input folder (never commit it) and writes encrypted files to
-portal/vault/. Each person gets one encrypted manifest and their own encrypted
-copy of every document they may see. The manifest also carries the codes for the
-shared areas their role may open (raise briefing, document library, holder
-reports), so one sign-in opens everything. Nothing readable is published: a file
-opens only in the person's browser with their ID and access code.
-
-Input folder layout (default: ./portal-input, which .gitignore excludes):
+Everything the portal shows lives in portal/vault/, encrypted. This script
+builds that folder from a PRIVATE input folder (never commit it):
 
   portal-input/
-    people.csv      id,name,role,units,since
-                      role  = prospect | investor | employee | admin
-                      units = units held (investors), else blank
-    documents.csv   investor,category,title,date,file
-                      investor = a portal ID, * for everyone, or @role (e.g. @employee)
-                      category = tax | agreements | certificates | updates | team | other
-                      file     = path relative to portal-input
-    settings.json   {"rooms": {"briefing": "<investor page code>",
-                               "library": "<document library code>",
-                               "holders": "<unit-holder code>"},
-                     "asOf": "2026-10-09", "unitsOutstanding": 10000,
-                     "note": "Text shown to everyone"}
-                    Optional "roleRooms" overrides which areas each role opens.
+    people.csv     id,name,role,units,since
+                     role = prospect | investor | employee | admin
+    library.csv    group,category,title,description,date,file
+                     group = company | investors | holders | team | admin
+                     (who may open the document; see GROUPS below)
+    documents.csv  investor,category,title,date,file          (optional)
+                     personal files: investor = a portal ID, * for everyone,
+                     or @role; category = tax | agreements | certificates |
+                     updates | team | other
+    settings.json  {"asOf": "2026-10-09", "unitsOutstanding": 10000,
+                    "note": "Message shown to everyone"}       (optional)
+    keys.json      group keys, created on first run    (keep private, keep safe)
+    codes.csv      each person's access code, created on first run (keep private)
 
-Access codes are kept in portal-input/codes.csv (also private). An investor
-without a code gets a new random one; existing codes are kept, so rebuilding
-does not lock anyone out. To revoke or rotate a code, delete that row and
-rebuild, then send the new code. Old encrypted files stay in this public
-repository's history, readable only with the old code.
+How access works:
+  * Each library group has its own random 256-bit key (keys.json). Every
+    library file is encrypted with its group's key, so a person can only open
+    the groups their role includes.
+  * Each person has a manifest encrypted with their access code (PBKDF2,
+    250,000 rounds). It holds their name, holdings, the keys for their
+    groups, and a personal key for their own documents.
+
+Common jobs:
+  * Add or remove a person: edit people.csv and rebuild. Removing someone
+    also stops their code working, but they may have kept copies of the
+    group keys; for a departure that matters, rotate the group keys.
+  * Rotate a person's code: delete their row from codes.csv and rebuild.
+  * Rotate a group key (after someone leaves): delete that group from
+    keys.json and rebuild. Everyone keeps their own code.
+  * Add a library document: add the file and a row to library.csv, rebuild.
 
 Usage:  python3 tools/portal_build.py [input_dir]
 Needs:  pip install cryptography
 """
-import csv, hashlib, json, os, secrets, shutil, sys
+import base64, csv, hashlib, json, os, secrets, shutil, sys
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
-ITER = 250000                      # must match portal/index.html
-ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"   # no 0/O, 1/I
-CATS = {"tax", "agreements", "certificates", "updates", "team", "other"}
+ITER = 250000                     # must match portal/index.html
+ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+GROUPS = {   # library group -> roles that may open it
+    "company":   {"prospect", "investor", "employee", "admin"},
+    "investors": {"prospect", "investor", "admin"},
+    "holders":   {"investor", "admin"},
+    "team":      {"employee", "admin"},
+    "admin":     {"admin"},
+}
 ROLES = {"prospect", "investor", "employee", "admin"}
-ROLE_ROOMS = {"prospect": ["briefing", "library"], "investor": ["briefing", "library", "holders"],
-              "employee": ["library"], "admin": ["briefing", "library", "holders"]}
+PCATS = {"tax", "agreements", "certificates", "updates", "team", "other"}
+TYPES = {".pdf": "application/pdf", ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+         ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+         ".png": "image/png", ".jpg": "image/jpeg", ".csv": "text/csv"}
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 VAULT = os.path.join(ROOT, "portal", "vault")
 
@@ -60,101 +73,143 @@ def new_code():
     return "-".join(raw[i:i + 4] for i in range(0, 16, 4))
 
 
-def seal(data, code):
+def seal_code(data, code):
     salt, iv = os.urandom(16), os.urandom(12)
     key = hashlib.pbkdf2_hmac("sha256", norm_code(code).encode(), salt, ITER, 32)
     return salt + iv + AESGCM(key).encrypt(iv, data, None)
 
 
-def vault_name(inv_id):
-    return hashlib.sha256(("aeroassist-portal:" + inv_id).encode()).hexdigest()[:24]
+def seal_key(data, key):
+    iv = os.urandom(12)
+    return iv + AESGCM(key).encrypt(iv, data, None)
+
+
+def b64(b):
+    return base64.b64encode(b).decode()
+
+
+def read_csv(path):
+    if not os.path.exists(path):
+        return []
+    with open(path, newline="", encoding="utf-8-sig") as f:
+        return [{k.strip(): (v or "").strip() for k, v in r.items() if k} for r in csv.DictReader(f)]
+
+
+def put(data, key):
+    name = secrets.token_hex(12) + ".enc"
+    with open(os.path.join(VAULT, "f", name), "wb") as f:
+        f.write(seal_key(data, key))
+    return name
+
+
+def meta(path, title, date, extra):
+    ext = os.path.splitext(path)[1].lower()
+    d = {"title": title, "date": date, "size": os.path.getsize(path),
+         "type": TYPES.get(ext, "application/octet-stream"), "name": os.path.basename(path)}
+    d.update(extra)
+    return d
 
 
 def main():
     src = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "portal-input"))
     if src.startswith(ROOT + os.sep) and os.path.basename(src) != "portal-input":
-        sys.exit("Keep the input folder outside the site or name it portal-input (ignored by git).")
-    people_csv = os.path.join(src, "people.csv")
-    if not os.path.exists(people_csv):
-        people_csv = os.path.join(src, "investors.csv")   # older name; role defaults to investor
-    with open(people_csv, newline="") as f:
-        investors = [r for r in csv.DictReader(f) if (r.get("id") or "").strip()]
-    for r in investors:
-        r["role"] = (r.get("role") or "investor").strip().lower()
-        if r["role"] not in ROLES:
-            sys.exit(f"Unknown role {r['role']!r} for {r['id']}")
-    docs = []
-    p = os.path.join(src, "documents.csv")
-    if os.path.exists(p):
-        with open(p, newline="") as f:
-            docs = [r for r in csv.DictReader(f) if (r.get("file") or "").strip()]
-    settings = {}
-    p = os.path.join(src, "settings.json")
-    if os.path.exists(p):
-        settings = json.load(open(p))
+        sys.exit("Keep the input folder outside the site, or name it portal-input (git ignores it).")
+    people = read_csv(os.path.join(src, "people.csv"))
+    if not people:
+        sys.exit("people.csv is missing or empty.")
+    library = read_csv(os.path.join(src, "library.csv"))
+    personal = read_csv(os.path.join(src, "documents.csv"))
+    settings = json.load(open(os.path.join(src, "settings.json"))) if os.path.exists(os.path.join(src, "settings.json")) else {}
+
+    # Check everything before touching the vault.
+    for p in people:
+        p["role"] = (p.get("role") or "").lower()
+        if not p.get("id") or p["role"] not in ROLES:
+            sys.exit(f"people.csv: every row needs an id and a role ({', '.join(sorted(ROLES))}); problem row: {p}")
+    ids = [norm_id(p["id"]) for p in people]
+    if len(set(ids)) != len(ids):
+        sys.exit("people.csv: the same ID appears twice.")
+    for d in library:
+        if d.get("group") not in GROUPS:
+            sys.exit(f"library.csv: unknown group {d.get('group')!r} for {d.get('title')}")
+        if not os.path.isfile(os.path.join(src, d["file"])):
+            sys.exit(f"library.csv: missing file {d['file']}")
+    for d in personal:
+        if d.get("category", "").lower() not in PCATS:
+            sys.exit(f"documents.csv: unknown category {d.get('category')!r} for {d.get('title')}")
+        if not os.path.isfile(os.path.join(src, d["file"])):
+            sys.exit(f"documents.csv: missing file {d['file']}")
+
+    keys_path = os.path.join(src, "keys.json")
+    keys = json.load(open(keys_path)) if os.path.exists(keys_path) else {}
+    for g in GROUPS:
+        if g not in keys:
+            keys[g] = b64(os.urandom(32))
+    with open(keys_path, "w") as f:
+        json.dump(keys, f, indent=1)
+    gkey = {g: base64.b64decode(keys[g]) for g in GROUPS}
 
     codes_path = os.path.join(src, "codes.csv")
-    codes = {}
-    if os.path.exists(codes_path):
-        with open(codes_path, newline="") as f:
-            codes = {norm_id(r["id"]): r["code"] for r in csv.DictReader(f) if r.get("code")}
-
-    for d in docs:
-        if d["category"].strip().lower() not in CATS:
-            sys.exit(f"Unknown category {d['category']!r} for {d['file']}")
-        if not os.path.isfile(os.path.join(src, d["file"])):
-            sys.exit(f"Missing file: {d['file']}")
+    codes = {norm_id(r["id"]): r["code"] for r in read_csv(codes_path) if r.get("code")}
 
     if os.path.isdir(VAULT):
         shutil.rmtree(VAULT)
     os.makedirs(os.path.join(VAULT, "f"))
 
+    # Library: one encrypted catalog per group, named by a hash of its key.
+    counts = {}
+    for g in GROUPS:
+        docs = []
+        for d in (x for x in library if x["group"] == g):
+            path = os.path.join(src, d["file"])
+            docs.append(meta(path, d["title"], d.get("date", ""), {
+                "desc": d.get("description", ""), "cat": d.get("category", "Documents"),
+                "file": put(open(path, "rb").read(), gkey[g])}))
+        name = hashlib.sha256(gkey[g]).hexdigest()[:24] + ".enc"
+        with open(os.path.join(VAULT, name), "wb") as f:
+            f.write(seal_key(json.dumps({"group": g, "docs": docs}).encode(), gkey[g]))
+        counts[g] = len(docs)
+
+    # People.
     rows = []
-    for inv in investors:
-        iid = norm_id(inv["id"])
+    for p in people:
+        iid, role = norm_id(p["id"]), p["role"]
         code = codes.get(iid) or new_code()
-        codes[iid] = code
-        who = [d["investor"].strip() for d in docs]
-        mine = [d for d, w in zip(docs, who) if w == "*" or w.lower() == "@" + inv["role"] or norm_id(w) == iid]
-        role_rooms = settings.get("roleRooms", {}).get(inv["role"], ROLE_ROOMS[inv["role"]])
-        rooms = {k: v for k, v in settings.get("rooms", {}).items() if k in role_rooms and v}
-        listed = []
-        for d in mine:
-            data = open(os.path.join(src, d["file"]), "rb").read()
-            fname = secrets.token_hex(12) + ".enc"
-            open(os.path.join(VAULT, "f", fname), "wb").write(seal(data, code))
-            ext = os.path.splitext(d["file"])[1].lower()
-            listed.append({
-                "title": d["title"].strip(), "cat": d["category"].strip().lower(),
-                "date": d.get("date", "").strip(), "file": fname, "size": len(data),
-                "type": {".pdf": "application/pdf", ".png": "image/png", ".jpg": "image/jpeg"}.get(ext, "application/octet-stream"),
-                "name": os.path.basename(d["file"]),
-            })
+        pkey = os.urandom(32)
+        mine = []
+        for d in personal:
+            w = d["investor"]
+            if w == "*" or w.lower() == "@" + role or norm_id(w) == iid:
+                path = os.path.join(src, d["file"])
+                mine.append(meta(path, d["title"], d.get("date", ""), {
+                    "cat": d["category"].lower(), "file": put(open(path, "rb").read(), pkey)}))
+        groups = sorted(g for g, rs in GROUPS.items() if role in rs)
         manifest = {
-            "holder": {"name": inv.get("name", "").strip(), "units": int(float(inv.get("units") or 0)),
-                       "since": inv.get("since", "").strip()},
-            "role": inv["role"], "rooms": rooms,
+            "holder": {"name": p.get("name", ""), "units": int(float(p.get("units") or 0)), "since": p.get("since", "")},
+            "role": role, "groups": {g: keys[g] for g in groups}, "pk": b64(pkey),
             "unitsOutstanding": int(settings.get("unitsOutstanding", 10000)),
-            "asOf": settings.get("asOf", ""), "note": settings.get("note", ""), "docs": listed,
+            "asOf": settings.get("asOf", ""), "note": settings.get("note", ""), "docs": mine,
         }
-        open(os.path.join(VAULT, vault_name(iid) + ".enc"), "wb").write(seal(json.dumps(manifest).encode(), code))
-        rows.append((iid, inv.get("name", "").strip(), code, len(listed), inv["role"], sorted(rooms)))
+        vname = hashlib.sha256(("aeroassist-portal:" + iid).encode()).hexdigest()[:24] + ".enc"
+        with open(os.path.join(VAULT, vname), "wb") as f:
+            f.write(seal_code(json.dumps(manifest).encode(), code))
+        rows.append((iid, p.get("name", ""), role, code, len(mine), groups))
 
     with open(codes_path, "w", newline="") as f:
-        w = csv.writer(f)
-        w.writerow(["id", "name", "code"])
-        for iid, name, code, *_ in rows:
-            w.writerow([iid, name, code])
-    # Unused files make the investor count less obvious from the outside.
-    for _ in range(max(0, 24 - len(rows))):
-        open(os.path.join(VAULT, secrets.token_hex(12) + ".enc"), "wb").write(os.urandom(28 + secrets.randbelow(900) + 64))
+        w = csv.writer(f, lineterminator="\n")
+        w.writerow(["id", "name", "role", "code"])
+        for iid, name, role, code, *_ in rows:
+            w.writerow([iid, name, role, code])
+    # Decoy files so the number of people isn't obvious from outside.
+    for _ in range(max(0, 32 - len(rows))):
+        with open(os.path.join(VAULT, secrets.token_hex(12) + ".enc"), "wb") as f:
+            f.write(os.urandom(200 + secrets.randbelow(1800)))
 
-    print(f"Built {len(rows)} portal sign-ins in portal/vault/")
-    for iid, name, _, n, role, rms in rows:
-        print(f"  {iid:<10} {name:<28} {role:<9} {n} documents  areas: {', '.join(rms) or 'none'}")
-    print(f"Access codes: {codes_path}  (private: send each code separately from the ID)")
-    if not settings.get("rooms"):
-        print("Note: settings.json has no \"rooms\" codes, so nobody gets the briefing or library through the portal.")
+    print("Library:", ", ".join(f"{g} {n}" for g, n in counts.items()))
+    print(f"People: {len(rows)}")
+    for iid, name, role, _, n, groups in rows:
+        print(f"  {iid:<12} {name:<26} {role:<9} {n} own docs  opens: {', '.join(groups)}")
+    print(f"Codes: {codes_path}   Group keys: {keys_path}   (both private)")
 
 
 if __name__ == "__main__":
