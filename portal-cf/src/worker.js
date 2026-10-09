@@ -88,10 +88,10 @@ const DEFAULT_SETTINGS = {
     ['A small team', 'The company depends on a few key people.'],
   ],
   offer_steps: [
-    ['Read the materials', 'The one-pager, subscription agreement and operating agreement summary are under Documents.'],
+    ['Read the materials', 'The one-pager and the due diligence checklist are under Documents.'],
     ['Talk to Sarvesh', 'A 30-minute call, or a visit to the Phoenix shop to see the aircraft fly.'],
     ['Do your diligence', 'Sign the mutual NDA for build records, customer references and financials.'],
-    ['Subscribe', 'Review the subscription agreement with your adviser. The CFO confirms your eligibility and countersigns.'],
+    ['Subscribe', 'When you’re ready, we send the subscription documents to review with your adviser. The CFO confirms your eligibility and countersigns.'],
   ],
   offer_email: 'sarvesh@aeroassist.us',
   offer_exits: [50000000, 100000000, 250000000, 500000000],

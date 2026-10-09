@@ -377,7 +377,7 @@ function vOpportunity(box,act){
 
   /* next steps */
   if((o.steps||[]).length){var sc=card('How to invest'),ol=el('ol','ip-steps2');
-    var docFor=[/one-?pager/i,null,/non-?disclosure|nda/i,/subscription/i];
+    var docFor=[/one-?pager/i,null,/non-?disclosure|\bnda\b/i,/subscription/i];
     o.steps.forEach(function(x,i){var li=el('li');li.appendChild(el('b',null,x[0]));li.appendChild(el('p',null,x[1]));
       var re=docFor[i],dd=re?libDoc(re):null;if(dd){var a=openLink(dd,['Open the one-pager','','Open the NDA','Open the agreement'][i]);a.classList.add('sm');li.appendChild(a);}
       else if(i===1&&o.email){var a2=link('Email Sarvesh','mail',mailto('AeroAssist round: let’s set up a call'),false,false);a2.classList.add('sm');li.appendChild(a2);}
