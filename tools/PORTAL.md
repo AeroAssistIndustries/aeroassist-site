@@ -20,11 +20,12 @@ Everything that builds the portal lives in a folder named `portal-input` (git ig
 
 | File | What it is |
 | --- | --- |
-| `people.csv` | `id,name,role,units,since` (role: prospect, investor, employee, admin) |
+| `people.csv` | `id,name,role,units,since,invested` (role: prospect, investor, employee, admin; invested = total paid, optional) |
 | `library.csv` | `group,category,title,description,date,file`, one row per library document |
 | `library/` | the library files themselves |
 | `documents.csv` | personal files: `investor,category,title,date,file` (investor = a portal ID, `*`, or `@role`) |
-| `settings.json` | `{"asOf": "...", "unitsOutstanding": 10000, "note": "..."}` |
+| `transactions.csv` | `id,date,type,units,amount,note`, one row per purchase, gift or transfer (shows on Holdings) |
+| `settings.json` | `asOf`, `unitsOutstanding`, `unitPrice` (for indicative values), `priceLabel`, `priceHistory` (the price-per-unit chart), `announcements` (shown on Overview) and `note` |
 | `keys.json` | the group keys, made on first build (secret) |
 | `codes.csv` | everyone's access codes, made on first build (secret) |
 

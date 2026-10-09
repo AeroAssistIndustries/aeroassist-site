@@ -5,8 +5,9 @@ Everything the portal shows lives in portal/vault/, encrypted. This script
 builds that folder from a PRIVATE input folder (never commit it):
 
   portal-input/
-    people.csv     id,name,role,units,since
+    people.csv     id,name,role,units,since[,invested][,email][,title]
                      role = prospect | investor | employee | admin
+                     invested = total paid for the units, in dollars (optional)
     library.csv    group,category,title,description,date,file
                      group = company | investors | holders | team | admin
                      (who may open the document; see GROUPS below)
@@ -14,7 +15,12 @@ builds that folder from a PRIVATE input folder (never commit it):
                      personal files: investor = a portal ID, * for everyone,
                      or @role; category = tax | agreements | certificates |
                      updates | team | other
+    transactions.csv  id,date,type,units,amount,note           (optional)
+                     one row per purchase, gift, transfer or repayment
     settings.json  {"asOf": "2026-10-09", "unitsOutstanding": 10000,
+                    "unitPrice": 2000, "priceLabel": "$2M round at $20M pre-money",
+                    "priceHistory": [{"date": "2023-04-01", "price": 400, "label": "First round"}],
+                    "announcements": [{"date": "2026-10-09", "title": "...", "body": "..."}],
                     "note": "Message shown to everyone"}       (optional)
     keys.json      group keys, created on first run    (keep private, keep safe)
     codes.csv      each person's access code, created on first run (keep private)
@@ -119,6 +125,7 @@ def main():
         sys.exit("people.csv is missing or empty.")
     library = read_csv(os.path.join(src, "library.csv"))
     personal = read_csv(os.path.join(src, "documents.csv"))
+    txns = read_csv(os.path.join(src, "transactions.csv"))
     settings = json.load(open(os.path.join(src, "settings.json"))) if os.path.exists(os.path.join(src, "settings.json")) else {}
 
     # Check everything before touching the vault.
@@ -184,12 +191,22 @@ def main():
                 mine.append(meta(path, d["title"], d.get("date", ""), {
                     "cat": d["category"].lower(), "file": put(open(path, "rb").read(), pkey)}))
         groups = sorted(g for g, rs in GROUPS.items() if role in rs)
+        my_txns = [{"date": t.get("date", ""), "type": t.get("type", ""), "units": float(t.get("units") or 0),
+                    "amount": float(t.get("amount") or 0), "note": t.get("note", "")}
+                   for t in txns if norm_id(t.get("id", "")) == iid]
         manifest = {
-            "holder": {"name": p.get("name", ""), "units": int(float(p.get("units") or 0)), "since": p.get("since", "")},
+            "holder": {"name": p.get("name", ""), "units": int(float(p.get("units") or 0)), "since": p.get("since", ""),
+                       "invested": float(p.get("invested") or 0), "title": p.get("title", ""), "email": p.get("email", "")},
             "role": role, "groups": {g: keys[g] for g in groups}, "pk": b64(pkey),
             "unitsOutstanding": int(settings.get("unitsOutstanding", 10000)),
-            "asOf": settings.get("asOf", ""), "note": settings.get("note", ""), "docs": mine,
+            "unitPrice": float(settings.get("unitPrice", 0)), "priceLabel": settings.get("priceLabel", ""),
+            "priceHistory": settings.get("priceHistory", []), "announcements": settings.get("announcements", []),
+            "asOf": settings.get("asOf", ""), "note": settings.get("note", ""), "docs": mine, "transactions": my_txns,
         }
+        if role == "admin":   # admins see who has access (never anyone's code)
+            manifest["roster"] = [{"id": norm_id(q["id"]), "name": q.get("name", ""), "role": q["role"],
+                                   "units": int(float(q.get("units") or 0)), "invested": float(q.get("invested") or 0)}
+                                  for q in people]
         vname = hashlib.sha256(("aeroassist-portal:" + iid).encode()).hexdigest()[:24] + ".enc"
         with open(os.path.join(VAULT, vname), "wb") as f:
             f.write(seal_code(json.dumps(manifest).encode(), code))
