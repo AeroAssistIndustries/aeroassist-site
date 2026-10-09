@@ -1,7 +1,7 @@
 /* People, activity log and company settings. Owners only. */
 (() => {
 "use strict";
-const { S, el, api, toast, fail, fmtWhen, nameOf } = SNP;
+const { S, el, api, toast, fail, fmtWhen, nameOf, items } = SNP;
 const ROLE_OPTIONS = [["snp_owner","Owner"],["snp_sales","Sales"],["snp_accountant","Accountant"],["snp_attorney","Attorney"]];
 const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 let lastLink=null;
@@ -101,6 +101,10 @@ function renderSettings(main){
     {section:"Business hours (Arizona time; shown by the clock at the top)"},
     {key:"hoursOpen",label:"Opens",type:"time"},{key:"hoursClose",label:"Closes",type:"time"},
     {key:"workdays",label:"Open on",type:"multi",options:DAYS},
+    {section:"CRM"},
+    {key:"defaultReorderDays",label:"Expect customers to reorder every (days), until they have 3 orders",type:"number",step:"1"},
+    {key:"emailDailyLimit",label:"Most campaign emails to send in a day",type:"number",step:"10",hint:"Most hosts cap outgoing email (GoDaddy's basic limit is a few hundred a day). Raise it if you connect an email service."},
+    {key:"portalEnabled",label:"Customer portal on (customers can sign in at /portal to see quotes and invoices)",type:"checkbox"},
     {section:"Reminders"},
     {key:"reminders",label:"Send each person a 7 a.m. email when they have tasks due (owners also get overdue invoices, follow-ups and records due)",type:"checkbox"}],
     Object.assign({},s,{memberships:(s.memberships||[]).join("\n"),workdays:(s.workdays||[1,2,3,4,5]).map(d=>DAYS[d])}));
@@ -108,7 +112,77 @@ function renderSettings(main){
   save.onclick=async()=>{ const v=SNP.readForm(f); v.memberships=String(v.memberships||"").split("\n"); v.workdays=(v.workdays||[]).map(d=>DAYS.indexOf(d)).filter(d=>d>=0);
     save.disabled=true; err.textContent="";
     try{ S.settings=await api("app-settings",{method:"POST",body:v}); toast("Settings saved."); SNP.refresh(true); }catch(e){ err.textContent=e.message; } finally{ save.disabled=false; } };
-  main.append(SNP.pageHead("Settings","Company details and defaults for the whole back office."), el("section",{class:"panel"}, f, err, el("div",{class:"row-actions"}, save)));
+  main.append(SNP.pageHead("Settings","Company details and defaults for the whole back office."), el("section",{class:"panel"}, f, err, el("div",{class:"row-actions"}, save)),
+    pipelinesPanel(), customFieldsPanel(), listsPanel());
+}
+const saveSetting=async(body, btn, msg)=>{ btn.disabled=true; try{ S.settings=await api("app-settings",{method:"POST",body}); toast(msg||"Saved."); SNP.refresh(true); }catch(e){ fail(e); } finally{ btn.disabled=false; } };
+
+/* Pipelines and their stages. */
+function pipelinesPanel(){
+  const pls=JSON.parse(JSON.stringify((S.settings&&S.settings.pipelines)||[]));
+  pls.forEach(p=>p.stages.forEach(st=>st._old=st.name));
+  const box=el("div");
+  const draw=()=>{ box.replaceChildren(...pls.map((p,pi)=>el("div",{class:"pl-ed"},
+    el("div",{class:"row-actions"}, el("input",{type:"text",value:p.name,"aria-label":"Pipeline name",oninput:e=>p.name=e.target.value}),
+      el("span",{class:"muted small"},`${items("deal").filter(d=>d.data.pipeline===p.key).length} deals`),
+      pls.length>1?el("button",{class:"btn small ghost",type:"button",onclick:()=>{ pls.splice(pi,1); draw(); }},"Remove pipeline"):null),
+    el("table",{class:"list stages-t"}, el("thead",{}, el("tr",{}, el("th",{},"Stage"), el("th",{class:"num"},"Chance %"), el("th",{},"Kind"), el("th",{}))),
+      el("tbody",{}, p.stages.map((st,si)=>el("tr",{},
+        el("td",{"data-label":"Stage"}, el("input",{type:"text",value:st.name,"aria-label":"Stage name",oninput:e=>st.name=e.target.value})),
+        el("td",{class:"num","data-label":"Chance %"}, el("input",{type:"number",min:"0",max:"100",value:st.prob,style:"width:70px","aria-label":"Chance",disabled:st.type!=="open"||null,oninput:e=>st.prob=Number(e.target.value)||0})),
+        el("td",{"data-label":"Kind"}, SNP.selectEl([["open","Open"],["won","Won"],["lost","Lost"]],st.type,v=>{ st.type=v; st.prob=v==="won"?100:v==="lost"?0:st.prob; draw(); },"Kind")),
+        el("td",{class:"rm"}, el("button",{class:"btn small ghost",type:"button","aria-label":"Move up",disabled:!si||null,onclick:()=>{ p.stages.splice(si-1,0,p.stages.splice(si,1)[0]); draw(); }},"↑"),
+          el("button",{class:"btn small ghost",type:"button","aria-label":"Remove stage",onclick:()=>{ p.stages.splice(si,1); draw(); }},"×")))))),
+    el("button",{class:"btn small ghost",type:"button",onclick:()=>{ const wonAt=p.stages.findIndex(x=>x.type!=="open"); p.stages.splice(wonAt<0?p.stages.length:wonAt,0,{name:"New stage",prob:50,type:"open"}); draw(); }},"+ Stage"))),
+    el("button",{class:"btn small",type:"button",onclick:()=>{ pls.push({name:"New pipeline",stages:[{name:"Lead",prob:10,type:"open"},{name:"Quoted",prob:50,type:"open"},{name:"Won",prob:100,type:"won"},{name:"Lost",prob:0,type:"lost"}]}); draw(); }},"+ Pipeline")); };
+  draw();
+  const save=el("button",{class:"btn primary",type:"button"},"Save pipelines");
+  save.onclick=async()=>{
+    const clean=pls.map(p=>({key:p.key,name:p.name,stages:p.stages.map(({name,prob,type})=>({name:name.trim(),prob,type}))}));
+    await saveSetting({pipelines:clean},save,"Pipelines saved.");
+    // Keep deals on the board: follow renamed stages, and move deals out of removed stages and pipelines.
+    const now=(S.settings&&S.settings.pipelines)||[]; const moves=[];
+    items("deal").forEach(d=>{ const p=pls.find(x=>x.key&&x.key===d.data.pipeline), live=now.find(x=>x.key===d.data.pipeline);
+      if (!live){ moves.push([d.id,{pipeline:now[0].key}]); return; }
+      const st=p&&p.stages.find(x=>x._old===d.data.stage);
+      if (st&&st.name.trim()!==d.data.stage&&live.stages.some(x=>x.name===st.name.trim())) moves.push([d.id,{stage:st.name.trim()}]);
+      else if (!live.stages.some(x=>x.name===d.data.stage)) moves.push([d.id,{stage:live.stages[0].name}]); });
+    if (moves.length){ const groups=new Map(); moves.forEach(([id,patch])=>{ const k=JSON.stringify(patch); if(!groups.has(k)) groups.set(k,[]); groups.get(k).push(id); });
+      try{ for (const [k,ids] of groups) await api("bulk",{method:"POST",body:{type:"deal",action:"update",ids,data:JSON.parse(k)}}); await SNP.load(); toast(`Pipelines saved. ${moves.length} deal${moves.length===1?"":"s"} moved to match.`); }catch(e){ fail(e); } }
+  };
+  return el("section",{class:"panel"}, el("h3",{},"Pipelines"),
+    el("p",{class:"sub"},"Each pipeline is its own board. Chance % feeds the weighted forecast. Renaming a stage keeps its deals; deals in a removed stage go to the pipeline's first stage, and deals in a removed pipeline go to the first pipeline."),
+    box, el("div",{class:"row-actions"}, save));
+}
+
+/* Extra fields on customers and contacts. */
+function customFieldsPanel(){
+  const list=JSON.parse(JSON.stringify((S.settings&&S.settings.customFields)||[]));
+  const box=el("div");
+  const draw=()=>{ box.replaceChildren(list.length?el("table",{class:"list"}, el("thead",{}, el("tr",{}, el("th",{},"Field"), el("th",{},"On"), el("th",{},"Type"), el("th",{},"Choices (for a list)"), el("th",{}))),
+      el("tbody",{}, list.map((f,i)=>el("tr",{},
+        el("td",{"data-label":"Field"}, el("input",{type:"text",value:f.label,"aria-label":"Field name",oninput:e=>f.label=e.target.value})),
+        el("td",{"data-label":"On"}, SNP.selectEl([["customer","Customers"],["contact","Contacts"]],f.entity,v=>f.entity=v,"Applies to")),
+        el("td",{"data-label":"Type"}, SNP.selectEl([["text","Text"],["number","Number"],["date","Date"],["select","Pick from a list"],["checkbox","Yes / no"]],f.type,v=>{ f.type=v; draw(); },"Type")),
+        el("td",{"data-label":"Choices"}, f.type==="select"?el("input",{type:"text",value:(f.options||[]).join(", "),placeholder:"Comma between choices","aria-label":"Choices",oninput:e=>f.options=e.target.value.split(",").map(x=>x.trim()).filter(Boolean)}):el("span",{class:"muted small"},"—")),
+        el("td",{class:"rm"}, el("button",{class:"btn small ghost",type:"button","aria-label":"Remove field",onclick:()=>{ list.splice(i,1); draw(); }},"×")))))):el("p",{class:"muted small"},"No custom fields yet."),
+    el("button",{class:"btn small",type:"button",onclick:()=>{ list.push({label:"",entity:"customer",type:"text",options:[]}); draw(); }},"+ Field")); };
+  draw();
+  const save=el("button",{class:"btn primary",type:"button"},"Save fields");
+  save.onclick=()=>saveSetting({customFields:list},save,"Custom fields saved.");
+  return el("section",{class:"panel"}, el("h3",{},"Custom fields"),
+    el("p",{class:"sub"},"Add fields SNP needs that aren't built in, like fleet size, EIN on file or preferred delivery day. They show on the record, in exports, and can be imported."),
+    box, el("div",{class:"row-actions"}, save));
+}
+
+/* Pick-lists. */
+function listsPanel(){
+  const lr=el("textarea",{rows:6,"aria-label":"Lost reasons"}); lr.value=((S.settings&&S.settings.lostReasons)||[]).join("\n");
+  const ind=el("textarea",{rows:6,"aria-label":"Types of business"}); ind.value=((S.settings&&S.settings.industries)||[]).join("\n");
+  const save=el("button",{class:"btn primary",type:"button"},"Save lists");
+  save.onclick=()=>saveSetting({lostReasons:lr.value.split("\n"),industries:ind.value.split("\n")},save,"Lists saved.");
+  return el("section",{class:"panel"}, el("h3",{},"Pick-lists"), el("div",{class:"fields"},
+    el("div",{class:"field"}, el("label",{},"Reasons a deal is lost (one per line)"), lr), el("div",{class:"field"}, el("label",{},"Types of business (one per line)"), ind)), el("div",{class:"row-actions"}, save));
 }
 
 SNP.module({ id:"people", label:"People", group:"Admin", visible:()=>!!S.perms.managePeople, render:renderPeople });

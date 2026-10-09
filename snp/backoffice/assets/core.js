@@ -1,6 +1,10 @@
 /* SNP back office: shared core (data, API, layout, panels, forms, tables, printing). Modules register through SNP.module(). */
 window.SNP = (() => {
 "use strict";
+/* Screens are built from optional parts (cond ? node : null). Let append/replaceChildren skip the empty ones
+   instead of printing "null", and accept nested lists, as el() already does. */
+{ const A=Element.prototype.append, R=Element.prototype.replaceChildren, keep=k=>k.flat(Infinity).filter(x=>x!=null&&x!==false&&x!=="");
+  Element.prototype.append=function(...k){ return A.apply(this,keep(k)); }; Element.prototype.replaceChildren=function(...k){ return R.apply(this,keep(k)); }; }
 const CFG = window.SNP_REC || {};
 const S = { loaded:false, failed:"", me:null, perms:{}, access:{}, settings:null, cats:[], statuses:[], assignees:[], docs:new Map(), tpls:new Map(),
   items:{}, byId:{}, people:[], activity:[], names:{}, scope:"", scopes:{}, maxUpload:0, today:"", pending:0 };
@@ -71,6 +75,7 @@ function applyState(st){
   S.tpls=new Map((st.templates||[]).map(t=>[t.key,t]));
   S.people=st.people||[]; S.activity=st.activity||[];
   S.items=st.items||{}; reindex(); S.scopeNames=st.scopeNames||null;
+  S.portalUsers=st.portalUsers||[]; S.portal=st.portal||null; S.suppressed=st.suppressed||0;
   S.loaded=true; S.failed="";
 }
 function reindex(){ S.byId={}; for (const [type,list] of Object.entries(S.items)){ S.byId[type]=new Map(list.map(i=>[i.id,i])); } }
@@ -98,7 +103,7 @@ async function deleteItem(type,id){ await api("items/"+id,{method:"DELETE"}); dr
 let loading=false;
 async function load(){
   if (loading) return; loading=true;
-  try { applyState(await api("state")); }
+  try { applyState(await api(CFG.statePath||"state")); }
   catch(e){ if(!S.loaded) S.failed=e.message||"The back office couldn't load."; }
   finally { loading=false; renderShell(); renderView(); tickClock(); modules.forEach(m=>m.onData&&m.onData()); }
 }
@@ -145,8 +150,13 @@ function field(def, value, ro){
   const dis = ro||def.readonly ? true : null;
   switch(def.type){
     case "textarea": input=el("textarea",{id,rows:def.rows||3,placeholder:def.placeholder||null,disabled:dis}); input.value=value??""; break;
-    case "select": case "customer": case "supplier": case "user": case "deal": {
+    case "tags": {
+      input=el("input",{type:"text",id,value:(value||[]).join(", "),placeholder:def.placeholder||"Comma between tags",disabled:dis,autocomplete:"off",list:"dl-tags"});
+      break; }
+    case "select": case "customer": case "supplier": case "user": case "deal": case "contact": case "lead": {
       let opts=def.options;
+      if (def.type==="contact") opts=[["","—"],...items("contact").filter(c=>!def.customerId||c.data.customerId===def.customerId).sort((a,b)=>(a.data.name||"").localeCompare(b.data.name||"")).map(c=>[String(c.id),c.data.name+(c.data.customerId&&!def.customerId?" · "+customerName(c.data.customerId):"")])];
+      if (def.type==="lead") opts=[["","—"],...items("lead").map(c=>[String(c.id),(c.data.company||c.data.name)])];
       if (def.type==="customer") opts=[["","Choose a customer"],...items("customer").slice().sort((a,b)=>(a.data.name||"").localeCompare(b.data.name||"")).map(c=>[String(c.id),c.data.name])];
       if (def.type==="supplier") opts=[["","Choose a supplier"],...items("supplier").slice().sort((a,b)=>(a.data.name||"").localeCompare(b.data.name||"")).map(c=>[String(c.id),c.data.name])];
       if (def.type==="deal") opts=[["","None"],...items("deal").map(c=>[String(c.id),c.data.title])];
@@ -165,10 +175,12 @@ function field(def, value, ro){
     case "date": input=el("input",{type:"date",id,value:value||"",disabled:dis}); break;
     case "month": input=el("input",{type:"month",id,value:value||"",disabled:dis,placeholder:"YYYY-MM"}); break;
     case "time": input=el("input",{type:"time",id,value:value||"",disabled:dis,step:"300"}); break;
+    case "datalist": input=el("input",{type:"text",id,value:value??"",placeholder:def.placeholder||null,disabled:dis,autocomplete:"off",list:"dl-"+def.key}); input._dl=el("datalist",{id:"dl-"+def.key},(def.options||[]).map(o=>el("option",{value:o}))); break;
     default: input=el("input",{type:def.type==="email"?"email":"text",id,value:value??"",placeholder:def.placeholder||null,disabled:dis,autocomplete:"off"});
   }
   input.dataset.key=def.key; input.dataset.type=def.type||"text";
   const wrap=el("div",{class:"field"+(def.full||def.type==="textarea"||def.type==="multi"?" full":"")});
+  if (input._dl) wrap.append(input._dl);
   if (def.type==="checkbox") wrap.append(el("label",{class:"chk",for:id}, input, def.label));
   else wrap.append(el("label",{for:id}, def.label), input);
   if (def.hint) wrap.append(el("div",{class:"hint"}, def.hint));
@@ -176,18 +188,32 @@ function field(def, value, ro){
 }
 function form(defs, values={}, ro=false){
   const f=el("div",{class:"fields"});
-  defs.forEach(d=>f.append(d.section?el("div",{class:"sec-h full"},d.section):field(d, values[d.key], ro)));
+  const val=k=>k.startsWith("custom.")?((values.custom||{})[k.slice(7)]):values[k];
+  defs.forEach(d=>f.append(d.section?el("div",{class:"sec-h full"},d.section):field(d, val(d.key), ro)));
+  if (!document.getElementById("dl-tags")) document.body.append(el("datalist",{id:"dl-tags"}));
+  const dl=document.getElementById("dl-tags"); dl.replaceChildren(...allTags().map(t=>el("option",{value:t})));
   return f;
+}
+/* Every tag in use, for suggestions. */
+function allTags(){ const set=new Map(); ["customer","contact","lead"].forEach(t=>items(t).forEach(i=>(i.data.tags||[]).forEach(x=>set.set(x.toLowerCase(),x)))); return [...set.values()].sort((a,b)=>a.localeCompare(b)); }
+/* Custom fields from Settings as form fields (keys "custom.<key>"). */
+function customFieldDefs(entity){
+  return ((S.settings&&S.settings.customFields)||[]).filter(f=>f.entity===entity).map(f=>({key:"custom."+f.key,label:f.label,
+    type:f.type==="select"?"select":f.type==="number"?"number":f.type==="date"?"date":f.type==="checkbox"?"checkbox":"text",
+    options:f.type==="select"?[["","—"],...f.options.map(o=>[o,o])]:undefined}));
 }
 function readForm(root){
   const out={};
   root.querySelectorAll("[data-key]").forEach(n=>{
     const k=n.dataset.key, t=n.dataset.type;
-    if (t==="multi") out[k]=[...n.querySelectorAll("input:checked")].map(i=>i.value);
-    else if (t==="checkbox") out[k]=n.checked;
-    else if (t==="money"||t==="number") out[k]=n.value===""?0:Number(n.value);
-    else if (["customer","supplier","user","deal"].includes(t)) out[k]=n.value?Number(n.value):0;
-    else out[k]=n.value;
+    let v;
+    if (t==="multi") v=[...n.querySelectorAll("input:checked")].map(i=>i.value);
+    else if (t==="checkbox") v=n.checked;
+    else if (t==="tags") v=n.value.split(/[,;]+/).map(x=>x.trim()).filter(Boolean);
+    else if (t==="money"||t==="number") v=n.value===""?(k.startsWith("custom.")?"":0):Number(n.value);
+    else if (["customer","supplier","user","deal","contact","lead"].includes(t)) v=n.value?Number(n.value):0;
+    else v=n.value;
+    if (k.startsWith("custom.")) (out.custom||(out.custom={}))[k.slice(7)]=v; else out[k]=v;
   });
   return out;
 }
@@ -214,7 +240,8 @@ function editRecord({type, id=null, title, eyebrow="", fields, defaults={}, afte
   const d=drawer(typeof title==="function"?title(it):title, eyebrow, body, {wide});
   save.onclick=async()=>{
     err.textContent=""; save.disabled=true;
-    try{ const data=Object.assign({}, it?it.data:{}, defaults&&!it?defaults:{}, readForm(f));
+    try{ const fv=readForm(f); const data=Object.assign({}, it?it.data:{}, defaults&&!it?defaults:{}, fv);
+      if (fv.custom) data.custom=Object.assign({}, (it&&it.data.custom)||{}, fv.custom);
       const saved=await saveItem(type, it?it.id:null, data);
       toast(it?"Saved.":"Added."); closePanel(d); refresh(); onSaved&&onSaved(saved);
     } catch(e){ err.textContent=e.message||"That didn't save."; save.disabled=false; }
@@ -284,6 +311,28 @@ function companyBlock(){
   return `<div class="co"><img src="${esc(CFG.logo)}" alt=""><div><b>${esc(s.companyName)}</b><div class="muted">${nl2br(s.companyAddress)}<br>${esc(s.companyPhone)} · ${esc(s.companyEmail)}<br>${esc(s.companyWebsite)}</div></div></div>`;
 }
 
+/* ---------- calendar files (.ics) ---------- */
+function icsEscape(s){ return String(s||"").replace(/\\/g,"\\\\").replace(/\n/g,"\\n").replace(/([,;])/g,"\\$1"); }
+/* events: [{uid,title,date(YYYY-MM-DD),time(HH:MM)?,minutes?,description?,location?}] */
+function ics(filename, events){
+  const stamp=new Date().toISOString().replace(/[-:]/g,"").slice(0,15)+"Z";
+  const lines=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//SNP Wholesale//SNP Records//EN","CALSCALE:GREGORIAN"];
+  events.forEach(e=>{ const d=e.date.replace(/-/g,"");
+    lines.push("BEGIN:VEVENT","UID:"+e.uid+"@snp-records","DTSTAMP:"+stamp);
+    if (e.time){ const [h,m]=e.time.split(":").map(Number), end=new Date(2000,0,1,h,m+(e.minutes||30));
+      lines.push(`DTSTART;TZID=${HQ_TZ}:${d}T${e.time.replace(":","")}00`, `DTEND;TZID=${HQ_TZ}:${d}T${pad(end.getHours())}${pad(end.getMinutes())}00`); }
+    else { lines.push("DTSTART;VALUE=DATE:"+d, "DTEND;VALUE=DATE:"+addDays(e.date,1).replace(/-/g,"")); }
+    lines.push("SUMMARY:"+icsEscape(e.title)); if(e.description) lines.push("DESCRIPTION:"+icsEscape(e.description)); if(e.location) lines.push("LOCATION:"+icsEscape(e.location));
+    lines.push("END:VEVENT"); });
+  lines.push("END:VCALENDAR");
+  saveBlob(filename, new Blob([lines.join("\r\n")],{type:"text/calendar"}));
+}
+
+/* ---------- script loader (Leaflet, etc.) ---------- */
+const loaded={};
+function loadScript(src){ return loaded[src]||(loaded[src]=new Promise((res,rej)=>{ const s=el("script",{src}); s.onload=res; s.onerror=()=>{ delete loaded[src]; rej(new Error("load")); }; document.head.append(s); })); }
+function loadCSS(href){ if(!document.querySelector(`link[href="${href}"]`)) document.head.append(el("link",{rel:"stylesheet",href})); }
+
 /* ---------- clocks & business hours ---------- */
 const HQ_TZ="America/Phoenix";
 function timeIn(tz, opts={}){ return new Intl.DateTimeFormat(undefined,Object.assign({hour:"numeric",minute:"2-digit",timeZone:tz},opts)).format(new Date()); }
@@ -312,11 +361,13 @@ function searchIndex(){
   const out=[], add=(group,title,sub,go,extra="")=>out.push({group,title:title||"",sub:sub||"",go,hay:`${title} ${sub} ${extra}`.toLowerCase()});
   if (can("customer","rw")) items("customer").forEach(c=>add("Customers",c.data.name,[c.data.contactName,c.data.state||c.data.country].filter(Boolean).join(" · "),()=>go("customers",c.id),`${c.data.email} ${c.data.phone}`));
   if (can("lead")) items("lead").forEach(l=>add("Leads",l.data.company||l.data.name,`${l.data.status} · ${l.data.name}`,()=>{ go("leads"); setTimeout(()=>SNP.leads&&SNP.leads.open(l.id),50); },`${l.data.email} ${l.data.phone}`));
+  if (can("contact","rw")) items("contact").forEach(c=>add("Contacts",c.data.name,[c.data.title,customerName(c.data.customerId)].filter(Boolean).join(" · "),()=>SNP.contacts.open(c.id),`${c.data.email} ${c.data.phone} ${c.data.mobile} ${(c.data.tags||[]).join(" ")}`));
   if (can("deal","rw")) items("deal").forEach(d=>add("Deals",d.data.title,`${d.data.stage} · ${customerName(d.data.customerId)}`,()=>SNP.crm.editDeal(d.id)));
   ["quote","invoice","po"].forEach(t=>{ if(!can(t)) return; items(t).forEach(x=>add({quote:"Quotes",invoice:"Invoices",po:"Purchase orders"}[t],x.data.number,`${t==="po"?supplierName(x.data.supplierId):customerName(x.data.customerId)} · ${money(x.data.total)}`,()=>SNP.sales.openDoc(t,x.id))); });
   if (can("product")) items("product").forEach(p=>add("Products",p.data.name,[p.data.sku,p.data.grade,money(p.data.price)].filter(Boolean).join(" · "),()=>SNP.products.edit(p.id)));
   if (can("supplier","rw")) items("supplier").forEach(x=>add("Suppliers",x.data.name,x.data.contactName,()=>SNP.buy.editSupplier(x.id)));
   if (can("oil_order")) items("oil_order").forEach(o=>add("Oil orders",o.data.description||"Oil order",`${fmtDate(o.data.date)} · ${customerName(o.data.customerId)}`,()=>SNP.oil.editOrder(o.id)));
+  if (can("campaign","rw")) items("campaign").forEach(c=>add("Email campaigns",c.data.name,c.data.status,()=>SNP.campaigns.openCampaign(c.id)));
   items("task").forEach(t=>add("Tasks",t.data.title,t.data.due?"Due "+fmtDate(t.data.due):"",()=>SNP.tasks.editTask(t.id)));
   items("note").forEach(n=>add("Notes",n.data.title||n.data.body.slice(0,60),n.data.title?n.data.body.slice(0,80):"",()=>SNP.notes.edit(n.id),n.data.body));
   [...S.docs.values()].forEach(d=>add("Company records",`${d.code} ${d.title}`,d.status,()=>{ go("records"); setTimeout(()=>SNP.records.openDoc(d.id),50); }));
@@ -408,5 +459,5 @@ return { CFG, S, el, $, pad, today, addDays, thisMonth, fmtDate, fmtMonth, fmtWh
   toast, api, url, fail, load, items, item, can, customerName, supplierName, putItem, dropItem, saveItem, deleteItem,
   pushPanel, closeTop, closePanel, closeAll, drawer, modal, confirmBtn, field, form, readForm, peopleWithAccess, editRecord,
   table, badge, kpi, toolbar, search, selectEl, subtabs, pageHead, saveBlob, csv, copyText, esc, nl2br, printHTML, companyBlock,
-  module, go, refresh, renderShell, start, openSearch, bizStatus, timeIn, HQ_TZ, get current(){ return current; } };
+  module, go, refresh, renderShell, start, openSearch, bizStatus, timeIn, HQ_TZ, allTags, customFieldDefs, ics, loadScript, loadCSS, get current(){ return current; } };
 })();

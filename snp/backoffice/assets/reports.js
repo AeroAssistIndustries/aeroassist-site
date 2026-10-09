@@ -62,7 +62,7 @@ function render(main){
   const sales=list.reduce((s,x)=>s+(x.data.subtotal||0),0), profit=list.reduce((s,x)=>s+(x.data.profit||0),0);
   const collected=billable().reduce((s,x)=>s+(x.data.payments||[]).filter(p=>p.date>=a&&p.date<=b).reduce((t,p)=>t+(p.amount||0),0),0);
   const oil=oilNet(a,b);
-  const won=items("deal").filter(d=>d.data.stage==="Won"&&(d.updatedAt||"").slice(0,10)>=a&&(d.updatedAt||"").slice(0,10)<=b), lost=items("deal").filter(d=>d.data.stage==="Lost"&&(d.updatedAt||"").slice(0,10)>=a&&(d.updatedAt||"").slice(0,10)<=b);
+  const inR=d=>{ const c=SNP.deals.closedAt(d); return c>=a&&c<=b; }, won=items("deal").filter(d=>SNP.deals.isWon(d)&&inR(d)), lost=items("deal").filter(d=>SNP.deals.isLost(d)&&inR(d));
   const period=SNP.selectEl([["month","This month"],["last","Last month"],["quarter","This quarter"],["ytd","Year to date"],["12m","Last 12 months"],["custom","Custom…"]],RF.period,v=>{RF.period=v;SNP.refresh(true);},"Period");
   const custom=RF.period==="custom"?[el("input",{type:"date",value:a,"aria-label":"From",onchange:e=>{RF.from=e.target.value;SNP.refresh(true);}}), el("span",{class:"muted"},"to"), el("input",{type:"date",value:b,"aria-label":"To",onchange:e=>{RF.to=e.target.value;SNP.refresh(true);}})]:[];
 

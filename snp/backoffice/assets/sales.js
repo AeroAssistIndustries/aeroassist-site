@@ -81,9 +81,18 @@ function openEditor(kind, id, draft){
     {key:"date",label:"Date",type:"date"}, {key:K.d2,label:K.d2label,type:"date"},
     {key:"status",label:"Status",type:"select",options:K.statuses},
     {key:"division",label:"Division",type:"select",options:[["","—"],...DIVS.map(x=>[x,x])]}];
-  if (kind!=="po") headDefs.push({key:"repId",label:"Sales rep",type:"user",readonly:S.me&&S.me.role!=="owner"});
+  if (kind!=="po") headDefs.push({key:"repId",label:"Sales rep",type:"user",readonly:S.me&&S.me.role!=="owner"},{key:"contactId",label:"Attention",type:"contact",customerId:draft.customerId||-1});
   const head=el("div",{class:"fields cols4"}, partySel, ...headDefs.map(d=>SNP.field(d, draft[d.key], ro)));
-  const onHead=e=>{ const k=e.target.dataset.key; if(!k||k===partyKey) return; draft[k]=k==="repId"?Number(e.target.value)||0:e.target.value; markDirty(); if(k==="date") updateDue(); };
+  const onHead=e=>{ const k=e.target.dataset.key; if(!k||k===partyKey) return; draft[k]=k==="repId"||k==="contactId"?Number(e.target.value)||0:e.target.value; markDirty(); if(k==="date") updateDue(); };
+  /* Credit and overdue warning for the chosen customer. */
+  const creditNote=el("div");
+  const checkCredit=()=>{ creditNote.replaceChildren(); if(kind==="po"||!draft.customerId||!SNP.health) return; const h=SNP.health.of(draft.customerId); if(!h) return;
+    const msgs=[]; if(h.overdue>0) msgs.push(`${money(h.overdue)} overdue`); if(h.creditLimit&&h.balance>=h.creditLimit*0.9) msgs.push(`${money(h.balance)} unpaid of a ${money(h.creditLimit)} credit limit`);
+    if (msgs.length) creditNote.append(el("p",{class:"scope-banner warn"}, "Heads up: this customer has "+msgs.join(" and ")+".")); };
+  const refreshContacts=()=>{ const cs=head.querySelector('[data-key="contactId"]'); if(!cs) return;
+    cs.replaceChildren(el("option",{value:""},"—"), ...items("contact").filter(c=>c.data.customerId===draft.customerId).map(c=>el("option",{value:String(c.id)},c.data.name)));
+    const p=items("contact").find(c=>c.data.customerId===draft.customerId&&c.data.primary); if(!saved&&p){ draft.contactId=p.id; } cs.value=draft.contactId?String(draft.contactId):""; };
+  ps.addEventListener("change",()=>{ refreshContacts(); checkCredit(); });
   head.addEventListener("input",onHead); head.addEventListener("change",onHead);
   function updateDue(){ if(kind!=="invoice"||saved) return; draft.dueDate=addDays(draft.date||today(), termDays(draft.customerId)); const n=head.querySelector('[data-key="dueDate"]'); if(n) n.value=draft.dueDate; }
 
@@ -233,12 +242,12 @@ function openEditor(kind, id, draft){
     }
     SNP.closePanel(panel);
   }
-  setTitle(); drawActions(); drawLines(); drawTotals(); drawPayments(); drawSent();
+  setTitle(); drawActions(); drawLines(); drawTotals(); drawPayments(); drawSent(); checkCredit(); if(!saved&&!ro&&draft.customerId) refreshContacts();
   panel.append(
     el("div",{class:"m-head"}, title, closeWrap, el("button",{class:"x",type:"button","aria-label":"Close",onclick:()=>close(false)},"×")),
     el("div",{class:"m-body"},
       ro?el("div",{class:"scope-banner"},"View only. You can download or share it, but only owners can make changes."):null,
-      head,
+      head, creditNote,
       el("section",{class:"ed-sec"}, el("h3",{},"Items"), linesBox, totalsBox),
       payBox,
       el("section",{class:"ed-sec"}, el("h3",{},"Notes"), notes),

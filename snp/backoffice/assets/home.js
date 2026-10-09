@@ -137,15 +137,37 @@ function newLeads(onlyMine){
 
 function funnel(deals, title){
   if (!SNP.can("deal","rw")) return null;
-  const rows=SNP.crm.OPEN_STAGES.map(s=>{ const ds=deals.filter(d=>d.data.stage===s); return {s,n:ds.length,v:sumBy(ds,d=>d.data.value)}; });
-  const useVal=rows.some(r=>r.v>0), max=Math.max(1,...rows.map(r=>useVal?r.v:r.n));
-  const m=SNP.thisMonth(), won=deals.filter(d=>d.data.stage==="Won"&&(d.updatedAt||"").slice(0,7)===m), lost=deals.filter(d=>d.data.stage==="Lost"&&(d.updatedAt||"").slice(0,7)===m);
+  const D=SNP.deals, open=deals.filter(D.isOpen);
+  const rows=D.pipelines().map(p=>{ const ds=open.filter(d=>D.pipelineOf(d).key===p.key); return {s:p.name,n:ds.length,v:sumBy(ds,d=>d.data.value),w:sumBy(ds,D.weighted)}; }).filter(r=>r.n||D.pipelines().length===1);
+  const max=Math.max(1,...rows.map(r=>r.v));
+  const m=SNP.thisMonth(), won=deals.filter(d=>D.isWon(d)&&D.closedAt(d).slice(0,7)===m), lost=deals.filter(d=>D.isLost(d)&&D.closedAt(d).slice(0,7)===m);
   return panel(title,["#pipeline","Pipeline →"],
-    el("div",{class:"funnel"}, rows.map(r=>el("a",{class:"fn-row",href:"#pipeline"},
+    rows.length?el("div",{class:"funnel"}, rows.map(r=>el("a",{class:"fn-row",href:"#pipeline"},
       el("span",{class:"fn-l"},r.s),
-      el("span",{class:"fn-bar"}, el("i",{style:`width:${Math.max(r.n?4:0,Math.round((useVal?r.v:r.n)/max*100))}%`})),
-      el("span",{class:"fn-v"}, `${r.n} · ${money0(r.v)}`)))),
-    el("p",{class:"muted small"}, `This month: ${won.length} won (${money0(sumBy(won,d=>d.data.value))}) · ${lost.length} lost`));
+      el("span",{class:"fn-bar"}, el("i",{style:`width:${Math.max(r.n?4:0,Math.round(r.v/max*100))}%`}), el("b",{style:`width:${Math.round(r.w/max*100)}%`})),
+      el("span",{class:"fn-v"}, `${r.n} · ${money0(r.v)}`)))):el("p",{class:"muted small"},"No open deals."),
+    el("p",{class:"muted small"}, `Weighted forecast ${money0(sumBy(open,D.weighted))} · this month ${won.length} won (${money0(sumBy(won,d=>d.data.value))}), ${lost.length} lost`));
+}
+/* Today's calls, meetings and visits for me. */
+function schedulePanel(){
+  if (!SNP.can("interaction","rw")||!SNP.activities) return null;
+  const me=S.me&&S.me.id, td=today();
+  const list=items("interaction").filter(a=>a.data.status==="Planned"&&(a.data.ownerId||a.createdBy)===me&&a.data.date&&a.data.date<=SNP.addDays(td,1))
+    .sort((a,b)=>(a.data.date+(a.data.time||"99")).localeCompare(b.data.date+(b.data.time||"99")));
+  return panel(list.length?`My schedule · ${list.length}`:"My schedule",["#calendar","Calendar →"],
+    list.length?el("ul",{class:"acts"}, list.slice(0,8).map(a=>SNP.activities.row(a,{showCustomer:true,brief:true}))):el("p",{class:"muted small"},"Nothing scheduled today or tomorrow."),
+    el("button",{class:"btn small",type:"button",onclick:()=>SNP.activities.edit(null,{status:"Planned",kind:"Call",date:td})},"+ Schedule"));
+}
+/* Customers whose usual reorder time has come (by their own order rhythm). */
+function reorderPanel(mineOnly){
+  if (!SNP.health||!SNP.can("customer","rw")) return null;
+  const me=S.me&&S.me.id, rank={"Overdue":0,"Due to reorder":1,"At risk":2};
+  const list=items("customer").map(c=>({c,h:SNP.health.of(c.id)})).filter(x=>x.h&&rank[x.h.status]!=null&&(!mineOnly||x.c.data.ownerId===me))
+    .sort((a,b)=>rank[a.h.status]-rank[b.h.status]||(b.h.rev12-a.h.rev12));
+  return panel(list.length?`Reorder radar · ${list.length}`:"Reorder radar",["#customers","Customers →"],
+    list.length?el("ul",{class:"attn"}, list.slice(0,7).map(({c,h})=>el("li",{class:h.status==="Overdue"||h.status==="At risk"?"bad":""},
+      el("a",{href:"#customers/"+c.id}, c.data.name), el("span",{class:"muted small"}, `${h.status} · last order ${h.daysSince} d ago, usually every ${h.interval} d${h.rev12?" · "+money0(h.rev12)+"/yr":""}`)))):el("p",{class:"muted small"},"Every customer is ordering on their usual rhythm."),
+    list.length?el("p",{class:"muted small"},"Based on each customer's own order history. Call before they buy somewhere else."):null);
 }
 
 function leaderboard(){
@@ -203,7 +225,7 @@ function activityPanel(){
 
 function quickAdd(){
   const b=(label,fn)=>el("button",{class:"btn",type:"button",onclick:fn},label), can=t=>SNP.can(t,"rw");
-  const btns=[can("lead")&&b("+ Lead",()=>SNP.leads.newLead()), can("customer")&&b("+ Customer",()=>SNP.crm.editCustomer()), can("deal")&&b("+ Deal",()=>SNP.crm.editDeal()),
+  const btns=[can("lead")&&b("+ Lead",()=>SNP.leads.newLead()), can("customer")&&b("+ Customer",()=>SNP.crm.editCustomer()), can("contact")&&b("+ Contact",()=>SNP.contacts.edit()), can("interaction")&&b("+ Schedule",()=>SNP.activities.edit(null,{status:"Planned",kind:"Call",date:today()})), can("deal")&&b("+ Deal",()=>SNP.crm.editDeal()),
     can("quote")&&b("+ Quote",()=>SNP.sales.newDoc("quote")), can("invoice")&&b("+ Invoice",()=>SNP.sales.newDoc("invoice")),
     can("oil_order")&&b("+ Oil order",()=>SNP.oil.editOrder()), can("po")&&b("+ Purchase order",()=>SNP.sales.newDoc("po")),
     can("product")&&b("+ Product",()=>SNP.products.edit()), b("+ Task",()=>SNP.newTask())].filter(Boolean);
@@ -226,7 +248,7 @@ function ownerHome(main){
   const td=today(), m=SNP.thisMonth(), inv=billable();
   const k=mtd(), coll=collectedIn(m), collPrev=collectedIn(prevMonth(m));
   const unpaid=sumBy(inv,x=>Math.max(0,x.data.balance||0)), od=inv.filter(x=>SNP.sales.statusOf(x)==="Overdue");
-  const pipe=items("deal").filter(d=>SNP.crm.OPEN_STAGES.includes(d.data.stage));
+  const pipe=items("deal").filter(SNP.deals.isOpen);
   const leadsNew=items("lead").filter(l=>l.data.status==="New").length;
   const oil=SNP.can("oil_order")?SNP.oil.statement(m):null;
   main.append(hero(attnSummary(od.length, leadsNew)),
@@ -240,7 +262,7 @@ function ownerHome(main){
 
   const attn=[];
   od.slice(0,6).forEach(x=>attn.push(li(`${x.data.number} · ${SNP.customerName(x.data.customerId)}`, `${money(x.data.balance)} overdue since ${fmtDate(x.data.dueDate)}`, ()=>SNP.sales.openDoc("invoice",x.id),"bad")));
-  items("deal").filter(d=>SNP.crm.OPEN_STAGES.includes(d.data.stage)&&d.data.nextStepDate&&d.data.nextStepDate<=td).slice(0,6)
+  items("deal").filter(d=>SNP.deals.isOpen(d)&&d.data.nextStepDate&&d.data.nextStepDate<=td).slice(0,6)
     .forEach(d=>attn.push(li(d.data.title, `${d.data.nextStep||"Follow up"} · ${fmtDate(d.data.nextStepDate)}${d.data.ownerId?" · "+nameOf(d.data.ownerId):""}`, ()=>SNP.crm.editDeal(d.id), d.data.nextStepDate<td?"bad":"")));
   items("quote").filter(q=>q.data.status==="Sent"&&q.data.validUntil&&q.data.validUntil>=td&&q.data.validUntil<=addDays(td,3))
     .forEach(q=>attn.push(li(`${q.data.number} · ${SNP.customerName(q.data.customerId)}`, `quote expires ${fmtDate(q.data.validUntil)}`, ()=>SNP.sales.openDoc("quote",q.id))));
@@ -255,8 +277,8 @@ function ownerHome(main){
 
   main.append(el("div",{class:"two-col"},
     el("div",{class:"col"}, panel(attn.length?`Needs attention · ${attn.length}`:"Needs attention", null, listOr(attn,"All clear. Nothing overdue or due soon.")),
-      leaderboard(), salesChart(), funnel(items("deal"),"Pipeline")),
-    el("div",{class:"col"}, newLeads(false), myTasks(), notesPanel(), quickAdd(), activityPanel())));
+      reorderPanel(false), leaderboard(), salesChart(), funnel(items("deal"),"Pipeline")),
+    el("div",{class:"col"}, schedulePanel(), newLeads(false), myTasks(), notesPanel(), quickAdd(), activityPanel())));
 }
 function attnSummary(overdue, leads){
   const bits=[];
@@ -271,7 +293,7 @@ function attnSummary(overdue, leads){
 function salesHome(main){
   const me=S.me&&S.me.id, td=today(), mine=x=>x.data.repId===me;
   const k=mtd(mine);
-  const deals=items("deal").filter(d=>d.data.ownerId===me), pipe=deals.filter(d=>SNP.crm.OPEN_STAGES.includes(d.data.stage));
+  const deals=items("deal").filter(d=>d.data.ownerId===me), pipe=deals.filter(SNP.deals.isOpen);
   const quotesOut=items("quote").filter(q=>mine(q)&&q.data.status==="Sent");
   const myUnpaid=billable().filter(x=>mine(x)&&(x.data.balance||0)>0.005);
   const odMine=myUnpaid.filter(x=>SNP.sales.statusOf(x)==="Overdue");
@@ -291,7 +313,7 @@ function salesHome(main){
 
   main.append(el("div",{class:"two-col"},
     el("div",{class:"col"}, panel(fu.length?`Follow-ups · ${fu.length}`:"Follow-ups", null, listOr(fu,"No follow-ups due. Time to work the new leads.")),
-      newLeads(true), funnel(deals,"My pipeline")),
+      schedulePanel(), reorderPanel(true), newLeads(true), funnel(deals,"My pipeline")),
     el("div",{class:"col"}, targetRing(), myTasks(), notesPanel(), quickAdd())));
 }
 

@@ -1,7 +1,7 @@
 /* Document output: real PDFs for quotes, invoices, POs and tables; emailing them; sharing to WhatsApp. */
 (() => {
 "use strict";
-const { S, el, CFG, money, fmtDate, item, toast } = SNP;
+const { S, el, CFG, money, fmtDate, item, items, toast } = SNP;
 const LIBS = ["https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",
               "https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"];
 const KIND = { quote:{label:"Quote",title:"QUOTE",d2:"validUntil",d2label:"Valid until",party:"customer"},
@@ -132,7 +132,8 @@ async function share(kind, it, btn){
 /* ---------- email ---------- */
 function emailDefaults(kind, it, mode){
   const d=it.data, s=S.settings||{}, p=partyOf(kind,d), t=SNP.sales.calc(d);
-  const first=(p.contactName||"").split(" ")[0]||"there", co=s.companyName||"SNP Wholesale", me=(S.me&&S.me.name)||co;
+  const cp=items("contact").find(c=>c.id===d.contactId)||items("contact").find(c=>c.data.customerId===d.customerId&&c.data.primary);
+  const first=((cp&&cp.data.name)||p.contactName||"").split(" ")[0]||"there", co=s.companyName||"SNP Wholesale", me=(S.me&&S.me.name)||co;
   const sign=`\n\nThank you,\n${me}\n${co}\n${[s.companyPhone,s.companyEmail].filter(Boolean).join(" · ")}`;
   if (mode==="reminder") return { subject:`Payment reminder: invoice ${d.number}`, message:`Hi ${first},\n\nThis is a friendly reminder that invoice ${d.number} for ${money(t.balance)} was due on ${fmtDate(d.dueDate)}. A copy is attached.\n\nIf you've already sent payment, please let us know the date and reference so we can match it.`+sign };
   if (kind==="quote") return { subject:`Quote ${d.number} from ${co}`, message:`Hi ${first},\n\nThanks for the opportunity. Your quote ${d.number} for ${money(t.total)} is attached${d.validUntil?" and is valid until "+fmtDate(d.validUntil):""}.\n\nReply to this email or send a PO referencing ${d.number} to confirm.`+sign };
@@ -141,7 +142,8 @@ function emailDefaults(kind, it, mode){
 }
 function openEmail(kind, it, mode="document", onSent){
   const d=it.data, p=partyOf(kind,d), def=emailDefaults(kind,it,mode);
-  const known=[p.email, ...((p.contacts||[]).map(c=>c.email))].filter(Boolean);
+  const people=kind==="po"?[]:items("contact").filter(c=>c.data.customerId===d.customerId&&c.data.email).sort((a,b)=>(d.contactId===b.id?2:b.data.primary?1:0)-(d.contactId===a.id?2:a.data.primary?1:0));
+  const known=[...new Set([...people.map(c=>c.data.email), p.email, ...((p.contacts||[]).map(c=>c.email))].filter(Boolean))];
   const dl=el("datalist",{id:"em-list"}, known.map(e=>el("option",{value:e})));
   const f=SNP.form([
     {key:"to",label:"To",type:"email",full:true,placeholder:"customer@example.com"},

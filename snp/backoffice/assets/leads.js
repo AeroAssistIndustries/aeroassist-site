@@ -16,6 +16,7 @@ const fields = () => [
   {key:"location",label:"Location"},{key:"division",label:"Interested in"},
   {key:"source",label:"Source",type:"select",options:SOURCES},{key:"status",label:"Status",type:"select",options:STATUSES},
   {key:"ownerId",label:"Assigned to",type:"user"},{key:"nextStepDate",label:"Follow up on",type:"date"},
+  {key:"tags",label:"Tags",type:"tags",full:true},
   {key:"message",label:"What they need",type:"textarea",rows:4}];
 
 function open(id){
@@ -23,7 +24,9 @@ function open(id){
   const d=l.data, ph=digits(d.phone);
   const quick=el("div",{class:"lead-quick"},
     d.phone?el("a",{class:"btn small",href:"tel:"+d.phone},"Call "+d.phone):null,
-    d.email?el("a",{class:"btn small",href:"mailto:"+d.email+"?subject="+encodeURIComponent("Your inquiry with SNP Wholesale")},"Email"):null,
+    d.email&&S.perms.sendEmail&&SNP.activities?el("button",{class:"btn small",type:"button",onclick:()=>SNP.activities.compose({to:d.email,name:d.name,company:d.company,leadId:l.id,subject:"Your inquiry with "+((S.settings&&S.settings.companyName)||"SNP Wholesale")})},"Email")
+      :d.email?el("a",{class:"btn small",href:"mailto:"+d.email+"?subject="+encodeURIComponent("Your inquiry with SNP Wholesale")},"Email"):null,
+    SNP.map&&(d.lat&&d.lng||d.location)?el("button",{class:"btn small ghost",type:"button",onclick:()=>SNP.map.checkIn("lead",l)},"Check in"):null,
     ph?el("a",{class:"btn small",href:"https://wa.me/"+ph,target:"_blank",rel:"noopener"},"WhatsApp"):null,
     d.email||d.phone?el("button",{class:"btn small ghost",type:"button",onclick:()=>SNP.copyText([d.name,d.company,d.email,d.phone].filter(Boolean).join("\n"))},"Copy details"):null);
   SNP.editRecord({type:"lead", id, title:d.company||d.name, eyebrow:`Lead · ${d.source} · received ${fmtWhen(received(l))}`, fields:fields(),
@@ -37,6 +40,7 @@ function open(id){
           el("button",{class:"btn",type:"button",onclick:()=>convert(it,true)},"Convert + start a deal"))), body.children[1]);
       if (it && it.data.customerId) body.insertBefore(el("p",{}, "Converted to ", el("a",{href:"#customers/"+it.data.customerId,onclick:()=>SNP.closeAll()}, SNP.customerName(it.data.customerId)), "."), body.children[1]);
       if (it && it.data.details) body.append(el("details",{class:"add-box"}, el("summary",{},"Original website submission"), el("pre",{class:"pre small"}, it.data.details)));
+      if (it && SNP.activities) body.append(SNP.activities.panel({leadId:it.id,compact:true}));
       if (it && it.data.status==="New" && SNP.can("lead","rw")) SNP.saveItem("lead",it.id,Object.assign({},it.data,{ownerId:it.data.ownerId||(S.me&&S.me.id)})).catch(()=>{});
     }});
 }
@@ -48,12 +52,15 @@ async function convert(l, withDeal){
     const divs=["Oil","Phones & electronics","Commercial supply"].filter(x=>(d.division||"").toLowerCase().includes(x.split(" ")[0].toLowerCase()));
     const c=await SNP.saveItem("customer",null,{ name:d.company||d.name, status:d.source==="Website account form"?"Active":"Lead", contactName:d.name, email:d.email, phone:d.phone,
       state:usState&&!isLatam?usState[1]:"", country:isLatam?(d.location||"").split(",").pop().trim():"", divisions:divs, ownerId:d.ownerId||(S.me&&S.me.id), source:d.source,
-      notes:d.message?`From ${d.source.toLowerCase()} (${fmtDate(received(l).slice(0,10))}):\n${d.message}`:"", terms:"Prepaid", contacts:d.name?[{name:d.name,title:"",email:d.email,phone:d.phone}]:[] });
+      notes:d.message?`From ${d.source.toLowerCase()} (${fmtDate(received(l).slice(0,10))}):\n${d.message}`:"", terms:"Prepaid", tags:d.tags||[], lat:d.lat||"", lng:d.lng||"" });
+    if (d.name||d.email) await SNP.saveItem("contact",null,{name:d.name||d.email,email:d.email,phone:d.phone,customerId:c.id,primary:true,ownerId:d.ownerId||(S.me&&S.me.id)});
+    // activity logged against the lead moves to the new customer
+    for (const a of items("interaction").filter(x=>x.data.leadId===l.id)) { try{ await SNP.saveItem("interaction",a.id,Object.assign({},a.data,{customerId:c.id})); }catch(e){} }
     await SNP.saveItem("interaction",null,{customerId:c.id,date:today(),kind:"Note",summary:`Converted from a ${d.source.toLowerCase()} lead.`+(d.message?"\n\n"+d.message:"")});
     await SNP.saveItem("lead",l.id,Object.assign({},d,{status:"Converted",customerId:c.id}));
     SNP.closeAll(); SNP.toast(`${c.data.name} added as a customer.`);
     SNP.go("customers",c.id);
-    if (withDeal) setTimeout(()=>SNP.crm.editDeal(null,{customerId:c.id,title:(d.division?d.division+" for ":"")+c.data.name,stage:"Contacted",nextStep:"Send quote",nextStepDate:SNP.addDays(today(),2)}),150);
+    if (withDeal) setTimeout(()=>SNP.crm.editDeal(null,{customerId:c.id,title:(d.division?d.division+" for ":"")+c.data.name,division:["Oil","Phones & electronics","Commercial supply"].find(x=>(d.division||"").toLowerCase().includes(x.split(" ")[0].toLowerCase()))||"",nextStep:"Send quote",nextStepDate:SNP.addDays(today(),2)}),150);
   } catch(e){ SNP.fail(e); }
 }
 function newLead(){ SNP.editRecord({type:"lead", title:"New lead", eyebrow:"Leads", fields:fields(), defaults:{source:"Phone",status:"New",ownerId:S.me&&S.me.id}}); }
