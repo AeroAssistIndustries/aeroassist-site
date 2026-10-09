@@ -8,7 +8,7 @@
   if (!host) return;
   var hero = host.parentNode;
   ['aaWorld', 'aaHud'].forEach(function (id) { var e = document.getElementById(id); if (e) e.parentNode.removeChild(e); });
-  host.classList.add('aa-map-on');
+  host.classList.add('aa-map-on', 'ready');
   var cv = document.createElement('canvas'); cv.className = 'aa-map'; host.appendChild(cv);
   var ctx = cv.getContext('2d');
   if (!ctx) return;
@@ -252,7 +252,7 @@
     if (running && visible && !document.hidden) raf = requestAnimationFrame(tick);
   }
   function wake() { if (!raf && running && visible && !document.hidden) { last = 0; raf = requestAnimationFrame(tick); } }
-  layout(); seed(); newCall();
+  layout(); seed(); newCall(); EV.t = 0.6; frame(0); EV.t = 0;
   if (REDUCE) { EV.t = EV.launch + EV.tf + 1.2; EV.logged = 0; ui(EV); EV.t = EV.launch + EV.tg + 1; ui(EV); frame(0); running = false; }
   else wake();
   var rt = 0; window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(function () { layout(); if (!running) frame(0); }, 150); });
