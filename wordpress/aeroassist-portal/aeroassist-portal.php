@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       AeroAssist Portal
  * Description:       Investor and team portal for AeroAssist Industries: personal sign-ins with two-factor, role-based documents, K-1s, capital accounts and a download log.
- * Version:           1.0.0
+ * Version:           1.0.1
  * Requires at least: 6.4
  * Requires PHP:      7.4
  * Author:            AeroAssist Industries
@@ -12,7 +12,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'AAP_VERSION', '1.0.0' );
+define( 'AAP_VERSION', '1.0.1' );
 define( 'AAP_DB_VERSION', 1 );
 define( 'AAP_FILE', __FILE__ );
 define( 'AAP_DIR', plugin_dir_path( __FILE__ ) );

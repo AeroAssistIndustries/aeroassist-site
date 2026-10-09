@@ -67,6 +67,12 @@ $aap_out = isset( $_GET['signed_out'] ) ? sanitize_key( $_GET['signed_out'] ) : 
 			<h1>No portal access</h1>
 			<p class="ip-lead">You're signed in as <?php echo esc_html( $aap_user->display_name ); ?>, but this account doesn't have access to the portal. If you think it should, email <a href="mailto:<?php echo esc_attr( aap_setting( 'help_email' ) ); ?>"><?php echo esc_html( aap_setting( 'help_email' ) ); ?></a>.</p>
 			<p><a class="ip-btn" href="<?php echo esc_url( wp_logout_url( aap_portal_url( array( 'signed_out' => 1 ) ) ) ); ?>">Sign out</a></p>
+		<?php elseif ( is_user_logged_in() && 'needs_setup' === $aap_state ) : ?>
+			<h1>Turn on two-factor</h1>
+			<p class="ip-lead">One more step before your documents open: protect your account with an authenticator app (Google Authenticator, Microsoft Authenticator, 1Password or similar). It takes about a minute.</p>
+			<p><a class="ip-btn pri" href="<?php echo esc_url( aap_twofa_setup_url() ); ?>">Set up an authenticator app</a></p>
+			<p class="ip-fine">Scan the QR code with the app, enter the 6-digit code to confirm, and save the recovery codes somewhere safe. Then come back to <a href="<?php echo esc_url( aap_portal_url() ); ?>">the portal</a>. Questions? Email <a href="mailto:<?php echo esc_attr( aap_setting( 'help_email' ) ); ?>"><?php echo esc_html( aap_setting( 'help_email' ) ); ?></a>.</p>
+			<p><a class="ip-btn" href="<?php echo esc_url( wp_logout_url( aap_portal_url( array( 'signed_out' => 1 ) ) ) ); ?>">Sign out</a></p>
 		<?php elseif ( is_user_logged_in() && 'no_plugin' === $aap_state ) : ?>
 			<h1>Almost ready</h1>
 			<p class="ip-lead">The portal is switched off until two-factor sign-in is active on this site.</p>

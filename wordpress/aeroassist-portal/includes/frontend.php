@@ -151,7 +151,7 @@ function aap_portal_data( WP_User $user ) {
 			'idle'    => html_entity_decode( wp_logout_url( aap_portal_url( array( 'signed_out' => 'idle' ) ) ) ),
 			'zip'     => aap_nonce_url( add_query_arg( 'action', 'aap_zip', admin_url( 'admin-post.php' ) ), 'aap_file' ),
 			'ping'    => aap_nonce_url( add_query_arg( 'action', 'aap_ping', admin_url( 'admin-ajax.php' ) ), 'aap_ping' ),
-			'profile' => admin_url( 'profile.php#two-factor-options' ),
+			'profile' => aap_twofa_setup_url(),
 			'vendor'  => AAP_URL . 'assets/vendor/',
 			'home'    => home_url( '/' ),
 			'privacy' => get_privacy_policy_url(),

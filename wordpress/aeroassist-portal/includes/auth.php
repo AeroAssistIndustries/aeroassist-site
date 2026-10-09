@@ -25,7 +25,8 @@ add_filter(
 	'two_factor_enabled_providers_for_user',
 	function ( $enabled, $user_id ) {
 		$privileged = user_can( $user_id, 'manage_options' ) || user_can( $user_id, 'edit_users' ) || user_can( $user_id, 'promote_users' );
-		if ( aap_setting( 'require_2fa' ) && ( aap_is_portal_user( $user_id ) || $privileged ) && empty( $enabled ) ) {
+		// People who already use Wordfence two-factor aren't asked for a second code by email.
+		if ( aap_setting( 'require_2fa' ) && ( aap_is_portal_user( $user_id ) || $privileged ) && empty( $enabled ) && ! aap_wordfence_2fa_active( $user_id ) ) {
 			$enabled = array( 'Two_Factor_Email' );
 		}
 		return $enabled;
@@ -35,9 +36,12 @@ add_filter(
 );
 
 /**
- * State of the current session: 'ok', 'signed_out', 'no_plugin' (two-factor is required but no
- * two-factor plugin is active) or 'needs_2fa' (signed in without the second step, e.g. before
- * the portal was installed).
+ * State of the current session:
+ *  'ok'          signed in with a second factor;
+ *  'signed_out';
+ *  'no_plugin'   two-factor is required but no two-factor plugin is active;
+ *  'needs_2fa'   signed in without the second step (e.g. before the portal was installed): sign in again;
+ *  'needs_setup' Wordfence is the two-factor plugin and this person hasn't turned it on yet.
  */
 function aap_session_state() {
 	if ( ! is_user_logged_in() ) {
@@ -46,10 +50,11 @@ function aap_session_state() {
 	if ( ! aap_setting( 'require_2fa' ) ) {
 		return 'ok';
 	}
-	$p = aap_twofa_plugin();
-	if ( '' === $p ) {
-		return 'no_plugin';
+	// Wordfence asks for the authenticator code at every sign-in once a person has turned it on.
+	if ( aap_wordfence_2fa_active( get_current_user_id() ) ) {
+		return 'ok';
 	}
+	$p = aap_twofa_plugin();
 	if ( 'two-factor' === $p ) {
 		// Fail closed: a Two-Factor version that cannot report on the session is treated as missing.
 		if ( ! method_exists( 'Two_Factor_Core', 'is_current_user_session_two_factor' ) ) {
@@ -57,9 +62,7 @@ function aap_session_state() {
 		}
 		return Two_Factor_Core::is_current_user_session_two_factor() ? 'ok' : 'needs_2fa';
 	}
-	// Wordfence does not mark sessions, so it is trusted only once the site owner confirms
-	// in wp-config.php that Wordfence requires 2FA for the portal roles.
-	return ( defined( 'AAP_TRUST_WORDFENCE_2FA' ) && AAP_TRUST_WORDFENCE_2FA ) ? 'ok' : 'no_plugin';
+	return 'wordfence' === $p ? 'needs_setup' : 'no_plugin';
 }
 
 /* App passwords would bypass two-factor, so nobody with portal access (admins included) can use them. */
@@ -163,6 +166,11 @@ function aap_keep_out_of_admin() {
 	}
 	global $pagenow;
 	if ( in_array( $pagenow, array( 'profile.php', 'admin-post.php' ), true ) ) {
+		return;
+	}
+	// Wordfence's own two-factor setup page.
+	// phpcs:ignore WordPress.Security.NonceVerification
+	if ( 'admin.php' === $pagenow && isset( $_GET['page'] ) && 'WFLS' === $_GET['page'] && aap_has_wordfence() ) {
 		return;
 	}
 	wp_safe_redirect( aap_portal_url() );

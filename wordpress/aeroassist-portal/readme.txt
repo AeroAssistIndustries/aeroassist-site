@@ -3,7 +3,7 @@ Contributors: aeroassist
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: GPLv2 or later
 
 Investor and team portal for AeroAssist Industries.
@@ -20,6 +20,10 @@ Investor and team portal for AeroAssist Industries.
 See INSTALL.md for installation and day-to-day use.
 
 == Changelog ==
+
+= 1.0.1 =
+* Works with Wordfence Login Security two-factor, alone or alongside Two-Factor.
+* Send-a-test-email button in Settings.
 
 = 1.0.0 =
 * First release.

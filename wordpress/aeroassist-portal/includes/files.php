@@ -38,6 +38,9 @@ function aap_file_gate() {
 	if ( 'no_plugin' === $state ) {
 		aap_deny( 'Documents are unavailable until two-factor sign-in is switched on for the portal.', 503 );
 	}
+	if ( 'needs_setup' === $state ) {
+		aap_deny( 'Turn on two-factor sign-in first, then open the document again.' );
+	}
 	if ( 'needs_2fa' === $state ) {
 		wp_logout();
 		wp_safe_redirect( wp_login_url( aap_portal_url() ) );

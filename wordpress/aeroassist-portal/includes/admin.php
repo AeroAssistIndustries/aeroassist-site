@@ -94,8 +94,8 @@ function aap_check( $action ) {
 	}
 	check_admin_referer( $action );
 	$state = aap_session_state();
-	if ( 'ok' !== $state && ! ( 'no_plugin' === $state && current_user_can( 'manage_options' ) ) ) {
-		wp_die( 'Sign in again with two-factor to manage the portal.', 403 );
+	if ( 'ok' !== $state && ! ( in_array( $state, array( 'no_plugin', 'needs_setup' ), true ) && current_user_can( 'manage_options' ) ) ) {
+		wp_die( 'needs_setup' === $state ? 'Turn on two-factor for your account first (Wordfence → Login Security), then try again.' : 'Sign in again with two-factor to manage the portal.', 403 );
 	}
 }
 
@@ -116,6 +116,9 @@ add_action(
 		}
 		if ( 'no_plugin' === $state && ! current_user_can( 'manage_options' ) ) {
 			wp_die( 'The portal is switched off until two-factor sign-in is active. Ask a site administrator to install the Two-Factor plugin.', 503 );
+		}
+		if ( 'needs_setup' === $state && ! current_user_can( 'manage_options' ) ) {
+			wp_die( 'Turn on two-factor for your account first: <a href="' . esc_url( aap_twofa_setup_url() ) . '">set up an authenticator app</a>.', 403 );
 		}
 	}
 );
@@ -1125,7 +1128,8 @@ function aap_security_status() {
 	$tf     = aap_twofa_plugin();
 	$probe  = $web ? aap_probe_storage() : 'n/a';
 	$rows   = array(
-		array( 'Two-factor plugin', 'two-factor' === $tf ? aap_ok_pill() . 'Two-Factor is active' : ( 'wordfence' === $tf ? ( defined( 'AAP_TRUST_WORDFENCE_2FA' ) && AAP_TRUST_WORDFENCE_2FA ? aap_ok_pill() : aap_warn_pill() ) . 'Wordfence Login Security is active. Require 2FA for the four Portal roles in Wordfence → Login Security → Settings, then add define( \'AAP_TRUST_WORDFENCE_2FA\', true ); to wp-config.php. Until then the portal stays off. (The free Two-Factor plugin needs no extra step.)' : aap_bad_pill() . 'None active. Install the free Two-Factor plugin.' ) ),
+		array( 'Two-factor plugin', aap_twofa_panel_text() ),
+
 		array( 'Document folder', $dir ? '<code>' . esc_html( $dir ) . '</code>' : aap_bad_pill() . 'Not set' ),
 		array( 'Outside the public website', $dir ? ( $web ? aap_warn_pill() . 'No — it is inside the WordPress folder. Files are still encrypted and blocked by .htaccess' . ( 'blocked' === $probe ? ' (checked: blocked).' : ( 'open' === $probe ? ' — but the web server is serving it! Set AAP_STORAGE_DIR (below).' : '.' ) ) . ' Best: set AAP_STORAGE_DIR in wp-config.php to a folder above public_html.' : aap_ok_pill() . 'Yes' ) : '—' ),
 		array( 'Encryption at rest', aap_ok_pill() . 'libsodium XSalsa20-Poly1305, random file names' ),
@@ -1147,6 +1151,18 @@ function aap_warn_pill() {
 }
 function aap_bad_pill() {
 	return '<span class="aap-pill bad">Missing</span> ';
+}
+
+function aap_twofa_panel_text() {
+	$tf = aap_twofa_plugin();
+	if ( 'two-factor' === $tf ) {
+		return aap_ok_pill() . 'Two-Factor is active: anyone without an authenticator app gets an email code at each sign-in.' . ( aap_has_wordfence() ? ' Wordfence two-factor also counts: people who turned it on there are not asked twice.' : '' );
+	}
+	if ( 'wordfence' === $tf ) {
+		$me = get_current_user_id();
+		return ( aap_wordfence_2fa_active( $me ) ? aap_ok_pill() : aap_warn_pill() ) . 'Wordfence Login Security is active. Each person must turn on an authenticator app in Wordfence before the portal opens for them (Wordfence has no email codes). In Wordfence → Login Security → Settings, enable 2FA for Administrator and the four Portal roles. For email codes instead, also install the free Two-Factor plugin.';
+	}
+	return aap_bad_pill() . 'None active. Install the free Two-Factor plugin (or Wordfence Login Security).';
 }
 
 /** If storage is inside the web root, check over HTTP that the web server refuses to serve it. */

@@ -94,14 +94,12 @@ Jay manages everything from **wp-admin → AeroAssist Portal**. There are no CSV
 
 **What it can't protect against.** Anyone with full server or database access, or a WordPress administrator able to install code, can in principle reach the documents. Keep administrator accounts to the minimum, give each one two-factor, and keep the encryption key in `wp-config.php` and the password manager only.
 
-### Using Wordfence instead of Two-Factor
+### Using Wordfence for two-factor
 
-Wordfence doesn't tell other plugins whether a session passed two-factor. To use it instead:
+The portal works with Wordfence Login Security on its own, or alongside Two-Factor.
 
-1. In Wordfence → Login Security → Settings, require 2FA for the four Portal roles and for Administrator.
-2. Add `define( 'AAP_TRUST_WORDFENCE_2FA', true );` to `wp-config.php`.
-
-Until both are done, the portal stays off. The Two-Factor plugin needs neither step and is the recommended choice.
+- **Wordfence only.** Each person must turn on an authenticator app in Wordfence before their documents open. The portal shows them a "Turn on two-factor" screen with a button to Wordfence's setup page. Wordfence has no email codes. In Wordfence → Login Security → Settings, enable 2FA for **Administrator** and the four portal roles: Prospective investor, Unit holder, AeroAssist team, Portal administrator.
+- **Wordfence and Two-Factor together.** This is the friendliest option for investors. People who turned on Wordfence 2FA are recognised and never asked twice. Everyone else gets an email code from Two-Factor.
 
 ## Testing checklist after go-live
 

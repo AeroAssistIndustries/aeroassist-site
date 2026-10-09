@@ -304,19 +304,65 @@ function aap_log( $action, $doc_id = 0, $detail = '', $user_id = null ) {
 
 /* ------------------------------------------------------------------ two-factor */
 
-/** Which established two-factor plugin is active: 'two-factor', 'wordfence', or ''. */
+/** Which established two-factor plugin is active: 'two-factor', 'wordfence', or ''. Two-Factor wins when both are. */
 function aap_twofa_plugin() {
 	if ( class_exists( 'Two_Factor_Core' ) ) {
 		return 'two-factor';
 	}
-	if ( defined( 'WORDFENCE_LS_VERSION' ) || class_exists( '\WordfenceLS\Controller_WordfenceLS' ) ) {
-		return 'wordfence';
+	return aap_has_wordfence() ? 'wordfence' : '';
+}
+
+function aap_has_wordfence() {
+	return defined( 'WORDFENCE_LS_VERSION' ) || class_exists( '\WordfenceLS\Controller_WordfenceLS' );
+}
+
+/**
+ * Whether a user has turned on Wordfence two-factor (an authenticator app). Wordfence then asks
+ * for the code at every sign-in. Fails closed: false whenever this can't be confirmed.
+ */
+function aap_wordfence_2fa_active( $user_id ) {
+	static $cache = array();
+	$user_id = (int) $user_id;
+	if ( ! $user_id || ! aap_has_wordfence() ) {
+		return false;
 	}
-	return '';
+	if ( isset( $cache[ $user_id ] ) ) {
+		return $cache[ $user_id ];
+	}
+	$active = false;
+	if ( class_exists( '\WordfenceLS\Controller_Users' ) && method_exists( '\WordfenceLS\Controller_Users', 'shared' ) ) {
+		$c = \WordfenceLS\Controller_Users::shared();
+		$u = get_userdata( $user_id );
+		if ( $u && method_exists( $c, 'has_2fa_active' ) ) {
+			$cache[ $user_id ] = (bool) $c->has_2fa_active( $u );
+			return $cache[ $user_id ];
+		}
+	}
+	global $wpdb;
+	foreach ( array_unique( array( $wpdb->base_prefix, $wpdb->prefix ) ) as $prefix ) {
+		$t = $prefix . 'wfls_2fa_secrets';
+		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $t ) ) === $t ) {
+			$active = (bool) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $t WHERE user_id = %d", $user_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL
+			break;
+		}
+	}
+	$cache[ $user_id ] = $active;
+	return $active;
+}
+
+/** Where a person sets up or changes their second factor. */
+function aap_twofa_setup_url() {
+	if ( aap_has_wordfence() && ! class_exists( 'Two_Factor_Core' ) ) {
+		return admin_url( 'admin.php?page=WFLS' );
+	}
+	return admin_url( 'profile.php#two-factor-options' );
 }
 
 /** Human description of a user's second factor. */
 function aap_twofa_status( $user_id ) {
+	if ( aap_wordfence_2fa_active( $user_id ) ) {
+		return 'Authenticator app (Wordfence)';
+	}
 	$p = aap_twofa_plugin();
 	if ( 'two-factor' === $p ) {
 		$stored = get_user_meta( $user_id, '_two_factor_enabled_providers', true );
@@ -330,7 +376,7 @@ function aap_twofa_status( $user_id ) {
 		return aap_setting( 'require_2fa' ) ? 'Email code (default)' : 'Not set up';
 	}
 	if ( 'wordfence' === $p ) {
-		return 'Managed by Wordfence';
+		return 'Not set up';
 	}
 	return 'No 2FA plugin';
 }
