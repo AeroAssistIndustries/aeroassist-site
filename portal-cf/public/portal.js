@@ -188,6 +188,7 @@ function vInvestment(box,act){
   var ca=card('Capital account'),dl=el('dl','ip-facts');
   [['Paid-in capital',a.paid?money(a.paid):'—'],['Distributions received',money(a.dist)],['Current value (indicative)',money(a.value)],['Total value',money(a.total)],['TVPI (total value ÷ paid-in)',a.tvpi?a.tvpi.toFixed(2)+'×':'—'],['DPI (distributions ÷ paid-in)',a.paid?a.dpi.toFixed(2)+'×':'—'],['Price per unit',a.price?money(a.price):'—']].forEach(function(r){dl.appendChild(el('dt',null,r[0]));dl.appendChild(el('dd',null,r[1]));});
   ca.appendChild(dl);if(m.priceLabel){var pl=el('p','ip-empty',m.priceLabel);pl.style.marginTop='10px';ca.appendChild(pl);}R.appendChild(ca);
+  if(m.offer&&a.units)L.appendChild(earlyCalc(offerNums()));
   if(ROUND_UNITS){var oc=card('Ownership','If '+ROUND+' is fully raised');oc.appendChild(donut(a));R.appendChild(oc);}
   g.appendChild(L);g.appendChild(R);box.appendChild(g);
 }
@@ -297,6 +298,42 @@ function offerHero(teaser){
   if(o.email){var mt=link('Talk to Sarvesh','mail',mailto('AeroAssist round: I’d like to talk'),false,false);mt.className='ip-btn '+(teaser?'ghost':'gold');c.appendChild(mt);}
   h.appendChild(c);return h;
 }
+/* For people who already hold units (the 2023 round at a $4M valuation): what those units could be worth. */
+function earlyPrice(){var h=(m.priceHistory||[]).slice().filter(function(x){return +x.price>0;}).sort(function(a,b){return (a.date||'').localeCompare(b.date||'');})[0];return h?{price:+h.price,year:String(h.date||'').slice(0,4)||'2023'}:{price:400,year:'2023'};}
+function earlyCalc(n){
+  var a=acct(),ep=earlyPrice(),isAdmin=m.role==='admin',mine=a.units>0&&!isAdmin;
+  var c=el('section','ip-card ip-calc ip-early');
+  var h=el('h2',null,mine?'What your units could be worth':'Calculator for '+ep.year+' investors');h.appendChild(el('small',null,'Units bought at '+money(ep.price)+' ('+short$(ep.price*OUT)+' valuation)'));c.appendChild(h);
+  var st={units:a.units||250,dil:+(m.offer&&m.offer.dilution)||0,custom:''};
+  var ctl=el('div','ctls');
+  var uw=el('label','ctl'),us=el('span',null,mine?'Your units':'Units held');uw.appendChild(us);var ui=el('input');ui.type='text';ui.inputMode='numeric';ui.value=String(st.units);ui.setAttribute('aria-label','Units held');
+  if(mine){ui.readOnly=true;ui.title='From your records';}
+  uw.appendChild(ui);ctl.appendChild(uw);
+  var rd=rangeCtl('Dilution from later rounds before a sale','edil',0,60,5,st.dil,function(v){return v+'%';});ctl.appendChild(rd.w);
+  var cw=el('label','ctl'),cs=el('span',null,'Try your own sale price');cw.appendChild(cs);var ci=el('input');ci.type='text';ci.inputMode='numeric';ci.placeholder='e.g. 150M or 1.2B';ci.setAttribute('aria-label','Your own sale price');cw.appendChild(ci);ctl.appendChild(cw);
+  c.appendChild(ctl);
+  var sum=el('div','ip-calc-sum');c.appendChild(sum);var rows=el('div','ip-sc-rows');c.appendChild(rows);
+  var note=el('p','fine');c.appendChild(note);
+  ui.oninput=function(){st.units=Math.max(0,Math.floor(+String(ui.value).replace(/[^0-9]/g,'')||0));calc();};
+  rd.i.oninput=function(){st.dil=+rd.i.value;rd.o.textContent=st.dil+'%';calc();};
+  ci.oninput=function(){st.custom=ci.value;calc();};
+  function calc(){
+    var u=st.units,cost=mine&&a.paid?a.paid:u*ep.price,own=u/(OUT+n.units),own2=own*(1-st.dil/100),paper=u*n.price;
+    sum.textContent='';
+    [['Cost at '+money(ep.price)+' a unit',money(cost)],['Same units at the new '+money(n.price)+' price',money(paper)+(cost?' · '+(paper/cost).toFixed(1)+'×':'')],['Ownership after the round',(own*100).toFixed(3)+'%']].forEach(function(x){var d=el('div');d.appendChild(el('span',null,x[0]));d.appendChild(el('b',null,x[1]));sum.appendChild(d);});
+    var ex=((m.offer&&m.offer.exits)||[]).slice(),cm=String(st.custom).trim().toUpperCase().replace(/[$,\s]/g,'').match(/^([0-9.]+)([KMB])?$/),cv=cm?(+cm[1])*({K:1e3,M:1e6,B:1e9}[cm[2]]||1):0;if(cv>0)ex.push(cv);
+    ex=ex.filter(function(v,i,s2){return s2.indexOf(v)===i;}).sort(function(x,y){return x-y;});
+    var top=Math.max.apply(null,ex.map(function(e){return own2*e;}).concat([cost,1]));
+    rows.textContent='';
+    [{label:'If the company fails',v:0,fail:true}].concat(ex.map(function(e){return {label:'Sold for '+short$(e),v:own2*e,custom:e===cv};})).forEach(function(r){
+      var d=el('div','ip-sc'+(r.fail?' fail':'')+(r.custom?' mine':''));d.appendChild(el('span','lb',r.label));
+      var bar=el('span','bar'),i=el('i');i.style.width=(r.v/top*100).toFixed(2)+'%';bar.appendChild(i);d.appendChild(bar);
+      var v=el('span','v');v.appendChild(el('b',null,money(r.v)));v.appendChild(el('small',null,cost?(r.v/cost).toFixed(1)+'×':'—'));d.appendChild(v);rows.appendChild(d);
+    });
+    note.textContent='Multiples compare against the '+money(ep.price)+' a unit originally paid. '+(mine&&a.dist?'Our records show '+money(a.dist)+' already returned to you; these amounts would be in addition to that. ':'For investors whose '+ep.year+' investment was repaid, these amounts would come on top of the money already returned. ')+'The new-price figure is what the same units cost a new investor in this round. It is not cash, and there is no market to sell units. Ownership assumes the full '+short$(n.raise)+' is raised. Sale prices are examples, not predictions, and the company may never be sold.';
+  }
+  calc();return c;
+}
 function vOpportunity(box,act){
   var o=m.offer;if(!o){box.appendChild(el('p','ip-empty','There is no open round to show.'));return;}
   if(!S.seenRound&&O.seen){S.seenRound=true;O.seen('round');}
@@ -354,6 +391,7 @@ function vOpportunity(box,act){
     });
   }
   calc();L.appendChild(cc);
+  if(holder()||m.role==='admin'){var ch=el('h2',null,'If you invest in this round');ch.appendChild(el('small',null,'New units at '+money(n.price)));cc.insertBefore(ch,cc.firstChild);L.insertBefore(earlyCalc(n),cc);}
   if((o.comps||[]).length){var cp=card('For scale','Recent deals in public-safety drones'),cl=el('ul','ip-list ip-comps');
     o.comps.forEach(function(x){var li=el('li'),d=el('div');d.appendChild(el('b',null,x[0]));d.appendChild(el('p',null,x[1]));li.appendChild(d);li.appendChild(el('span','amt',x[2]));cl.appendChild(li);});
     cp.appendChild(cl);var cf=el('p','ip-empty','Reported figures from public sources. These are among the most successful companies in the category; most never reach outcomes like these, and their results say nothing certain about ours.');cf.style.marginTop='10px';cp.appendChild(cf);L.appendChild(cp);}
