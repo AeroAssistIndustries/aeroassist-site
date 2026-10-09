@@ -321,91 +321,142 @@
 .rb-submit .btn-line{color:#0B1220;border-color:rgba(11,18,32,.35);background:#fff}
 .iv-docs{margin-top:28px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding-top:22px;border-top:1px solid rgba(255,255,255,.12);max-width:560px}.iv-docs span{font:600 12px 'IBM Plex Mono';letter-spacing:.14em;text-transform:uppercase;color:#C9CFD8}
 
-/* Portal: login uses the site hero; signed in, a two-column dashboard (sidebar + views). */
-.pg-portal{--p-bg:#05070b;--p-deep:#080b11;--p-card:#0e121a;--p-card2:#151a24;--p-ink:#f4f6f8;--p-mist:#cdd2da;--p-dim:#9aa1ad;--p-gold:#e2be72;--p-gold2:#f4e2b0;--p-edge:rgba(214,220,228,.13);--p-edgeg:rgba(226,190,114,.42);--p-live:#5bede2;--p-good:#3dd68c}
+.ip{--mark:url(data:image/png;base64,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)}
+/* Sign-in keeps the site's dark hero. Signed in, the portal is a light, full-screen app:
+   top bar, left navigation, white cards on a cool grey canvas, navy ink, one deep-gold accent. */
 .pt-lock{margin-top:30px;display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;max-width:720px}
 .pt-field{display:flex;flex-direction:column;gap:6px;min-width:0}
 .pt-field label{font:600 12px 'IBM Plex Mono';letter-spacing:.14em;text-transform:uppercase;color:#C9CFD8}
 .pt-field input{height:54px;padding:0 16px;background:rgba(8,11,17,.85);border:1px solid rgba(255,255,255,.22);color:#fff;font:600 16px 'IBM Plex Mono';letter-spacing:.1em;width:100%;min-width:0}
-.pt-field input:focus-visible,.db input:focus-visible,.db button:focus-visible,.db a:focus-visible{outline:2px solid var(--p-live);outline-offset:2px}
+.pt-field input:focus-visible{outline:2px solid #5bede2;outline-offset:2px}
 .pt-lock .btn{height:54px}
 .pt-sel{user-select:all;color:#F4E2B0}
 @media (max-width:720px){.pt-lock{grid-template-columns:1fr}}
 
-.db{background:var(--p-bg);padding:calc(var(--head-h,76px) + var(--cmd-h,34px) + 28px) 0 56px}
-.db-shell{max-width:1240px;margin:0 auto;padding:0 20px;display:grid;grid-template-columns:232px minmax(0,1fr);gap:28px;align-items:start}
-.db-side{position:sticky;top:calc(var(--head-h,76px) + var(--cmd-h,34px) + 16px);min-width:0;display:flex;flex-direction:column;gap:18px;background:var(--p-deep);border:1px solid var(--p-edge);padding:18px}
-.db-me{display:flex;gap:12px;align-items:center}
-.db-av{width:40px;height:40px;flex:none;display:grid;place-items:center;background:var(--p-gold);color:#120c02;font:800 16px 'Oxanium',sans-serif;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
-.db-who{min-width:0;display:flex;flex-direction:column}
-.db-who b{color:var(--p-ink);font:700 15px/1.25 'IBM Plex Sans',sans-serif;overflow-wrap:anywhere}
-.db-who span{font:600 11px 'IBM Plex Mono';letter-spacing:.12em;text-transform:uppercase;color:var(--p-gold)}
-.db-nav{display:flex;flex-direction:column;gap:2px;min-width:0}
-.db-nav button{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;color:var(--p-mist);font:500 15px 'IBM Plex Sans',sans-serif;cursor:pointer;border-left:2px solid transparent}
-.db-nav button svg{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.6}
-.db-nav button:hover{background:var(--p-card);color:var(--p-ink)}
-.db-nav button[aria-current="page"]{background:var(--p-card2);color:var(--p-ink);border-left-color:var(--p-gold)}
-.db-nav .ct{margin-left:auto;font:600 11px 'IBM Plex Mono';color:var(--p-dim)}
-.db-out{all:unset;cursor:pointer;font:600 12px 'IBM Plex Mono';letter-spacing:.12em;text-transform:uppercase;color:var(--p-dim);padding:10px 12px;border-top:1px solid var(--p-edge)}
-.db-out:hover{color:var(--p-ink)}
-.db-main{min-width:0;display:flex;flex-direction:column;gap:22px}
-.db-head{display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:space-between;align-items:end}
-.db-head h1{font:800 clamp(26px,3.4vw,36px)/1.1 'Oxanium',sans-serif;color:var(--p-ink);margin:2px 0 0;text-transform:none;letter-spacing:0}
-.db-k{font:600 12px 'IBM Plex Mono';letter-spacing:.16em;text-transform:uppercase;color:var(--p-gold)}
-.db-asof{font:500 12px 'IBM Plex Mono';letter-spacing:.08em;color:var(--p-dim)}
-.db-note{margin:0;border:1px solid var(--p-edgeg);background:rgba(226,190,114,.06);color:var(--p-mist);padding:12px 16px}
-.db-fine{font-size:12.5px;color:var(--p-dim);margin:8px 0 0;max-width:80ch}
-.db-grid{display:grid;gap:14px}
-.db-kpis{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
-.db-2{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);align-items:start}
-#dbView{display:flex;flex-direction:column;gap:14px}
-@media (max-width:980px){.db-2{grid-template-columns:1fr}}
-.db-card{background:var(--p-card);border:1px solid var(--p-edge);padding:18px 20px;min-width:0}
-.db-card h2{font:700 17px/1.2 'Oxanium',sans-serif;color:var(--p-ink);margin:0 0 12px;display:flex;justify-content:space-between;align-items:baseline;gap:10px}
-.db-card h2 a,.db-card h2 button{all:unset;cursor:pointer;font:600 11px 'IBM Plex Mono';letter-spacing:.12em;text-transform:uppercase;color:var(--p-gold)}
-.kpi b{display:block;font:800 28px/1.05 'Oxanium',sans-serif;color:var(--p-ink);font-variant-numeric:tabular-nums}
-.kpi span{display:block;margin-top:6px;font-size:13px;color:var(--p-dim)}
-.kpi em{display:block;margin-top:4px;font:500 12px 'IBM Plex Mono';font-style:normal;color:var(--p-good)}
-.kpi.hi{border-color:var(--p-edgeg)}
-.db-list{list-style:none;margin:0;padding:0}
-.db-list li{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 0;border-top:1px solid var(--p-edge)}
-.db-list li:first-child{border-top:0;padding-top:2px}
-.db-list .t{min-width:0;color:var(--p-ink);font-weight:600;overflow-wrap:anywhere}
-.db-list .s{display:block;font-weight:400;color:var(--p-mist);font-size:14px;margin-top:2px}
-.db-list .d{display:block;font:500 12px 'IBM Plex Mono';color:var(--p-dim);letter-spacing:.04em;margin-top:3px}
-.db-list .a{display:flex;gap:6px;flex:none}
-.db-btn{all:unset;cursor:pointer;font:700 11px/1 'Oxanium',sans-serif;letter-spacing:.06em;text-transform:uppercase;padding:9px 12px;border:1px solid var(--p-edgeg);color:var(--p-ink);white-space:nowrap}
-.db-btn.pri{background:var(--p-gold);border-color:var(--p-gold);color:#120c02}
-.db-btn:disabled{opacity:.6;cursor:default}
-.db-tag{display:inline-block;font:600 10.5px 'IBM Plex Mono';letter-spacing:.1em;text-transform:uppercase;color:var(--p-live);border:1px solid rgba(91,237,226,.4);padding:3px 6px;margin-left:8px;vertical-align:2px}
-.db-ann{padding:10px 0;border-top:1px solid var(--p-edge)}.db-ann:first-of-type{border-top:0;padding-top:0}
-.db-ann b{display:block;color:var(--p-ink)}
-.db-ann p{margin:4px 0 0;color:var(--p-mist);font-size:14px}
-.db-tw{overflow-x:auto}
-.db-table{width:100%;border-collapse:collapse;min-width:520px;font-size:14px}
-.db-table th{font:600 11px 'IBM Plex Mono';letter-spacing:.12em;text-transform:uppercase;color:var(--p-dim);text-align:left;padding:10px 10px;border-bottom:1px solid var(--p-edge);white-space:nowrap}
-.db-table td{padding:11px 10px;border-bottom:1px solid var(--p-edge);color:var(--p-mist)}
-.db-table td.n,.db-table th.n{text-align:right;font-variant-numeric:tabular-nums;font-family:'IBM Plex Mono',monospace}
-.db-table tr.tot td{color:var(--p-ink);font-weight:600;border-bottom:0}
-.db-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
-.db-chips button{all:unset;cursor:pointer;font:600 11px 'IBM Plex Mono';letter-spacing:.08em;text-transform:uppercase;padding:8px 10px;border:1px solid var(--p-edge);color:var(--p-mist)}
-.db-chips button[aria-pressed="true"]{border-color:var(--p-gold);color:var(--p-ink);background:var(--p-card2)}
-.db-search{width:100%;max-width:420px;height:44px;padding:0 12px;background:var(--p-deep);border:1px solid var(--p-edge);color:var(--p-ink);font:15px 'IBM Plex Sans',sans-serif;margin-bottom:12px}
-.db-empty{color:var(--p-dim);margin:4px 0}
-.db-chart{max-width:560px}
-.db-chart svg{display:block;width:100%;height:auto}
-.db-help p{margin:0 0 10px;color:var(--p-mist);font-size:14.5px}
-.db-help b{color:var(--p-ink)}
-@media (max-width:900px){
-  .db-shell{grid-template-columns:minmax(0,1fr)}
-  .db-side{position:static;padding:12px}
-  .db-nav{flex-direction:row;overflow-x:auto;gap:4px;padding-bottom:4px}
-  .db-nav button{width:auto;white-space:nowrap;border-left:0;border-bottom:2px solid transparent;padding:9px 10px}
-  .db-nav button[aria-current="page"]{border-bottom-color:var(--p-gold)}
-  .db-nav .ct{display:none}
-  .db-out{border-top:0;padding:4px 0}
+body.pt-in{background:#f4f5f8}
+body.pt-in .aa-cmd,body.pt-in .site-head,body.pt-in .site-foot,body.pt-in #mobileCta,body.pt-in .skip{display:none!important}
+.ip{--bg:#f4f5f8;--card:#ffffff;--raise:#f8f9fb;--ink:#0b1220;--body:#3a4556;--muted:#5a6577;--faint:#8a93a2;--line:#e3e6ec;--line2:#d5d9e0;
+  --gold:#8a6420;--gold-bg:#f7f1e3;--gold-line:#e5d3ab;--navy:#14213d;--good:#1a7046;--good-bg:#e8f4ee;--info:#0b6b64;--info-bg:#e6f3f2;--warn:#9a5b00;
+  min-height:100vh;background:var(--bg);color:var(--body);font:15px/1.5 'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;color-scheme:light}
+.ip *{box-sizing:border-box}
+.ip a{color:var(--navy)}
+.ip button{font-family:inherit}
+.ip :focus-visible{outline:2px solid #2563eb;outline-offset:2px}
+.ip-top{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:calc(10px + env(safe-area-inset-top,0px)) 24px 10px;background:#fff;border-bottom:1px solid var(--line)}
+.ip-brand{display:flex;align-items:center;gap:12px;min-width:0}
+.ip-mark{width:30px;height:32px;flex:none;background:var(--mark) center/contain no-repeat}
+.ip-brand b{display:block;color:var(--ink);font-weight:600;font-size:15px;line-height:1.2}
+.ip-brand i{display:block;font-style:normal;color:var(--muted);font-size:12.5px}
+.ip-user{display:flex;align-items:center;gap:12px;min-width:0}
+.ip-asof{font-size:12.5px;color:var(--faint);white-space:nowrap}
+.ip-av{width:34px;height:34px;flex:none;border-radius:50%;display:grid;place-items:center;background:var(--navy);color:#fff;font-weight:600;font-size:13px}
+.ip-who{display:flex;flex-direction:column;min-width:0}
+.ip-who b{color:var(--ink);font-weight:600;font-size:14px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ip-who i{font-style:normal;color:var(--muted);font-size:12px}
+.ip-out{border:1px solid var(--line2);background:#fff;color:var(--ink);font-size:13px;font-weight:500;padding:7px 12px;border-radius:6px;cursor:pointer}
+.ip-out:hover{background:var(--raise)}
+.ip-body{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:calc(100vh - 56px);background:linear-gradient(to right,#fff 0,#fff 231px,#e3e6ec 231px,#e3e6ec 232px,transparent 232px)}
+.ip-nav{background:transparent;padding:18px 12px;display:flex;flex-direction:column;gap:2px;position:sticky;top:56px;align-self:start;height:calc(100vh - 56px);overflow-y:auto}
+.ip-nav .grp{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);padding:14px 12px 6px}
+.ip-nav button{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;border-radius:6px;color:var(--body);font-size:14.5px;cursor:pointer}
+.ip-nav button svg{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.ip-nav button:hover{background:var(--raise);color:var(--ink)}
+.ip-nav button[aria-current="page"]{background:var(--gold-bg);color:var(--ink);font-weight:600}
+.ip-nav button[aria-current="page"] svg{color:var(--gold)}
+.ip-nav .ct{margin-left:auto;font-size:12px;color:var(--faint);font-variant-numeric:tabular-nums}
+.ip-main{min-width:0;padding:28px 32px 40px;display:flex;flex-direction:column;gap:20px;max-width:1240px}
+.ip-head{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-end;justify-content:space-between}
+.ip-head h1{margin:0;color:var(--ink);font:600 clamp(24px,2.6vw,30px)/1.2 'IBM Plex Sans',sans-serif;letter-spacing:-.01em;text-transform:none}
+.ip-k{margin:0 0 4px;font-size:13px;color:var(--muted)}
+.ip-actions{display:flex;flex-wrap:wrap;gap:8px}
+.ip-note{margin:0;background:var(--gold-bg);border:1px solid var(--gold-line);color:#5c4415;padding:10px 14px;border-radius:8px;font-size:14px}
+.ip-view{display:flex;flex-direction:column;gap:16px}
+.ip-foot{margin-top:12px;border-top:1px solid var(--line);padding-top:16px;font-size:12.5px;color:var(--faint)}
+.ip-foot p{margin:0 0 6px;max-width:100ch}
+.ip-foot a{color:var(--muted)}
+.ip-grid{display:grid;gap:16px}
+.ip-2{grid-template-columns:minmax(0,1.65fr) minmax(0,1fr);align-items:start}
+.ip-card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px 22px;min-width:0;box-shadow:0 1px 2px rgba(11,18,32,.04)}
+.ip-card>h2{margin:0 0 14px;color:var(--ink);font-size:15.5px;font-weight:600;display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.ip-card>h2 small{font-weight:400;font-size:12.5px;color:var(--faint)}
+.ip-card>h2 button{all:unset;cursor:pointer;font-size:13px;font-weight:500;color:var(--gold)}
+.ip-card>h2 button:hover{text-decoration:underline}
+.ip-strip{background:var(--card);border:1px solid var(--line);border-radius:10px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));box-shadow:0 1px 2px rgba(11,18,32,.04)}
+.ip-stat{padding:18px 20px;border-left:1px solid var(--line);min-width:0}
+.ip-stat:first-child{border-left:0}
+.ip-stat span{display:block;font-size:12.5px;color:var(--muted)}
+.ip-stat b{display:block;margin-top:6px;color:var(--ink);font-size:24px;font-weight:600;letter-spacing:-.01em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ip-stat em{display:inline-block;margin-top:6px;font-style:normal;font-size:12px;font-weight:600;padding:2px 7px;border-radius:999px;background:var(--good-bg);color:var(--good)}
+.ip-stat.hi b{color:var(--gold)}
+.ip-btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line2);background:#fff;color:var(--ink);font-size:13px;font-weight:500;padding:7px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;text-decoration:none}
+.ip-btn:hover{background:var(--raise)}
+.ip-btn.pri{background:var(--navy);border-color:var(--navy);color:#fff}
+.ip-btn.pri:hover{background:#0b1220}
+.ip-btn:disabled{opacity:.6;cursor:default}
+.ip-btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.ip-tw{overflow-x:auto;margin:0 -22px;padding:0 22px}
+.ip-table{width:100%;border-collapse:collapse;font-size:14px;min-width:560px}
+.ip-table th{text-align:left;font-size:12px;font-weight:600;color:var(--muted);padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap;background:var(--raise)}
+.ip-table th:first-child{border-top-left-radius:6px}.ip-table th:last-child{border-top-right-radius:6px}
+.ip-table td{padding:11px 10px;border-bottom:1px solid var(--line);color:var(--body);vertical-align:middle}
+.ip-table tr:last-child td{border-bottom:0}
+.ip-table .n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ip-table .nm{color:var(--ink);font-weight:500}
+.ip-table .sub{display:block;font-size:12.5px;color:var(--faint);font-weight:400;max-width:62ch}
+.ip-table .act{text-align:right;white-space:nowrap}
+.ip-table .act .ip-btn{padding:5px 10px;font-size:12.5px;margin-left:4px}
+.ip-table tr.tot td{font-weight:600;color:var(--ink);background:var(--raise)}
+.ip-pill{display:inline-block;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px;background:#eef0f4;color:var(--body);white-space:nowrap}
+.ip-pill.new{background:var(--info-bg);color:var(--info)}
+.ip-pill.gold{background:var(--gold-bg);color:var(--gold)}
+.ip-pill.good{background:var(--good-bg);color:var(--good)}
+.ip-filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.ip-filters input,.ip-filters select{height:36px;border:1px solid var(--line2);border-radius:6px;background:#fff;color:var(--ink);font:14px 'IBM Plex Sans',sans-serif;padding:0 10px}
+.ip-filters input{flex:1 1 220px;max-width:340px}
+.ip-seg{display:inline-flex;border:1px solid var(--line2);border-radius:6px;overflow:hidden}
+.ip-seg button{border:0;background:#fff;padding:7px 12px;font-size:13px;color:var(--body);cursor:pointer;border-left:1px solid var(--line2)}
+.ip-seg button:first-child{border-left:0}
+.ip-seg button[aria-pressed="true"]{background:var(--navy);color:#fff}
+.ip-list{list-style:none;margin:0;padding:0}
+.ip-list li{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--line)}
+.ip-list li:first-child{border-top:0;padding-top:0}
+.ip-dot{width:8px;height:8px;border-radius:50%;background:var(--gold);flex:none;margin-top:7px}
+.ip-list b{display:block;color:var(--ink);font-weight:600;font-size:14.5px}
+.ip-list p{margin:2px 0 0;font-size:14px;color:var(--body)}
+.ip-list small{display:block;font-size:12.5px;color:var(--faint);margin-top:2px}
+.ip-facts{display:grid;grid-template-columns:1fr auto;gap:0;margin:0}
+.ip-facts dt,.ip-facts dd{padding:9px 0;border-top:1px solid var(--line);font-size:14px;margin:0}
+.ip-facts dt:first-of-type,.ip-facts dd:first-of-type{border-top:0}
+.ip-facts dt{color:var(--muted)}
+.ip-facts dd{color:var(--ink);font-weight:500;text-align:right;font-variant-numeric:tabular-nums}
+.ip-empty{color:var(--faint);font-size:14px;margin:0}
+.ip-chart svg{display:block;width:100%;height:auto}
+.ip-legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--body);margin-top:10px}
+.ip-legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.ip-donut{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+.ip-donut svg{width:150px;height:150px;flex:none}
+.ip-help p{margin:0 0 12px;font-size:14.5px}
+.ip-help b{color:var(--ink)}
+.ip-mono{font-family:'IBM Plex Mono',monospace;font-size:13px}
+@media (max-width:1100px){.ip-2{grid-template-columns:1fr}}
+@media (max-width:860px){
+  .ip-body{grid-template-columns:minmax(0,1fr);background:none}
+  .ip-nav{background:#fff}
+  .ip-strip .ip-stat:last-child:nth-child(odd){grid-column:1/-1}
+  .ip-tw.compact .ip-table{min-width:0}
+  .ip-tw.compact td:nth-child(2),.ip-tw.compact th:nth-child(2){display:none}
+  .ip-tw.compact .act .ip-btn{margin:2px 0 2px 4px}
+  .ip-nav{position:sticky;top:56px;z-index:15;height:auto;flex-direction:row;overflow-x:auto;border-bottom:1px solid var(--line);padding:8px 12px}
+  .ip-nav .grp{display:none}
+  .ip-nav button{width:auto;white-space:nowrap;padding:8px 10px}
+  .ip-nav .ct{display:none}
+  .ip-main{padding:20px 16px 32px}
+  .ip-asof,.ip-who i{display:none}
+  .ip-stat{border-left:0;border-top:1px solid var(--line)}
+  .ip-stat:first-child,.ip-stat:nth-child(2){border-top:0}
+  .ip-strip{grid-template-columns:1fr 1fr}
 }
-@media (max-width:560px){.db-list li{flex-direction:column;align-items:flex-start}.kpi b{font-size:24px}}
+@media (max-width:520px){.ip-who{display:none}.ip-top{padding-inline:16px}.ip-stat b{font-size:20px}.ip-brand i{display:none}}
 </style>
 </head>
 <body class="pg-invest pg-portal">
@@ -441,7 +492,7 @@
 <section class="aa-sub iv-gate" id="ptLogin"><div class="aa-sub-sky" aria-hidden="true"></div><div class="wrap">
   <span class="kicker">Investor and team portal</span>
   <h1>One sign-in for <span class="g">everything.</span></h1>
-  <p class="lead">Unit holders, prospective investors and the AeroAssist team sign in here for holdings, K-1s, company documents and reports. What you see depends on your role.</p>
+  <p class="lead">Unit holders, prospective investors and the AeroAssist team sign in here for capital accounts, K-1s, company documents and reports. What you see depends on your role.</p>
   <form class="pt-lock" id="ptForm" autocomplete="off">
     <div class="pt-field"><label for="ptId">Portal ID</label><input id="ptId" name="id" placeholder="AA-0000" autocapitalize="characters" spellcheck="false" required></div>
     <div class="pt-field"><label for="ptCode">Access code</label><input id="ptCode" name="code" type="password" placeholder="XXXX-XXXX-XXXX-XXXX" autocapitalize="characters" spellcheck="false" required></div>
@@ -451,45 +502,54 @@
   <p class="iv-fine">No sign-in yet, or lost your code? Email Jay Shah, CFO, at <span class="pt-sel">jay@aeroassist.us</span>. Codes are personal; please don't share them. Documents are encrypted and open only in your browser. Looking for the $2M round? See <a href="../invest/index.html">investor relations</a>.</p>
 </div></section>
 
-<section class="db" id="ptApp" hidden>
-  <div class="db-shell">
-    <aside class="db-side" aria-label="Portal sections">
-      <div class="db-me">
-        <span class="db-av" id="dbAv">A</span>
-        <div class="db-who"><b id="dbName">Welcome</b><span id="dbRole">Portal</span></div>
+<div class="ip" id="ptApp" hidden>
+  <header class="ip-top">
+    <div class="ip-brand"><span class="ip-mark" aria-hidden="true"></span><span><b>AeroAssist Industries</b><i>Investor portal</i></span></div>
+    <div class="ip-user">
+      <span class="ip-asof" id="dbAsOf"></span>
+      <span class="ip-av" id="dbAv" aria-hidden="true">A</span>
+      <span class="ip-who"><b id="dbName">Welcome</b><i id="dbRole">Portal</i></span>
+      <button class="ip-out" type="button" id="ptOut">Sign out</button>
+    </div>
+  </header>
+  <div class="ip-body">
+    <nav class="ip-nav" id="dbNav" aria-label="Portal sections"></nav>
+    <div class="ip-main" id="ipMain">
+      <div class="ip-head">
+        <div><p class="ip-k" id="dbKicker"></p><h1 id="dbTitle">Overview</h1></div>
+        <div class="ip-actions" id="dbActions"></div>
       </div>
-      <nav class="db-nav" id="dbNav"></nav>
-      <button class="db-out" type="button" id="ptOut">Sign out</button>
-    </aside>
-    <div class="db-main">
-      <header class="db-head">
-        <div><span class="db-k" id="dbKicker">Overview</span><h1 id="dbTitle">Overview</h1></div>
-        <span class="db-asof" id="dbAsOf"></span>
-      </header>
-      <p class="db-note" id="dbNote" hidden></p>
-      <div id="dbView"></div>
-      <p class="db-fine">Figures are company records and unaudited; signed agreements control. Indicative values use the current round price and are not an appraisal or an offer to buy or sell units. Documents are encrypted and open only in your browser.</p>
+      <p class="ip-note" id="dbNote" hidden></p>
+      <div id="dbView" class="ip-view"></div>
+      <footer class="ip-foot">
+        <p>Figures are company records and unaudited; your subscription and operating agreements control. Indicative values use the current round price per unit and are not an appraisal, a tax valuation, or an offer to buy or sell units.</p>
+        <p>AeroAssist Industries · 4750 S 44th Pl, Suite E18, Phoenix, AZ 85040 · <a href="../index.html">aeroassist.us</a> · <a href="../privacy.html">Privacy</a> · <a href="../terms.html">Terms</a></p>
+      </footer>
     </div>
   </div>
-</section>
+</div>
 </main>
 <script>
 (function(){
-var ITER=250000, VENDOR=(window.AA_VENDOR||'../assets/vendor/'), BASE=(window.AA_PORTAL||'vault/'), S=null, OUT=10000;
+var ITER=250000, VENDOR=(window.AA_VENDOR||'../assets/vendor/'), BASE=(window.AA_PORTAL||'vault/'), S=null, OUT=10000, ROUND_UNITS=1000;
 var GROUPS={company:['prospect','investor','employee','admin'],investors:['prospect','investor','admin'],holders:['investor','admin'],team:['employee','admin'],admin:['admin']};
 var ROLES={prospect:'Prospective investor',investor:'Unit holder',employee:'AeroAssist team',admin:'Administrator'};
-var LIBCATS=['Raise and investing','Unit holder reports','Agencies and sales','Operations','People and HR','Governance and admin'];
-var PCATS=[['tax','Tax (K-1s)'],['certificates','Certificates'],['agreements','Agreements'],['updates','Updates'],['team','Employment'],['other','Other']];
+var PCATS={tax:'Tax (K-1)',certificates:'Certificate',agreements:'Agreement',updates:'Investor update',team:'Employment',other:'Other'};
 var ICON={
- overview:'<path d="M3 13h8V3H3zM13 21h8V11h-8zM3 21h8v-6H3zM13 9h8V3h-8z"/>',
- holdings:'<path d="M3 20h18M6 16V9M11 16V5M16 16v-4M21 16V8"/>',
- documents:'<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/>',
- library:'<path d="M4 4h5v16H4zM10 4h5v16h-5z"/><path d="M16 5l4 1-3 14-4-1"/>',
- people:'<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 4.5a3 3 0 010 6M18 14c2 .7 3 2.6 3 6"/>',
- help:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.6 2.6 0 015 1c0 1.8-2.5 2.2-2.5 4M12 17.5v.5"/>'
+ overview:'<path d="M4 13h6V4H4zM14 20h6v-9h-6zM4 20h6v-3H4zM14 7h6V4h-6z"/>',
+ investment:'<path d="M4 19h16M7 15v-4M12 15V7M17 15v-6"/>',
+ documents:'<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4M10 12h5M10 16h5"/>',
+ updates:'<path d="M4 6h16M4 12h10M4 18h7"/><circle cx="18" cy="16" r="3"/>',
+ company:'<path d="M4 20V8l8-4 8 4v12"/><path d="M9 20v-5h6v5M4 20h16"/>',
+ investors:'<circle cx="9" cy="8" r="3"/><path d="M3.5 19c.6-3 2.8-5 5.5-5s4.9 2 5.5 5"/><path d="M16 5a3 3 0 010 6M17.5 14c1.7.6 2.7 2.5 3 5"/>',
+ help:'<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 014.8.9c0 1.7-2.4 2.1-2.4 3.9M12 17v.4"/>',
+ dl:'<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
+ doc:'<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/>'
 };
+var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function $(i){return document.getElementById(i);}
 function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e;}
+function svgIcon(n){var s=document.createElementNS('http://www.w3.org/2000/svg','svg');s.setAttribute('viewBox','0 0 24 24');s.setAttribute('aria-hidden','true');s.innerHTML=ICON[n];return s;}
 function normId(v){return String(v||'').replace(/\s+/g,'').toUpperCase();}
 function normCode(v){return String(v||'').replace(/[\s-]+/g,'').toUpperCase();}
 function hex(buf){return Array.prototype.map.call(new Uint8Array(buf),function(b){return ('0'+b.toString(16)).slice(-2);}).join('');}
@@ -506,13 +566,14 @@ function aesKey(b){if(!KEYS[b])KEYS[b]=crypto.subtle.importKey('raw',b64d(b),{na
 function openKey(buf,b){return aesKey(b).then(function(k){return crypto.subtle.decrypt({name:'AES-GCM',iv:buf.slice(0,12)},k,buf.slice(12));});}
 function fetchBuf(path){return fetch(BASE+path,{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('missing');return r.arrayBuffer();}).then(function(ab){return new Uint8Array(ab);});}
 function msg(t,err){var m=$('ptMsg');m.textContent=t;m.className='iv-msg'+(err?' err':'');}
-var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function fmtDate(d){if(!d)return '';var p=String(d).split('-');return p.length===3?(MON[+p[1]-1]+' '+(+p[2])+', '+p[0]):d;}
-function money(n){return '$'+Math.round(n||0).toLocaleString('en-US');}
+function money(n){return (n<0?'-$':'$')+Math.abs(Math.round(n||0)).toLocaleString('en-US');}
 function num(n){return Math.round(n||0).toLocaleString('en-US');}
 function kb(n){return n>=1048576?(n/1048576).toFixed(1)+' MB':Math.max(1,Math.round(n/1024))+' KB';}
 function store(v){try{if(v)sessionStorage.setItem('aaPortal',JSON.stringify(v));else sessionStorage.removeItem('aaPortal');}catch(e){}}
 function daysAgo(d){var t=Date.parse(d);return isNaN(t)?1e9:(Date.now()-t)/864e5;}
+function isNew(d){var a=daysAgo(d.date);return a<=(d.mine?60:14)&&a>-400;}
+function greeting(){var h=new Date().getHours();return h<12?'Good morning':h<18?'Good afternoon':'Good evening';}
 
 /* ---------- sign in ---------- */
 function signIn(id,code,quiet){
@@ -524,8 +585,8 @@ function signIn(id,code,quiet){
    .then(function(buf){return openCode(buf,code);})
    .then(function(pt){
      var m=JSON.parse(new TextDecoder().decode(pt));
-     (m.docs||[]).forEach(function(d){d.key=m.pk;d.mine=true;});
-     S={id:id,m:m,lib:[],libReady:false,view:null,libCat:'All',docCat:'all',q:''};
+     (m.docs||[]).forEach(function(d){d.key=m.pk;d.mine=true;d.type_=PCATS[d.cat]||'Other';});
+     S={id:id,m:m,lib:[],libReady:false,view:null,f:{q:'',src:'all',type:'',year:'',as:'all'},tx:'all'};
      store({id:id,code:code});
      boot();
      return loadLibrary();
@@ -536,23 +597,35 @@ function loadLibrary(){
   return Promise.all(Object.keys(g).map(function(name){
     var k=g[name];
     return sha(b64d(k)).then(function(h){return fetchBuf(h+'.enc');}).then(function(buf){return openKey(buf,k);})
-      .then(function(pt){return JSON.parse(new TextDecoder().decode(pt)).docs.map(function(d){d.key=k;d.group=name;return d;});})
+      .then(function(pt){return JSON.parse(new TextDecoder().decode(pt)).docs.map(function(d){d.key=k;d.group=name;d.type_=d.cat;return d;});})
       .catch(function(){return [];});
-  })).then(function(lists){S.lib=[].concat.apply([],lists);S.libReady=true;nav();render();});
+  })).then(function(lists){if(!S)return;S.lib=[].concat.apply([],lists);S.libReady=true;nav();render();});
 }
+function allDocs(){return (S.m.docs||[]).concat(S.lib).slice().sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});}
+
+/* ---------- capital account ---------- */
+function acct(){
+  var m=S.m,h=m.holder||{},tx=m.transactions||[],u=+h.units||0,out=+m.unitsOutstanding||OUT,price=+m.unitPrice||0;
+  var paid=+h.invested||tx.filter(function(t){return /purchase|buy|subscri|contribut/i.test(t.type);}).reduce(function(s,t){return s+(+t.amount||0);},0);
+  var dist=tx.filter(function(t){return /distribut|repay|return of capital/i.test(t.type);}).reduce(function(s,t){return s+Math.abs(+t.amount||0);},0);
+  var value=u*price,total=value+dist;
+  return {units:u,out:out,pct:u/out*100,after:u/(out+ROUND_UNITS)*100,price:price,paid:paid,dist:dist,value:value,total:total,tvpi:paid?total/paid:0,dpi:paid?dist/paid:0};
+}
+function holder(){var m=S.m;return (+((m.holder||{}).units)||0)>0||(m.transactions||[]).length>0;}
 
 /* ---------- shell ---------- */
 function views(){
-  var m=S.m,h=m.holder||{},v=[['overview','Overview']];
-  if(h.units||(m.transactions||[]).length)v.push(['holdings','Holdings']);
-  v.push(['documents','My documents',(m.docs||[]).length]);
-  v.push(['library','Company library',S.libReady?S.lib.length:'']);
-  if(m.role==='admin'&&m.roster)v.push(['people','People and access',m.roster.length]);
-  v.push(['help','Help']);
+  var m=S.m,v=[['Portfolio'],['overview','Overview']];
+  if(holder())v.push(['investment','My investment']);
+  v.push(['Documents'],['documents','Documents',S.libReady?allDocs().length:''],['updates','Updates']);
+  v.push(['Company'],['company','Company']);
+  if(m.role==='admin'&&m.roster)v.push(['investors','Investors and access',m.roster.length]);
+  v.push(['help','Help and security']);
   return v;
 }
 function boot(){
   var m=S.m,h=m.holder||{};
+  document.body.classList.add('pt-in');
   $('ptLogin').hidden=true;$('ptApp').hidden=false;
   var nm=h.name||'Portal user';$('dbName').textContent=nm;
   $('dbAv').textContent=nm.split(/\s+/).map(function(w){return w.charAt(0);}).join('').slice(0,2).toUpperCase();
@@ -560,265 +633,269 @@ function boot(){
   $('dbAsOf').textContent=m.asOf?'Records as of '+fmtDate(m.asOf):'';
   var n=$('dbNote');n.hidden=!m.note;n.textContent=m.note||'';
   var hash=(location.hash||'').slice(1);
-  S.view=views().some(function(x){return x[0]===hash;})?hash:'overview';
+  S.view=views().some(function(x){return x[0]===hash&&x[1];})?hash:'overview';
   nav();render();window.scrollTo(0,0);idleStart();
 }
 function nav(){
   var box=$('dbNav');box.textContent='';
   views().forEach(function(v){
+    if(v.length===1){box.appendChild(el('div','grp',v[0]));return;}
     var b=el('button');b.type='button';b.setAttribute('aria-current',S.view===v[0]?'page':'false');
-    b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+ICON[v[0]]+'</svg>';
-    b.appendChild(document.createTextNode(v[1]));
-    if(v[2]!=null&&v[2]!==''){b.appendChild(el('span','ct',String(v[2])));}
+    b.appendChild(svgIcon(v[0]));b.appendChild(document.createTextNode(v[1]));
+    if(v[2]!=null&&v[2]!=='')b.appendChild(el('span','ct',String(v[2])));
     b.onclick=function(){go(v[0]);};box.appendChild(b);
   });
 }
-function go(v){S.view=v;try{history.replaceState(null,'','#'+v);}catch(e){}nav();render();var t=$('dbTitle');t.setAttribute('tabindex','-1');t.focus({preventScroll:true});window.scrollTo({top:$('ptApp').offsetTop-80});}
+function go(v){S.view=v;try{history.replaceState(null,'','#'+v);}catch(e){}nav();render();window.scrollTo(0,0);var t=$('dbTitle');t.setAttribute('tabindex','-1');t.focus({preventScroll:true});}
 function render(){
-  var titles={overview:['Overview','Your dashboard'],holdings:['Holdings','Your position'],documents:['My documents','Personal'],library:['Company library','Shared with your role'],people:['People and access','Administrator'],help:['Help','Support']};
-  var t=titles[S.view]||titles.overview;$('dbTitle').textContent=t[0];$('dbKicker').textContent=t[1];
+  var m=S.m,first=((m.holder||{}).name||'').split(/\s+/)[0];
+  var T={overview:[greeting()+(first?', '+first:'')+'.','Overview'],investment:['My investment','Your units in AeroAssist Industries'],documents:['Documents','Everything shared with you, in one place'],updates:['Updates','News and reports from the company'],company:['AeroAssist Industries','Company profile'],investors:['Investors and access','Administrator'],help:['Help and security','How the portal works']};
+  var t=T[S.view]||T.overview;$('dbTitle').textContent=t[0];$('dbKicker').textContent=t[1];
+  var act=$('dbActions');act.textContent='';
   var box=$('dbView');box.textContent='';
-  ({overview:vOverview,holdings:vHoldings,documents:vDocuments,library:vLibrary,people:vPeople,help:vHelp}[S.view]||vOverview)(box);
+  ({overview:vOverview,investment:vInvestment,documents:vDocuments,updates:vUpdates,company:vCompany,investors:vInvestors,help:vHelp}[S.view]||vOverview)(box,act);
 }
-function card(title,link,linkTo){var c=el('section','db-card'),h=el('h2',null,title);if(link){var a=el('button',null,link);a.type='button';a.onclick=function(){go(linkTo);};h.appendChild(a);}c.appendChild(h);return c;}
-function kpi(val,label,extra,hi){var c=el('div','db-card kpi'+(hi?' hi':''));c.appendChild(el('b',null,val));c.appendChild(el('span',null,label));if(extra)c.appendChild(el('em',null,extra));return c;}
-
-/* ---------- position math ---------- */
-function position(){
-  var m=S.m,h=m.holder||{},u=+h.units||0,out=+m.unitsOutstanding||OUT,price=+m.unitPrice||0;
-  var inv=+h.invested||0;
-  if(!inv){inv=(m.transactions||[]).filter(function(t){return /purchase|buy|subscri/i.test(t.type);}).reduce(function(s,t){return s+(+t.amount||0);},0);}
-  return {units:u,out:out,pct:u/out*100,price:price,value:u*price,invested:inv,multiple:inv?u*price/inv:0};
+function card(title,small,link,linkTo){var c=el('section','ip-card'),h=el('h2',null,title);if(small)h.appendChild(el('small',null,small));if(link){var a=el('button',null,link);a.type='button';a.onclick=function(){go(linkTo);};h.appendChild(a);}c.appendChild(h);return c;}
+function strip(items){var s=el('div','ip-strip');items.forEach(function(it){var d=el('div','ip-stat'+(it.hi?' hi':''));d.appendChild(el('span',null,it.label));d.appendChild(el('b',null,it.value));if(it.badge)d.appendChild(el('em',null,it.badge));s.appendChild(d);});return s;}
+function btn(label,icon,pri,fn){var b=el('button','ip-btn'+(pri?' pri':''));b.type='button';if(icon)b.appendChild(svgIcon(icon));b.appendChild(document.createTextNode(label));b.onclick=function(){fn(b);};return b;}
+function table(cols,rows){
+  var w=el('div','ip-tw'),t=el('table','ip-table'),th=el('thead'),tr=el('tr');
+  cols.forEach(function(c){tr.appendChild(el('th',c.n?'n':(c.act?'act':null),c.h));});th.appendChild(tr);t.appendChild(th);
+  var tb=el('tbody');rows.forEach(function(r){var row=el('tr',r.cls||null);r.cells.forEach(function(v,i){var c=cols[i],td=el('td',c.n?'n':(c.act?'act':null));if(v instanceof Node)td.appendChild(v);else td.textContent=v==null?'':v;row.appendChild(td);});tb.appendChild(row);});
+  t.appendChild(tb);w.appendChild(t);return w;
 }
 
 /* ---------- views ---------- */
-function vOverview(box){
-  var m=S.m,p=position(),k=el('div','db-grid db-kpis');
-  if(p.units){
-    k.appendChild(kpi(num(p.units),'Units held',null,false));
-    k.appendChild(kpi(p.pct.toFixed(2)+'%','Ownership of '+num(p.out)+' units'));
-    if(p.price)k.appendChild(kpi(money(p.value),'Indicative value at '+money(p.price)+' a unit',p.multiple?p.multiple.toFixed(1)+'× what you paid':null,true));
-    if(p.invested)k.appendChild(kpi(money(p.invested),'Total invested'));
+function vOverview(box,act){
+  var m=S.m,a=acct();
+  if(holder()){
+    act.appendChild(btn('Download statement','dl',true,statement));
+    box.appendChild(strip([{label:'Current value (indicative)',value:money(a.value),hi:true},{label:'Paid-in capital',value:a.paid?money(a.paid):'—'},{label:'Distributions',value:money(a.dist)},{label:'Total value',value:money(a.total)},{label:'Multiple (TVPI)',value:a.tvpi?a.tvpi.toFixed(2)+'×':'—',badge:a.paid?'DPI '+a.dpi.toFixed(2)+'×':null}]));
   }else{
-    var all=(m.docs||[]).concat(S.lib);
-    k.appendChild(kpi(String((m.docs||[]).length),'Personal documents'));
-    k.appendChild(kpi(S.libReady?String(S.lib.length):'…','Library documents for your role'));
-    k.appendChild(kpi(String(all.filter(function(d){return daysAgo(d.date)<=30;}).length),'New in the last 30 days'));
-    k.appendChild(kpi(ROLES[m.role]||'—','Your access'));
+    var docs=allDocs();
+    box.appendChild(strip([{label:'Documents shared with you',value:S.libReady?num(docs.length):'…'},{label:'New in the last 14 days',value:S.libReady?num(docs.filter(isNew).length):'…'},{label:'Personal documents',value:num((m.docs||[]).length)},{label:'Your access',value:ROLES[m.role]||'—'}]));
   }
-  box.appendChild(k);
-  var row=el('div','db-grid db-2'),left=el('div','db-grid'),right=el('div','db-grid');
-  // Needs attention: new personal docs
-  var fresh=(m.docs||[]).filter(function(d){return daysAgo(d.date)<=60;});
-  var att=card('Needs your attention');
-  if(fresh.length){var ul=el('ul','db-list');fresh.slice(0,4).forEach(function(d){ul.appendChild(docRow(d,true));});att.appendChild(ul);}
-  else att.appendChild(el('p','db-empty','Nothing new for you right now.'));
-  if(m.taxNote&&(m.role==='investor'||m.role==='admin'||p.units)){var tx=el('p','db-asof',m.taxNote);tx.style.marginTop='10px';att.appendChild(tx);}
-  left.appendChild(att);
-  var rec=card('Recently added to the library','See all','library');
-  var recent=S.lib.slice().sort(function(a,b){return (b.date||'').localeCompare(a.date||'');}).slice(0,6);
-  if(recent.length){var ul2=el('ul','db-list');recent.forEach(function(d){ul2.appendChild(docRow(d,false));});rec.appendChild(ul2);}
-  else rec.appendChild(el('p','db-empty',S.libReady?'No documents yet.':'Opening the library…'));
-  left.appendChild(rec);
-  if((m.announcements||[]).length){
-    var an=card('From the company');
-    m.announcements.slice().sort(function(a,b){return (b.date||'').localeCompare(a.date||'');}).slice(0,3).forEach(function(a){var d=el('div','db-ann');d.appendChild(el('b',null,a.title||''));d.appendChild(el('span','db-asof',fmtDate(a.date)));d.appendChild(el('p',null,a.body||''));an.appendChild(d);});
-    right.appendChild(an);
-  }
-  if((m.priceHistory||[]).length>1&&(p.units||m.role==='admin'||m.role==='investor')){
-    var ch=card('Price per unit');ch.appendChild(priceChart(m.priceHistory));if(m.priceLabel)ch.appendChild(el('p','db-asof',m.priceLabel));right.appendChild(ch);
-  }
-  right.appendChild(contacts());
-  row.appendChild(left);row.appendChild(right);box.appendChild(row);
+  var g=el('div','ip-grid ip-2'),L=el('div','ip-grid'),R=el('div','ip-grid');
+  if(holder()&&(m.priceHistory||[]).length>1){var c=card('Value of your units','Units × price per unit at each round');c.appendChild(valueChart(m.priceHistory,a.units));L.appendChild(c);}
+  else if(m.role==='admin'&&(m.priceHistory||[]).length>1){var c2=card('Price per unit','By round');c2.appendChild(valueChart(m.priceHistory,1));L.appendChild(c2);}
+  var rc=card('Recent documents',null,'View all','documents');
+  if(!S.libReady&&!(m.docs||[]).length)rc.appendChild(el('p','ip-empty','Opening your documents…'));
+  else rc.appendChild(docTable(allDocs().slice(0,6),true));
+  L.appendChild(rc);
+  R.appendChild(actionCard());
+  if((m.announcements||[]).length)R.appendChild(annCard(2));
+  R.appendChild(factsCard());
+  g.appendChild(L);g.appendChild(R);box.appendChild(g);
 }
-function vHoldings(box){
-  var m=S.m,p=position(),h=m.holder||{},k=el('div','db-grid db-kpis');
-  k.appendChild(kpi(num(p.units),'Units held'));
-  k.appendChild(kpi(p.pct.toFixed(2)+'%','Ownership today'));
-  k.appendChild(kpi((p.units/(p.out+1000)*100).toFixed(2)+'%','After the full $2M round'));
-  if(p.price)k.appendChild(kpi(money(p.value),'Indicative value',p.multiple?p.multiple.toFixed(1)+'× invested':null,true));
-  box.appendChild(k);
-  box.appendChild(ownership(p));
-  var c=card('Position'),tw=el('div','db-tw'),tb=el('table','db-table');
-  tb.innerHTML='<thead><tr><th>Security</th><th class="n">Units</th><th class="n">Ownership</th><th class="n">Invested</th><th class="n">Price now</th><th class="n">Indicative value</th></tr></thead>';
-  var bd=el('tbody'),tr=el('tr');[ 'LLC membership units',num(p.units),p.pct.toFixed(2)+'%',p.invested?money(p.invested):'—',p.price?money(p.price):'—',p.price?money(p.value):'—'].forEach(function(v,i){tr.appendChild(el('td',i?'n':null,v));});
-  bd.appendChild(tr);tb.appendChild(bd);tw.appendChild(tb);c.appendChild(tw);
-  if(h.since)c.appendChild(el('p','db-asof','Unit holder since '+fmtDate(h.since)));
-  var sb=el('button','db-btn pri','Download statement (PDF)');sb.type='button';sb.style.marginTop='12px';sb.onclick=function(){statement(sb);};c.appendChild(sb);
-  box.appendChild(c);
-  var t=card('Transactions'),tx=(m.transactions||[]).slice().sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
-  if(tx.length){var w=el('div','db-tw'),tt=el('table','db-table');tt.innerHTML='<thead><tr><th>Date</th><th>Type</th><th class="n">Units</th><th class="n">Amount</th><th>Note</th></tr></thead>';var b=el('tbody');
-    tx.forEach(function(x){var r=el('tr');[fmtDate(x.date),x.type,x.units?num(x.units):'—',x.amount?money(x.amount):'—',x.note||''].forEach(function(v,i){r.appendChild(el('td',(i===2||i===3)?'n':null,v));});b.appendChild(r);});
-    tt.appendChild(b);w.appendChild(tt);t.appendChild(w);}
-  else t.appendChild(el('p','db-empty','No transactions recorded yet. Contact the CFO if something is missing.'));
-  box.appendChild(t);
-  var certs=(m.docs||[]).filter(function(d){return d.cat==='certificates'||d.cat==='agreements';});
-  var cc=card('Certificates and agreements');
-  if(certs.length){var ul=el('ul','db-list');certs.forEach(function(d){ul.appendChild(docRow(d,false));});cc.appendChild(ul);}else cc.appendChild(el('p','db-empty','None issued yet.'));
-  box.appendChild(cc);
-  if((m.priceHistory||[]).length>1){var ch=card('Price per unit');ch.appendChild(priceChart(m.priceHistory));box.appendChild(ch);}
+function actionCard(){
+  var m=S.m,c=card('For your attention'),ul=el('ul','ip-list'),items=[];
+  (m.docs||[]).filter(isNew).forEach(function(d){items.push({t:d.title,p:(PCATS[d.cat]||'Document')+' added '+fmtDate(d.date),d:d});});
+  if(m.taxNote&&holder())items.push({t:'Tax documents',p:m.taxNote});
+  if(!items.length){c.appendChild(el('p','ip-empty','You are all caught up.'));return c;}
+  items.slice(0,5).forEach(function(it){var li=el('li');li.appendChild(el('span','ip-dot'));var d=el('div');d.appendChild(el('b',null,it.t));d.appendChild(el('p',null,it.p));
+    if(it.d){var b=btn('Open','doc',false,function(bt){get(it.d,bt,(it.d.type||'').indexOf('pdf')>-1);});b.style.marginTop='8px';d.appendChild(b);}
+    li.appendChild(d);ul.appendChild(li);});
+  c.appendChild(ul);return c;
 }
-function vDocuments(box){
-  var m=S.m,docs=(m.docs||[]).slice().sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
-  var tax=docs.filter(function(d){return d.cat==='tax';});
-  if(tax.length||m.taxNote&&(m.role==='investor'||(m.holder||{}).units)){var tc=card('Tax center');
-    if(m.taxNote)tc.appendChild(el('p','db-help',m.taxNote));
-    var years={};tax.forEach(function(d){var y=(String(d.title).match(/(19|20)\d\d/)||[String(d.date).slice(0,4)])[0];(years[y]=years[y]||[]).push(d);});
-    Object.keys(years).sort().reverse().forEach(function(y){var h=el('h3',null,'Tax year '+y);h.style.cssText='font:600 12px IBM Plex Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:#9aa1ad;margin:10px 0 4px';tc.appendChild(h);var ul=el('ul','db-list');years[y].forEach(function(d){ul.appendChild(docRow(d,false));});tc.appendChild(ul);});
-    if(!tax.length)tc.appendChild(el('p','db-empty','No K-1s have been issued to you yet.'));box.appendChild(tc);}
-  var c=card('Your documents'),chips=el('div','db-chips');
-  var cats=[['all','All']].concat(PCATS.filter(function(x){return docs.some(function(d){return d.cat===x[0];});}));
-  cats.forEach(function(x){var b=el('button',null,x[1]);b.type='button';b.setAttribute('aria-pressed',String(S.docCat===x[0]));b.onclick=function(){S.docCat=x[0];render();};chips.appendChild(b);});
-  if(docs.length)c.appendChild(chips);
-  if(docs.length>1){var za=el('button','db-btn','Download all ('+docs.length+')');za.type='button';za.style.marginBottom='12px';za.onclick=function(){zipAll(docs,za);};c.appendChild(za);}
-  var list=docs.filter(function(d){return S.docCat==='all'||d.cat===S.docCat;});
-  if(list.length){var ul=el('ul','db-list');list.forEach(function(d){ul.appendChild(docRow(d,false));});c.appendChild(ul);}
-  else c.appendChild(el('p','db-empty','Nothing has been shared with you personally yet. K-1s, certificates and HR papers appear here.'));
-  box.appendChild(c);
+function annCard(limit){
+  var c=card('From the company',null,limit?'All updates':null,'updates'),ul=el('ul','ip-list');
+  (S.m.announcements||[]).slice().sort(function(a,b){return (b.date||'').localeCompare(a.date||'');}).slice(0,limit||99).forEach(function(a){var li=el('li');var d=el('div');d.appendChild(el('b',null,a.title||''));d.appendChild(el('small',null,fmtDate(a.date)));d.appendChild(el('p',null,a.body||''));li.appendChild(d);ul.appendChild(li);});
+  c.appendChild(ul);return c;
 }
-function vLibrary(box){
-  var c=card('Company library');
-  if(!S.libReady){c.appendChild(el('p','db-empty','Opening the library…'));box.appendChild(c);return;}
-  var s=el('input','db-search');s.type='search';s.id='dbFind';s.placeholder='Search the library';s.value=S.q;s.setAttribute('aria-label','Search the library');
-  s.oninput=function(){S.q=s.value;draw();};c.appendChild(s);
-  var cats=['All'].concat(LIBCATS.filter(function(x){return S.lib.some(function(d){return d.cat===x;});}));
-  S.lib.forEach(function(d){if(cats.indexOf(d.cat)<0)cats.push(d.cat);});
-  var chips=el('div','db-chips');cats.forEach(function(x){var b=el('button',null,x);b.type='button';b.setAttribute('aria-pressed',String(S.libCat===x));b.onclick=function(){S.libCat=x;render();var f=$('dbFind');if(f){f.focus();}};chips.appendChild(b);});
-  c.appendChild(chips);
-  if(S.m.role==='admin'){var va=el('div','db-chips');va.appendChild(el('span','db-asof','View as: '));[['all','As admin (everything)'],['prospect','As prospect'],['investor','As unit holder'],['employee','As team member']].forEach(function(x){var b=el('button',null,x[1]);b.type='button';b.setAttribute('aria-pressed',String((S.viewAs||'all')===x[0]));b.onclick=function(){S.viewAs=x[0];render();};va.appendChild(b);});c.appendChild(va);}
-  var out=el('div');c.appendChild(out);box.appendChild(c);
+function factsCard(){
+  var m=S.m,c=card('Company at a glance',null,'Profile','company'),dl=el('dl','ip-facts');
+  (m.company||[]).forEach(function(f){dl.appendChild(el('dt',null,f[0]));dl.appendChild(el('dd',null,f[1]));});
+  if(!(m.company||[]).length){dl.appendChild(el('dt',null,'Units outstanding'));dl.appendChild(el('dd',null,num(m.unitsOutstanding||OUT)));}
+  c.appendChild(dl);return c;
+}
+function vInvestment(box,act){
+  var m=S.m,a=acct(),h=m.holder||{};
+  act.appendChild(btn('Download statement','dl',true,statement));
+  box.appendChild(strip([{label:'Units held',value:num(a.units)},{label:'Ownership today',value:a.pct.toFixed(2)+'%'},{label:'After the full $2M round',value:a.after.toFixed(2)+'%'},{label:'Current value (indicative)',value:money(a.value),hi:true,badge:a.tvpi?a.tvpi.toFixed(2)+'× TVPI':null}]));
+  var g=el('div','ip-grid ip-2'),L=el('div','ip-grid'),R=el('div','ip-grid');
+  var pc=card('Position',h.since?'Unit holder since '+fmtDate(h.since):null);
+  pc.appendChild(table([{h:'Security'},{h:'Units',n:1},{h:'Ownership',n:1},{h:'Paid-in',n:1},{h:'Price per unit',n:1},{h:'Current value',n:1}],
+    [{cells:['LLC membership units',num(a.units),a.pct.toFixed(2)+'%',a.paid?money(a.paid):'—',a.price?money(a.price):'—',a.price?money(a.value):'—']}]));
+  L.appendChild(pc);
+  var tc=card('Transactions'),tx=(m.transactions||[]).slice().sort(function(x,y){return (y.date||'').localeCompare(x.date||'');});
+  var types=['all'].concat(tx.map(function(t){return t.type;}).filter(function(v,i,s){return v&&s.indexOf(v)===i;}));
+  if(types.length>2){var seg=el('div','ip-seg');types.forEach(function(t){var b=el('button',null,t==='all'?'All':t);b.type='button';b.setAttribute('aria-pressed',String(S.tx===t));b.onclick=function(){S.tx=t;render();};seg.appendChild(b);});var f=el('div','ip-filters');f.appendChild(seg);tc.appendChild(f);}
+  var rows=tx.filter(function(t){return S.tx==='all'||t.type===S.tx;}).map(function(t){var nm=el('span','nm',t.type||'');if(t.note){nm.appendChild(el('span','sub',t.note));}return {cells:[fmtDate(t.date),nm,t.units?num(t.units):'—',t.amount?money(t.amount):'—']};});
+  if(rows.length)tc.appendChild(table([{h:'Date'},{h:'Type'},{h:'Units',n:1},{h:'Amount',n:1}],rows));else tc.appendChild(el('p','ip-empty','No transactions recorded yet. Contact the CFO if something is missing.'));
+  L.appendChild(tc);
+  var dc=card('Certificates and agreements'),certs=(m.docs||[]).filter(function(d){return d.cat==='certificates'||d.cat==='agreements';});
+  dc.appendChild(certs.length?docTable(certs,false):el('p','ip-empty','None issued yet.'));L.appendChild(dc);
+  if((m.priceHistory||[]).length>1){var vc=card('Value of your units','Units × price per unit at each round');vc.appendChild(valueChart(m.priceHistory,a.units));L.appendChild(vc);}
+  var ca=card('Capital account'),dl=el('dl','ip-facts');
+  [['Paid-in capital',a.paid?money(a.paid):'—'],['Distributions received',money(a.dist)],['Current value (indicative)',money(a.value)],['Total value',money(a.total)],['TVPI (total value ÷ paid-in)',a.tvpi?a.tvpi.toFixed(2)+'×':'—'],['DPI (distributions ÷ paid-in)',a.paid?a.dpi.toFixed(2)+'×':'—'],['Price per unit',a.price?money(a.price):'—']].forEach(function(r){dl.appendChild(el('dt',null,r[0]));dl.appendChild(el('dd',null,r[1]));});
+  ca.appendChild(dl);if(m.priceLabel){var pl=el('p','ip-empty',m.priceLabel);pl.style.marginTop='10px';ca.appendChild(pl);}R.appendChild(ca);
+  var oc=card('Ownership','If the $2M round is fully raised');oc.appendChild(donut(a));R.appendChild(oc);
+  g.appendChild(L);g.appendChild(R);box.appendChild(g);
+}
+function vDocuments(box,act){
+  var m=S.m,f=S.f;
+  if((m.docs||[]).length>1)act.appendChild(btn('Download my documents','dl',false,function(b){zipAll(m.docs,b);}));
+  var c=card('All documents');
+  if(!S.libReady){c.appendChild(el('p','ip-empty','Opening the library…'));box.appendChild(c);return;}
+  var docs=allDocs(),fl=el('div','ip-filters');
+  var q=el('input');q.type='search';q.placeholder='Search documents';q.value=f.q;q.id='ipQ';q.setAttribute('aria-label','Search documents');q.oninput=function(){f.q=q.value;draw();};fl.appendChild(q);
+  var seg=el('div','ip-seg');[['all','All'],['mine','Mine'],['company','Company']].forEach(function(x){var b=el('button',null,x[1]);b.type='button';b.setAttribute('aria-pressed',String(f.src===x[0]));b.onclick=function(){f.src=x[0];render();var e=$('ipQ');if(e)e.focus();};seg.appendChild(b);});fl.appendChild(seg);
+  var types=docs.map(function(d){return d.type_;}).filter(function(v,i,s){return v&&s.indexOf(v)===i;}).sort();
+  var ts=el('select');ts.setAttribute('aria-label','Document type');ts.appendChild(new Option('All types',''));types.forEach(function(t){ts.appendChild(new Option(t,t));});ts.value=f.type;ts.onchange=function(){f.type=ts.value;draw();};fl.appendChild(ts);
+  var years=docs.map(function(d){return String(d.date||'').slice(0,4);}).filter(function(v,i,s){return v&&s.indexOf(v)===i;}).sort().reverse();
+  var ys=el('select');ys.setAttribute('aria-label','Year');ys.appendChild(new Option('All years',''));years.forEach(function(y){ys.appendChild(new Option(y,y));});ys.value=f.year;ys.onchange=function(){f.year=ys.value;draw();};fl.appendChild(ys);
+  if(m.role==='admin'){var vs=el('select');vs.setAttribute('aria-label','View as');[['all','View as: admin'],['prospect','View as: prospect'],['investor','View as: unit holder'],['employee','View as: team']].forEach(function(x){vs.appendChild(new Option(x[1],x[0]));});vs.value=f.as;vs.onchange=function(){f.as=vs.value;draw();};fl.appendChild(vs);}
+  c.appendChild(fl);var out=el('div');c.appendChild(out);box.appendChild(c);
   function draw(){
-    out.textContent='';var q=S.q.trim().toLowerCase();
-    var list=S.lib.filter(function(d){return (!S.viewAs||S.viewAs==='all'||(GROUPS[d.group]||[]).indexOf(S.viewAs)>-1)&&(S.libCat==='All'||d.cat===S.libCat)&&(!q||((d.title||'')+' '+(d.desc||'')+' '+(d.cat||'')).toLowerCase().indexOf(q)>-1);});
-    if(!S.lib.length){out.appendChild(el('p','db-empty','No library documents are shared with your role yet.'));return;}
-    if(!list.length){out.appendChild(el('p','db-empty','No documents match.'));return;}
-    var order=LIBCATS.slice();list.forEach(function(d){if(order.indexOf(d.cat)<0)order.push(d.cat);});
-    order.forEach(function(cat){var l=list.filter(function(d){return d.cat===cat;});if(!l.length)return;
-      if(S.libCat==='All'){var h=el('h3',null,cat);h.style.cssText='font:600 12px IBM Plex Mono,monospace;letter-spacing:.14em;text-transform:uppercase;color:#9aa1ad;margin:16px 0 4px';out.appendChild(h);}
-      var ul=el('ul','db-list');l.forEach(function(d){ul.appendChild(docRow(d,true));});out.appendChild(ul);});
+    out.textContent='';var qq=f.q.trim().toLowerCase();
+    var list=docs.filter(function(d){return (f.src==='all'||(f.src==='mine')===!!d.mine)&&(!f.type||d.type_===f.type)&&(!f.year||String(d.date).slice(0,4)===f.year)&&(f.as==='all'||(!d.mine&&(GROUPS[d.group]||[]).indexOf(f.as)>-1))&&(!qq||((d.title||'')+' '+(d.desc||'')+' '+(d.type_||'')).toLowerCase().indexOf(qq)>-1);});
+    out.appendChild(el('p','ip-empty',list.length+' of '+docs.length+' documents'));
+    if(list.length){var t=docTable(list,false);t.style.marginTop='8px';out.appendChild(t);}
   }
   draw();
 }
-function vPeople(box){
-  var r=(S.m.roster||[]).slice().sort(function(a,b){return (b.units||0)-(a.units||0)||String(a.name).localeCompare(b.name);});
-  var k=el('div','db-grid db-kpis'),count=function(role){return r.filter(function(x){return x.role===role;}).length;};
-  k.appendChild(kpi(String(r.length),'People with a sign-in'));
-  k.appendChild(kpi(String(count('investor')),'Unit holders'));
-  k.appendChild(kpi(String(count('prospect')),'Prospective investors'));
-  k.appendChild(kpi(String(count('employee')+count('admin')),'Team and admins'));
-  box.appendChild(k);
-  var c=card('Who has access'),w=el('div','db-tw'),t=el('table','db-table');
-  t.innerHTML='<thead><tr><th>Portal ID</th><th>Name</th><th>Role</th><th class="n">Units</th><th class="n">Ownership</th><th class="n">Invested</th></tr></thead>';
-  var b=el('tbody'),tu=0,ti=0,out=+S.m.unitsOutstanding||OUT;
-  r.forEach(function(x){tu+=x.units||0;ti+=x.invested||0;var tr=el('tr');[x.id,x.name,ROLES[x.role]||x.role,x.units?num(x.units):'—',x.units?(x.units/out*100).toFixed(2)+'%':'—',x.invested?money(x.invested):'—'].forEach(function(v,i){tr.appendChild(el('td',i>2?'n':null,v));});b.appendChild(tr);});
-  var tot=el('tr','tot');['','Total in the portal','',num(tu),(tu/out*100).toFixed(2)+'%',ti?money(ti):'—'].forEach(function(v,i){tot.appendChild(el('td',i>2?'n':null,v));});b.appendChild(tot);
-  t.appendChild(b);w.appendChild(t);c.appendChild(w);
-  c.appendChild(el('p','db-asof','Access codes are never shown here. To add someone, change a role or issue a new code, the CFO edits the private portal folder and rebuilds (tools/PORTAL.md).'));
+function docTable(list,compact){
+  var rows=list.map(function(d){
+    var nm=el('span','nm',d.title||'Document');
+    if(isNew(d)){nm.appendChild(document.createTextNode(' '));nm.appendChild(el('span','ip-pill new','New'));}
+    if(!compact&&d.desc)nm.appendChild(el('span','sub',d.desc));
+    var ty=el('span','ip-pill'+(d.mine?' gold':''),d.mine?(PCATS[d.cat]||'Personal'):d.type_||'Document');
+    var a=el('span');
+    if((d.type||'').indexOf('pdf')>-1)a.appendChild(btn('View',null,false,function(b){get(d,b,true);}));
+    a.appendChild(btn('Download',null,false,function(b){get(d,b,false);}));
+    return {cells:compact?[nm,fmtDate(d.date),a]:[nm,ty,fmtDate(d.date),d.size?kb(d.size):'',a]};
+  });
+  if(compact){var tw=table([{h:'Document'},{h:'Date'},{h:'',act:1}],rows);tw.classList.add('compact');return tw;}
+  return compact?null:table([{h:'Document'},{h:'Type'},{h:'Date'},{h:'Size',n:1},{h:'',act:1}],rows);
+}
+function vUpdates(box){
+  var m=S.m;
+  if((m.announcements||[]).length)box.appendChild(annCard(0));
+  var ups=allDocs().filter(function(d){return d.cat==='updates'||d.type_==='Unit holder reports';});
+  var c=card('Reports and investor updates');c.appendChild(ups.length?docTable(ups,false):el('p','ip-empty',S.libReady?'No reports have been shared with you yet.':'Opening the library…'));box.appendChild(c);
+}
+function vCompany(box){
+  var g=el('div','ip-grid ip-2'),L=el('div','ip-grid'),R=el('div','ip-grid');
+  var ab=card('About'),p=el('p',null,'AeroAssist Industries designs, fabricates and builds drone-as-first-responder aircraft in Phoenix, Arizona, for police, fire and rescue agencies. Aircraft launch from a dock when a call comes in and stream live video to responders before the first unit arrives. Built under NDAA §848 supply-chain rules; FCC certified and CE marked.');p.style.margin='0';ab.appendChild(p);L.appendChild(ab);
+  L.appendChild(factsCard());
+  R.appendChild(contacts());
+  var lk=card('Links'),ul=el('ul','ip-list');[['Company website','../index.html'],['The $2M round (investor relations)','../invest/index.html'],['Our team','../team.html']].forEach(function(x){var li=el('li'),a=el('a',null,x[0]);a.href=x[1];li.appendChild(a);ul.appendChild(li);});lk.appendChild(ul);R.appendChild(lk);
+  g.appendChild(L);g.appendChild(R);box.appendChild(g);
+}
+function contacts(){
+  var c=card('Contacts'),ul=el('ul','ip-list');
+  [['Jay Shah','Chief Financial Officer','Tax documents, statements, access and transfers','jay@aeroassist.us'],['Sarvesh Joshi','Founder and CEO','The business, the round and everything else','sarvesh@aeroassist.us']].forEach(function(x){var li=el('li'),d=el('div');d.appendChild(el('b',null,x[0]+' · '+x[1]));d.appendChild(el('p',null,x[2]));var e=el('small','ip-mono',x[3]);e.style.userSelect='all';d.appendChild(e);li.appendChild(d);ul.appendChild(li);});
+  c.appendChild(ul);return c;
+}
+function vInvestors(box){
+  var r=(S.m.roster||[]).slice().sort(function(a,b){return (b.units||0)-(a.units||0)||String(a.name).localeCompare(b.name);}),out=+S.m.unitsOutstanding||OUT,price=+S.m.unitPrice||0;
+  var cnt=function(role){return r.filter(function(x){return x.role===role;}).length;},tu=r.reduce(function(s,x){return s+(x.units||0);},0),ti=r.reduce(function(s,x){return s+(x.invested||0);},0);
+  box.appendChild(strip([{label:'People with a sign-in',value:num(r.length)},{label:'Unit holders',value:num(cnt('investor'))},{label:'Prospective investors',value:num(cnt('prospect'))},{label:'Team and admins',value:num(cnt('employee')+cnt('admin'))},{label:'Units held by portal members',value:num(tu)+' ('+(tu/out*100).toFixed(1)+'%)'}]));
+  var c=card('Who has access','Access codes are never shown here');
+  var rows=r.map(function(x){return {cells:[el('span','ip-mono',x.id),el('span','nm',x.name||'—'),el('span','ip-pill'+(x.role==='investor'?' good':x.role==='admin'?' gold':''),ROLES[x.role]||x.role),x.units?num(x.units):'—',x.units?(x.units/out*100).toFixed(2)+'%':'—',x.invested?money(x.invested):'—',x.units&&price?money(x.units*price):'—']};});
+  rows.push({cls:'tot',cells:['','Total','',num(tu),(tu/out*100).toFixed(2)+'%',ti?money(ti):'—',price?money(tu*price):'—']});
+  c.appendChild(table([{h:'Portal ID'},{h:'Name'},{h:'Role'},{h:'Units',n:1},{h:'Ownership',n:1},{h:'Paid-in',n:1},{h:'Current value',n:1}],rows));
+  var p=el('p','ip-empty','To add someone, change a role or issue a new code, the CFO edits the private portal folder and rebuilds (tools/PORTAL.md in the site repository).');p.style.marginTop='12px';c.appendChild(p);
   box.appendChild(c);
 }
 function vHelp(box){
-  var c=card('How the portal works'),d=el('div','db-help');
+  var c=card('How the portal works'),d=el('div','ip-help');
   [['Your sign-in','Your portal ID and access code are personal. If you lose your code or think someone else has it, ask the CFO for a new one; the old code then stops working.'],
-   ['What you can see','Your role sets which parts of the company library you can open. Unit holders see holder reports and their own K-1s; the team sees operating manuals and policies.'],
-   ['Security','Every document is encrypted. It is unlocked in your own browser with your sign-in and is never sent anywhere readable. Signing out clears it from this tab.'],
-   ['Values','Indicative values use the current round price per unit. They are not an appraisal, a valuation for tax purposes, or an offer to buy or sell units.']].forEach(function(x){var p=el('p');p.appendChild(el('b',null,x[0]+'. '));p.appendChild(document.createTextNode(x[1]));d.appendChild(p);});
+   ['What you can see','Your role sets which documents you can open. Unit holders see their capital account, holder reports and K-1s. The team sees operating manuals and policies.'],
+   ['Security','Every document is encrypted. It is unlocked in your own browser with your sign-in and is never sent anywhere readable. You are signed out after 30 minutes without activity, and signing out clears everything from this tab.'],
+   ['Values and multiples','Current value uses the price per unit in the most recent round. TVPI is total value (current value plus distributions) divided by what you paid in; DPI is distributions divided by paid-in. These are indicative, not an appraisal or a tax valuation.']].forEach(function(x){var p=el('p');p.appendChild(el('b',null,x[0]+'. '));p.appendChild(document.createTextNode(x[1]));d.appendChild(p);});
   c.appendChild(d);box.appendChild(c);box.appendChild(contacts());
 }
-function contacts(){
-  var c=card('Contacts'),d=el('div','db-help');
-  [['Tax documents, access and transfers','Jay Shah, CFO','jay@aeroassist.us'],['Everything else','Sarvesh Joshi, Founder and CEO','sarvesh@aeroassist.us']].forEach(function(x){var p=el('p');p.appendChild(el('b',null,x[0]));p.appendChild(el('br'));p.appendChild(document.createTextNode(x[1]+' · '));p.appendChild(el('span','pt-sel',x[2]));d.appendChild(p);});
-  c.appendChild(d);return c;
-}
-function priceChart(rows){
-  rows=rows.slice().sort(function(a,b){return (a.date||'').localeCompare(b.date||'');});
-  var W=340,H=200,L=64,R=14,T=26,B=34,max=Math.max.apply(null,rows.map(function(r){return +r.price||0;}))*1.15||1;
-  var t0=Date.parse(rows[0].date),t1=Date.parse(rows[rows.length-1].date),span=Math.max(1,t1-t0);
+
+/* ---------- charts ---------- */
+var NS='http://www.w3.org/2000/svg';
+function svgEl(svg,t,a,txt){var e=document.createElementNS(NS,t);for(var k in a)e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;svg.appendChild(e);return e;}
+function valueChart(hist,mult){
+  var rows=hist.slice().sort(function(a,b){return (a.date||'').localeCompare(b.date||'');}).map(function(r){return {date:r.date,label:r.label,v:(+r.price||0)*mult};});
+  var nar=window.innerWidth<640,fs=nar?1.25:1,W=nar?380:620,H=nar?250:230,L=nar?86:70,R=nar?12:24,T=30,B=36,top=Math.max.apply(null,rows.map(function(r){return r.v;}))||1,max=top*1.18;
+  var t0=Date.parse(rows[0].date),span=Math.max(1,Date.parse(rows[rows.length-1].date)-t0);
   var X=function(d){return L+(Date.parse(d)-t0)/span*(W-L-R);},Y=function(v){return T+(1-v/max)*(H-T-B);};
-  var NS='http://www.w3.org/2000/svg',svg=document.createElementNS(NS,'svg');svg.setAttribute('viewBox','0 0 '+W+' '+H);svg.setAttribute('role','img');
-  svg.setAttribute('aria-label','Price per unit: '+rows.map(function(r){return fmtDate(r.date)+' '+money(r.price);}).join(', '));
-  function add(t,a,txt){var e=document.createElementNS(NS,t);for(var k in a)e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;svg.appendChild(e);return e;}
-  [0,.5,1].forEach(function(f){var v=max/1.15*f;add('line',{x1:L,x2:W-R,y1:Y(v),y2:Y(v),stroke:'rgba(214,220,228,.13)'});add('text',{x:L-8,y:Y(v)+4,'text-anchor':'end','font-size':12,fill:'#9aa1ad','font-family':'IBM Plex Mono, monospace'},money(v));});
-  var d='M'+X(rows[0].date)+' '+Y(rows[0].price);for(var i=1;i<rows.length;i++){d+=' H'+X(rows[i].date)+' V'+Y(rows[i].price);}
-  add('path',{d:d,fill:'none',stroke:'#e2be72','stroke-width':2.5});
-  rows.forEach(function(r,i){add('circle',{cx:X(r.date),cy:Y(r.price),r:4.5,fill:i===rows.length-1?'#e2be72':'#0e121a',stroke:'#e2be72','stroke-width':2});
-    var right=i===rows.length-1;add('text',{x:X(r.date)+(right?-8:8),y:Y(r.price)-10,'text-anchor':right?'end':'start','font-size':14,'font-weight':600,fill:'#f4f6f8','font-family':'IBM Plex Sans, sans-serif'},money(r.price)+(r.label?' · '+r.label:''));
-    add('text',{x:X(r.date),y:H-14,'text-anchor':i===0?'start':(right?'end':'middle'),'font-size':12,fill:'#9aa1ad','font-family':'IBM Plex Mono, monospace'},MON[+String(r.date).slice(5,7)-1]+' '+String(r.date).slice(0,4));});
-  var w=el('div','db-chart');w.appendChild(svg);return w;
+  var svg=document.createElementNS(NS,'svg');svg.setAttribute('viewBox','0 0 '+W+' '+H);svg.setAttribute('role','img');
+  svg.setAttribute('aria-label',rows.map(function(r){return fmtDate(r.date)+': '+money(r.v);}).join(', '));
+  [0,.5,1].forEach(function(f){var v=top*f;svgEl(svg,'line',{x1:L,x2:W-R,y1:Y(v),y2:Y(v),stroke:'#e3e6ec'});svgEl(svg,'text',{x:L-10,y:Y(v)+4,'text-anchor':'end','font-size':12*fs,fill:'#8a93a2','font-family':'IBM Plex Sans, sans-serif'},money(v));});
+  var d='M'+X(rows[0].date)+' '+Y(rows[0].v);for(var i=1;i<rows.length;i++)d+=' H'+X(rows[i].date)+' V'+Y(rows[i].v);
+  var area=d+' V'+Y(0)+' H'+X(rows[0].date)+' Z';svgEl(svg,'path',{d:area,fill:'#14213d','fill-opacity':.05});
+  svgEl(svg,'path',{d:d,fill:'none',stroke:'#14213d','stroke-width':2.25});
+  rows.forEach(function(r,i){var last=i===rows.length-1;svgEl(svg,'circle',{cx:X(r.date),cy:Y(r.v),r:5,fill:last?'#8a6420':'#fff',stroke:last?'#8a6420':'#14213d','stroke-width':2});
+    svgEl(svg,'text',{x:X(r.date)+(last?-10:10),y:Y(r.v)-12,'text-anchor':last?'end':'start','font-size':13.5*fs,'font-weight':600,fill:'#0b1220','font-family':'IBM Plex Sans, sans-serif'},money(r.v)+(r.label&&!nar?'  ·  '+r.label:''));
+    svgEl(svg,'text',{x:X(r.date),y:H-12,'text-anchor':i===0?'start':(last?'end':'middle'),'font-size':12*fs,fill:'#8a93a2','font-family':'IBM Plex Sans, sans-serif'},MON[+String(r.date).slice(5,7)-1]+' '+String(r.date).slice(0,4));});
+  var w=el('div','ip-chart');w.appendChild(svg);return w;
+}
+function donut(a){
+  var total=a.out+ROUND_UNITS,parts=[[a.units,'#8a6420','You'],[a.out-a.units,'#c9ced8','Other unit holders'],[ROUND_UNITS,'#14213d','New units in the $2M round']];
+  var svg=document.createElementNS(NS,'svg');svg.setAttribute('viewBox','0 0 120 120');svg.setAttribute('role','img');svg.setAttribute('aria-label','You hold '+(a.units/total*100).toFixed(2)+'% after the round');
+  var r=46,C=2*Math.PI*r,off=0;parts.forEach(function(p){var len=Math.max(p[0]/total*C,p[2]==='You'?1.6:0);svgEl(svg,'circle',{cx:60,cy:60,r:r,fill:'none',stroke:p[1],'stroke-width':16,'stroke-dasharray':len+' '+(C-len),'stroke-dashoffset':-off,transform:'rotate(-90 60 60)'});off+=len;});
+  svgEl(svg,'text',{x:60,y:58,'text-anchor':'middle','font-size':15,'font-weight':600,fill:'#0b1220','font-family':'IBM Plex Sans, sans-serif'},(a.units/total*100).toFixed(2)+'%');
+  svgEl(svg,'text',{x:60,y:74,'text-anchor':'middle','font-size':9,fill:'#5a6577','font-family':'IBM Plex Sans, sans-serif'},'your share');
+  var w=el('div','ip-donut');w.appendChild(svg);var lg=el('div','ip-legend');lg.style.flexDirection='column';
+  parts.forEach(function(p){var s=el('span');var i=el('i');i.style.background=p[1];s.appendChild(i);s.appendChild(document.createTextNode(p[2]+' · '+num(p[0])+' units ('+(p[0]/total*100).toFixed(2)+'%)'));lg.appendChild(s);});
+  w.appendChild(lg);return w;
 }
 
-/* ---------- documents ---------- */
-function docRow(d,showDesc){
-  var li=el('li'),t=el('div','t',d.title||'Document');
-  if(daysAgo(d.date)<=(d.mine?60:14)&&daysAgo(d.date)>=-400)t.appendChild(el('span','db-tag','New'));
-  if(showDesc&&d.desc)t.appendChild(el('span','s',d.desc));
-  var ext=(d.name||'').split('.').pop().toUpperCase();
-  t.appendChild(el('span','d',[fmtDate(d.date),d.size?kb(d.size):'',ext,d.mine?'Personal':(d.cat||'')].filter(Boolean).join(' · ')));
-  var a=el('div','a');
-  if((d.type||'').indexOf('pdf')>-1){var v=el('button','db-btn','View');v.type='button';v.onclick=function(){get(d,v,true);};a.appendChild(v);}
-  var s=el('button','db-btn pri','Download');s.type='button';s.onclick=function(){get(d,s,false);};a.appendChild(s);
-  li.appendChild(t);li.appendChild(a);return li;
-}
+/* ---------- files ---------- */
 var cache={};
-function get(d,btn,view){
-  var t=btn.textContent,win=view?window.open('','_blank'):null;
+function get(d,b,view){
+  var t=b.textContent,win=view?window.open('','_blank'):null;
   if(win){try{win.document.write('<p style="font:16px system-ui;padding:24px">Opening '+String(d.title||'document').replace(/[<>&]/g,'')+'…</p>');}catch(e){}}
-  btn.textContent='Preparing…';btn.disabled=true;
-  var p=cache[d.file]?Promise.resolve(cache[d.file]):fetchBuf('f/'+d.file).then(function(b){return openKey(b,d.key);}).then(function(pt){var u=URL.createObjectURL(new Blob([pt],{type:d.type||'application/octet-stream'}));cache[d.file]=u;return u;});
+  b.textContent='Preparing…';b.disabled=true;
+  var p=cache[d.file]?Promise.resolve(cache[d.file]):fetchBuf('f/'+d.file).then(function(x){return openKey(x,d.key);}).then(function(pt){var u=URL.createObjectURL(new Blob([pt],{type:d.type||'application/octet-stream'}));cache[d.file]=u;return u;});
   p.then(function(u){
     if(view&&win){win.location.href=u;}
     else{var a=document.createElement('a');a.href=u;a.download=d.name||'AeroAssist_document';document.body.appendChild(a);a.click();a.remove();}
-    btn.textContent=t;btn.disabled=false;
-  }).catch(function(){if(win){try{win.close();}catch(e){}}btn.textContent='Failed, try again';btn.disabled=false;});
-}
-
-function ownership(p){
-  var c=card('Your share of the company'),out=p.out,after=out+1000,me=p.units;
-  var bar=el('div');bar.style.cssText='display:flex;height:16px;border:1px solid rgba(214,220,228,.13);background:#080b11;margin:4px 0 10px';
-  var seg=function(w,bg,label){var s=el('i');s.style.cssText='display:block;height:100%;width:'+w+'%;background:'+bg;s.title=label;bar.appendChild(s);};
-  seg(Math.max(.6,me/after*100),'#e2be72','You');seg((out-me)/after*100,'#3a4556','Other unit holders');seg(1000/after*100,'rgba(91,237,226,.45)','New units in the $2M round');
-  c.appendChild(bar);
-  var lg=el('p','db-asof');lg.textContent='You '+num(me)+' units · Other holders '+num(out-me)+' · New round 1,000 units (if fully raised) · Total after the round '+num(after);c.appendChild(lg);
-  return c;
+    b.textContent=t;b.disabled=false;
+  }).catch(function(){if(win){try{win.close();}catch(e){}}b.textContent='Failed, try again';b.disabled=false;});
 }
 function loadScript(src){return new Promise(function(ok,no){var s=document.createElement('script');s.src=src;s.onload=ok;s.onerror=no;document.head.appendChild(s);});}
-function statement(btn){
-  var t=btn.textContent;btn.textContent='Preparing…';btn.disabled=true;
+function statement(b){
+  var t=b.textContent;b.textContent='Preparing…';b.disabled=true;
   (window.jspdf?Promise.resolve():loadScript(VENDOR+'jspdf.umd.min.js')).then(function(){
-    var m=S.m,h=m.holder||{},p=position(),doc=new window.jspdf.jsPDF({unit:'pt',format:'letter'}),y=64;
-    doc.setFont('helvetica','bold');doc.setFontSize(18);doc.text('AeroAssist Industries',56,y);y+=22;
-    doc.setFontSize(12);doc.setFont('helvetica','normal');doc.text('Unit holder statement',56,y);y+=12;doc.setDrawColor(201,151,63);doc.setLineWidth(1.5);doc.line(56,y,556,y);y+=24;
-    doc.setFontSize(10);[['Holder',h.name||''],['Portal ID',S.id],['Records as of',fmtDate(m.asOf)||'—'],['Statement generated',fmtDate(new Date().toISOString().slice(0,10))]].forEach(function(r){doc.setFont('helvetica','bold');doc.text(r[0],56,y);doc.setFont('helvetica','normal');doc.text(String(r[1]),180,y);y+=16;});
-    y+=14;doc.setFont('helvetica','bold');doc.setFontSize(12);doc.text('Position',56,y);y+=18;doc.setFontSize(10);
-    [['Security','LLC membership units'],['Units held',num(p.units)],['Ownership today',p.pct.toFixed(2)+'% of '+num(p.out)+' units'],['Ownership after the full $2M round',(p.units/(p.out+1000)*100).toFixed(2)+'%'],['Total invested',p.invested?money(p.invested):'—'],['Current round price per unit',p.price?money(p.price):'—'],['Indicative value',p.price?money(p.value):'—']].forEach(function(r){doc.setFont('helvetica','normal');doc.text(r[0],56,y);doc.text(r[1],330,y);y+=16;});
-    y+=14;doc.setFont('helvetica','bold');doc.setFontSize(12);doc.text('Transactions',56,y);y+=18;doc.setFontSize(10);
-    var tx=(m.transactions||[]).slice().sort(function(a,b){return (a.date||'').localeCompare(b.date||'');});
+    var m=S.m,h=m.holder||{},a=acct(),doc=new window.jspdf.jsPDF({unit:'pt',format:'letter'}),y=64;
+    var row=function(k,v,bold){doc.setFont('helvetica',bold?'bold':'normal');doc.text(k,56,y);doc.text(String(v),556,y,{align:'right'});y+=17;};
+    doc.setFont('helvetica','bold');doc.setFontSize(18);doc.text('AeroAssist Industries',56,y);y+=20;
+    doc.setFontSize(11);doc.setFont('helvetica','normal');doc.setTextColor(90);doc.text('Unit holder statement',56,y);doc.text('Records as of '+(fmtDate(m.asOf)||'—'),556,y,{align:'right'});doc.setTextColor(0);y+=12;
+    doc.setDrawColor(138,100,32);doc.setLineWidth(1.2);doc.line(56,y,556,y);y+=26;
+    doc.setFontSize(10);row('Unit holder',h.name||'');row('Portal ID',S.id);row('Generated',fmtDate(new Date().toISOString().slice(0,10)));
+    y+=12;doc.setFont('helvetica','bold');doc.setFontSize(12);doc.text('Capital account',56,y);y+=18;doc.setFontSize(10);
+    row('Paid-in capital',a.paid?money(a.paid):'—');row('Distributions received',money(a.dist));row('Current value (indicative)',money(a.value));row('Total value',money(a.total),true);
+    row('TVPI',a.tvpi?a.tvpi.toFixed(2)+'x':'—');row('DPI',a.paid?a.dpi.toFixed(2)+'x':'—');
+    y+=12;doc.setFont('helvetica','bold');doc.setFontSize(12);doc.text('Position',56,y);y+=18;doc.setFontSize(10);
+    row('Security','LLC membership units');row('Units held',num(a.units));row('Ownership today',a.pct.toFixed(2)+'% of '+num(a.out)+' units');row('Ownership after the full $2M round',a.after.toFixed(2)+'%');row('Current price per unit',a.price?money(a.price):'—');
+    y+=12;doc.setFont('helvetica','bold');doc.setFontSize(12);doc.text('Transactions',56,y);y+=18;doc.setFontSize(10);
+    var tx=(m.transactions||[]).slice().sort(function(p,q){return (p.date||'').localeCompare(q.date||'');});
     if(!tx.length){doc.setFont('helvetica','normal');doc.text('None recorded.',56,y);y+=16;}
-    else{doc.setFont('helvetica','bold');doc.text('Date',56,y);doc.text('Type',150,y);doc.text('Units',300,y);doc.text('Amount',380,y);y+=14;doc.setFont('helvetica','normal');
-      tx.forEach(function(x){doc.text(fmtDate(x.date),56,y);doc.text(String(x.type||''),150,y);doc.text(x.units?num(x.units):'—',300,y);doc.text(x.amount?money(x.amount):'—',380,y);y+=15;if(x.note){doc.setTextColor(110);doc.text(doc.splitTextToSize(String(x.note),440),150,y);doc.setTextColor(0);y+=15;}});}
-    y+=24;doc.setFontSize(8.5);doc.setTextColor(90);
-    doc.text(doc.splitTextToSize('Company records, unaudited. Indicative value uses the current round price per unit and is not an appraisal, a valuation for tax purposes, or an offer to buy or sell units. Your subscription and operating agreements control. Questions: Jay Shah, CFO, jay@aeroassist.us.',500),56,y);
-    doc.save('AeroAssist_Statement_'+S.id+'_'+(m.asOf||'')+'.pdf');btn.textContent=t;btn.disabled=false;
-  }).catch(function(){btn.textContent='Could not prepare the statement';btn.disabled=false;});
+    else{doc.setFont('helvetica','bold');doc.text('Date',56,y);doc.text('Type',150,y);doc.text('Units',430,y,{align:'right'});doc.text('Amount',556,y,{align:'right'});y+=6;doc.setDrawColor(220);doc.line(56,y,556,y);y+=14;doc.setFont('helvetica','normal');
+      tx.forEach(function(x){if(y>700){doc.addPage();y=64;}doc.text(fmtDate(x.date),56,y);doc.text(String(x.type||''),150,y);doc.text(x.units?num(x.units):'—',430,y,{align:'right'});doc.text(x.amount?money(x.amount):'—',556,y,{align:'right'});y+=15;if(x.note){doc.setTextColor(120);doc.text(doc.splitTextToSize(String(x.note),380),150,y);doc.setTextColor(0);y+=15;}});}
+    y+=22;doc.setFontSize(8.5);doc.setTextColor(100);
+    doc.text(doc.splitTextToSize('Company records, unaudited. Current value uses the most recent round price per unit and is not an appraisal, a valuation for tax purposes, or an offer to buy or sell units. Your subscription and operating agreements control. Questions: Jay Shah, CFO, jay@aeroassist.us. AeroAssist Industries, 4750 S 44th Pl, Suite E18, Phoenix, AZ 85040.',500),56,y);
+    doc.save('AeroAssist_Statement_'+S.id+'_'+(m.asOf||'')+'.pdf');b.textContent=t;b.disabled=false;
+  }).catch(function(){b.textContent='Could not prepare the statement';b.disabled=false;});
 }
-function fileData(d){return fetchBuf('f/'+d.file).then(function(b){return openKey(b,d.key);});}
-function zipAll(docs,btn){
-  var t=btn.textContent;btn.textContent='Preparing…';btn.disabled=true;
+function zipAll(docs,b){
+  var t=b.textContent;b.textContent='Preparing…';b.disabled=true;
   (window.JSZip?Promise.resolve():loadScript(VENDOR+'jszip.min.js')).then(function(){
     var z=new window.JSZip(),used={};
-    return Promise.all(docs.map(function(d){return fileData(d).then(function(buf){var n=d.name||(d.title+'.pdf');while(used[n])n='1_'+n;used[n]=1;z.file(n,buf);});})).then(function(){return z.generateAsync({type:'blob'});});
-  }).then(function(blob){var u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='AeroAssist_My_Documents.zip';document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u);},5000);btn.textContent=t;btn.disabled=false;})
-   .catch(function(){btn.textContent='Could not prepare the download';btn.disabled=false;});
+    return Promise.all(docs.map(function(d){return fetchBuf('f/'+d.file).then(function(x){return openKey(x,d.key);}).then(function(buf){var n=d.name||(d.title+'.pdf');while(used[n])n='1_'+n;used[n]=1;z.file(n,buf);});})).then(function(){return z.generateAsync({type:'blob'});});
+  }).then(function(blob){var u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='AeroAssist_My_Documents.zip';document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u);},5000);b.textContent=t;b.disabled=false;})
+   .catch(function(){b.textContent='Could not prepare the download';b.disabled=false;});
 }
-$('ptForm').addEventListener('submit',function(e){e.preventDefault();signIn($('ptId').value,$('ptCode').value);});
+
+/* ---------- session ---------- */
 function signOut(why){
   store(null);Object.keys(cache).forEach(function(k){URL.revokeObjectURL(cache[k]);});cache={};KEYS={};S=null;clearTimeout(idleT);
   try{history.replaceState(null,'',location.pathname);}catch(e){}
+  document.body.classList.remove('pt-in');
   $('ptApp').hidden=true;$('ptLogin').hidden=false;$('ptCode').value='';msg(why||'Signed out.');window.scrollTo(0,0);
 }
-$('ptOut').addEventListener('click',function(){signOut();});
 var idleT=null,IDLE=30*60*1000;
 function idleStart(){clearTimeout(idleT);idleT=setTimeout(function(){if(S)signOut('Signed out after 30 minutes without activity. Sign in again to continue.');},IDLE);}
 ['click','keydown','scroll','touchstart'].forEach(function(ev){document.addEventListener(ev,function(){if(S)idleStart();},{passive:true});});
+$('ptOut').addEventListener('click',function(){signOut();});
+$('ptForm').addEventListener('submit',function(e){e.preventDefault();signIn($('ptId').value,$('ptCode').value);});
 function auto(){var s=null;try{s=JSON.parse(sessionStorage.getItem('aaPortal')||'null');}catch(e){}if(s&&s.id&&s.code)signIn(s.id,s.code,true);}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',auto);else auto();
 })();

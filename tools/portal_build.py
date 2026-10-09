@@ -22,6 +22,7 @@ builds that folder from a PRIVATE input folder (never commit it):
                     "priceHistory": [{"date": "2023-04-01", "price": 400, "label": "First round"}],
                     "announcements": [{"date": "2026-10-09", "title": "...", "body": "..."}],
                     "taxNote": "When this year's K-1s will be ready (shown to unit holders)",
+                    "companyFacts": [["Founded", "2022"], ["Headquarters", "Phoenix, Arizona"]],
                     "note": "Message shown to everyone"}       (optional)
     keys.json      group keys, created on first run    (keep private, keep safe)
     codes.csv      each person's access code, created on first run (keep private)
@@ -201,7 +202,7 @@ def main():
             "role": role, "groups": {g: keys[g] for g in groups}, "pk": b64(pkey),
             "unitsOutstanding": int(settings.get("unitsOutstanding", 10000)),
             "unitPrice": float(settings.get("unitPrice", 0)), "priceLabel": settings.get("priceLabel", ""),
-            "priceHistory": settings.get("priceHistory", []), "announcements": settings.get("announcements", []), "taxNote": settings.get("taxNote", ""),
+            "priceHistory": settings.get("priceHistory", []), "announcements": settings.get("announcements", []), "taxNote": settings.get("taxNote", ""), "company": settings.get("companyFacts", []),
             "asOf": settings.get("asOf", ""), "note": settings.get("note", ""), "docs": mine, "transactions": my_txns,
         }
         if role == "admin":   # admins see who has access (never anyone's code)
