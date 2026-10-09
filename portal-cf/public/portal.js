@@ -279,6 +279,7 @@ function offerNums(){
   return {pre:pre,raise:raise,post:pre+raise,price:price,units:units,pct:units?units/(OUT+units)*100:0};
 }
 function short$(n){n=+n||0;if(n>=1e9)return '$'+(n/1e9).toFixed(n%1e9?1:0)+'B';if(n>=1e6)return '$'+(n/1e6).toFixed(n%1e6?1:0)+'M';if(n>=1e3)return '$'+Math.round(n/1e3)+'K';return money(n);}
+function firstPrice(){var h=(m.priceHistory||[]).slice().sort(function(a,b){return (a.date||'').localeCompare(b.date||'');})[0];return h&&+h.price&&h.date?[['Price per unit in '+String(h.date).slice(0,4)+(h.label?' ('+h.label+')':''),money(+h.price)]]:[];}
 function libDoc(re){return S.lib.filter(function(d){return re.test(d.title||'');})[0]||null;}
 function mailto(subject){var o=m.offer||{};return 'mailto:'+(o.email||'')+'?subject='+encodeURIComponent(subject);}
 function offerHero(teaser){
@@ -310,10 +311,10 @@ function vOpportunity(box,act){
   /* track record */
   if((o.track||[]).length){
     var tc=el('section','ip-card ip-trackcard');
-    tc.appendChild(el('div','kick','Track record'));
-    tc.appendChild(el('h3',null,'Our earlier investors got their money back, and kept their units.'));
+    tc.appendChild(el('div','kick','Capital history'));
+    tc.appendChild(el('h3',null,'In 2023, outside investors put in about $600,000. It was repaid in full by April 2024, and those investors still hold their units.'));
     var tg=el('div','ip-track');o.track.forEach(function(x){var d=el('div');d.appendChild(el('b',null,x[0]));d.appendChild(el('p',null,x[1]));tg.appendChild(d);});tc.appendChild(tg);
-    tc.appendChild(el('p','fine','That history is real, but it doesn’t make a new investment safe. Units in this round cost '+money(n.price)+', and your money is at risk until there is a sale of the company or a distribution.'));
+    tc.appendChild(el('p','fine','Past repayments are not a pattern or a promise. The company has no plan or obligation to repay investors in this round, and you could lose all of your investment. Units in this round cost '+money(n.price)+', so the earlier investors’ outcome says nothing about yours.'));
     box.appendChild(tc);
   }
 
@@ -323,14 +324,14 @@ function vOpportunity(box,act){
   var cc=el('section','ip-card ip-calc');
   var st={amt:100000,dil:+o.dilution||0,custom:''};
   var ctl=el('div','ctls');
-  var ra=rangeCtl('Investment','amt',25000,1000000,25000,st.amt,function(v){return money(v);});
+  var ra=rangeCtl('Investment','amt',50000,1000000,50000,st.amt,function(v){return money(v);});
   var rd=rangeCtl('Dilution from later rounds before a sale','dil',0,60,5,st.dil,function(v){return v+'%';});
   ctl.appendChild(ra.w);ctl.appendChild(rd.w);
-  var cw=el('label','ctl'),cs=el('span',null,'Try your own sale price');cw.appendChild(cs);var ci=el('input');ci.type='text';ci.inputMode='numeric';ci.placeholder='e.g. 150,000,000';cw.appendChild(ci);ctl.appendChild(cw);
+  var cw=el('label','ctl'),cs=el('span',null,'Try your own sale price');cw.appendChild(cs);var ci=el('input');ci.type='text';ci.inputMode='numeric';ci.placeholder='e.g. 150M or 1.2B';cw.appendChild(ci);ctl.appendChild(cw);
   cc.appendChild(ctl);
   var sum=el('div','ip-calc-sum');cc.appendChild(sum);
   var rows=el('div','ip-sc-rows');cc.appendChild(rows);
-  cc.appendChild(el('p','fine','Units = investment ÷ '+money(n.price)+', rounded down. Ownership assumes the full '+short$(n.raise)+' is raised ('+num(OUT+n.units)+' units). Later rounds usually reduce everyone’s share; the slider sets by how much. The math ignores taxes, fees, time and any preferences later investors may negotiate. These sale prices are examples, not predictions, and the company may never be sold.'));
+  cc.appendChild(el('p','fine','Units = investment ÷ '+money(n.price)+', rounded down. Ownership assumes the full '+short$(n.raise)+' is raised ('+num(OUT+n.units)+' units). Later rounds usually reduce everyone’s share; the slider sets by how much. The math ignores taxes, fees, debt, time and any preferences later investors may negotiate. These sale prices are examples, not predictions, and the company may never be sold.'));
   ra.i.oninput=function(){st.amt=+ra.i.value;ra.o.textContent=money(st.amt);calc();};
   rd.i.oninput=function(){st.dil=+rd.i.value;rd.o.textContent=st.dil+'%';calc();};
   ci.oninput=function(){st.custom=ci.value;calc();};
@@ -338,7 +339,7 @@ function vOpportunity(box,act){
     var units=n.price?Math.floor(st.amt/n.price):0,paid=units*n.price,own=units/(OUT+n.units),own2=own*(1-st.dil/100);
     sum.textContent='';
     [['Units',num(units)+(paid!==st.amt?' ('+money(paid)+')':'')],['Ownership after the round',(own*100).toFixed(3)+'%'],['After later rounds',(own2*100).toFixed(3)+'%']].forEach(function(x){var d=el('div');d.appendChild(el('span',null,x[0]));d.appendChild(el('b',null,x[1]));sum.appendChild(d);});
-    var ex=(o.exits||[]).slice(),cv=+String(st.custom).replace(/[^0-9.]/g,'');if(cv>0)ex.push(cv);
+    var ex=(o.exits||[]).slice(),cm=String(st.custom).trim().toUpperCase().replace(/[$,\s]/g,'').match(/^([0-9.]+)([KMB])?$/),cv=cm?(+cm[1])*({K:1e3,M:1e6,B:1e9}[cm[2]]||1):0;if(cv>0)ex.push(cv);
     ex=ex.filter(function(v,i,s){return s.indexOf(v)===i;}).sort(function(a,b){return a-b;});
     var top=Math.max.apply(null,ex.map(function(e){return own2*e;}).concat([paid,1]));
     rows.textContent='';
@@ -352,9 +353,9 @@ function vOpportunity(box,act){
   calc();L.appendChild(cc);
   if((o.comps||[]).length){var cp=card('For scale','Recent deals in public-safety drones'),cl=el('ul','ip-list ip-comps');
     o.comps.forEach(function(x){var li=el('li'),d=el('div');d.appendChild(el('b',null,x[0]));d.appendChild(el('p',null,x[1]));li.appendChild(d);li.appendChild(el('span','amt',x[2]));cl.appendChild(li);});
-    cp.appendChild(cl);var cf=el('p','ip-empty','Reported figures from public sources. Other companies’ results say nothing certain about ours.');cf.style.marginTop='10px';cp.appendChild(cf);L.appendChild(cp);}
+    cp.appendChild(cl);var cf=el('p','ip-empty','Reported figures from public sources. These are among the most successful companies in the category; most never reach outcomes like these, and their results say nothing certain about ours.');cf.style.marginTop='10px';cp.appendChild(cf);L.appendChild(cp);}
   var tc2=card('The terms'),dl=el('dl','ip-facts ip-terms');
-  [['Raise',money(n.raise)],['Security',o.security||'—'],['Pre-money valuation',money(n.pre)],['Post-money valuation',money(n.post)],['Price per unit',money(n.price)],['Units outstanding today',num(OUT)],['New units',num(n.units)],['Ownership for the full round',n.pct.toFixed(2)+'%'],['Minimum investment',o.min||'Ask us']].forEach(function(r){dl.appendChild(el('dt',null,r[0]));dl.appendChild(el('dd',null,r[1]));});
+  [['Raise',money(n.raise)],['Security',o.security||'—'],['Pre-money valuation',money(n.pre)],['Post-money valuation',money(n.post)],['Price per unit',money(n.price)]].concat(firstPrice()).concat([['Units outstanding today',num(OUT)],['New units',num(n.units)],['Ownership for the full round',n.pct.toFixed(2)+'%'],['Minimum investment',o.min||'Ask us']]).forEach(function(r){dl.appendChild(el('dt',null,r[0]));dl.appendChild(el('dd',null,r[1]));});
   tc2.appendChild(dl);R.appendChild(tc2);
   g.appendChild(L);g.appendChild(R);box.appendChild(g);
 
@@ -365,7 +366,7 @@ function vOpportunity(box,act){
     if((o.use||[]).length){var uc=card('Use of funds',money(n.raise)),tot=o.use.reduce(function(s,x){return s+(+x[1]||0);},0)||1,mx=Math.max.apply(null,o.use.map(function(x){return +x[1]||0;}))||1,ul=el('div','ip-use');
       o.use.forEach(function(x){var r=el('div','row');r.appendChild(el('span','lb',x[0]));var b=el('span','bar'),i=el('i');i.style.width=((+x[1]||0)/mx*100).toFixed(1)+'%';b.appendChild(i);r.appendChild(b);var v=el('span','v');v.appendChild(el('b',null,short$(+x[1])));v.appendChild(el('small',null,Math.round((+x[1]||0)/tot*100)+'%'));r.appendChild(v);ul.appendChild(r);});
       uc.appendChild(ul);L2.appendChild(uc);}
-    if((o.phases||[]).length){var pc=card('Released in phases'),pw=el('div','ip-phases');
+    if((o.phases||[]).length){var pc=card('Planned spending in two phases'),pw=el('div','ip-phases');
       o.phases.forEach(function(x){var d=el('div');var hd=el('div','hd');hd.appendChild(el('b',null,x[0]));hd.appendChild(el('span','ip-pill gold',short$(+x[1])));d.appendChild(hd);d.appendChild(el('small',null,x[2]));d.appendChild(el('p',null,x[3]));pw.appendChild(d);});
       pc.appendChild(pw);var pf=el('p','ip-empty','Monthly updates to investors report spending against these milestones.');pf.style.marginTop='12px';pc.appendChild(pf);R2.appendChild(pc);}
     g2.appendChild(L2);g2.appendChild(R2);box.appendChild(g2);
@@ -377,10 +378,13 @@ function vOpportunity(box,act){
 
   /* next steps */
   if((o.steps||[]).length){var sc=card('How to invest'),ol=el('ol','ip-steps2');
-    var docFor=[/one-?pager/i,null,/non-?disclosure|\bnda\b/i,/subscription/i];
     o.steps.forEach(function(x,i){var li=el('li');li.appendChild(el('b',null,x[0]));li.appendChild(el('p',null,x[1]));
-      var re=docFor[i],dd=re?libDoc(re):null;if(dd){var a=openLink(dd,['Open the one-pager','','Open the NDA','Open the agreement'][i]);a.classList.add('sm');li.appendChild(a);}
-      else if(i===1&&o.email){var a2=link('Email Sarvesh','mail',mailto('AeroAssist round: let’s set up a call'),false,false);a2.classList.add('sm');li.appendChild(a2);}
+      var t=(x[0]+' '+x[1]).toLowerCase(),dd=null,lab='';
+      if(/\bnda\b|non-?disclosure/.test(t)){dd=libDoc(/non-?disclosure|\bnda\b/i);lab='Open the NDA';}
+      else if(/subscri/.test(x[0].toLowerCase())){dd=libDoc(/subscription/i);lab='Open the agreement';}
+      else if(/one-?pager|read/.test(t)){dd=libDoc(/one-?pager/i);lab='Open the one-pager';}
+      if(dd){var a=openLink(dd,lab);a.classList.add('sm');li.appendChild(a);}
+      else if(/talk|call/.test(t)&&o.email){var a2=link('Email Sarvesh','mail',mailto('AeroAssist round: let’s set up a call'),false,false);a2.classList.add('sm');li.appendChild(a2);}
       ol.appendChild(li);});
     sc.appendChild(ol);box.appendChild(sc);}
   if(o.note){var nt=el('p','ip-fineprint',o.note);box.appendChild(nt);}
