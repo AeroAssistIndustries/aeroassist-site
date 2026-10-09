@@ -8,3 +8,4 @@ Made in WordPress → Tools → Theme File Editor on 2026-10-09. The theme itsel
 - `page-invest.php`: new investor page (portal sign-in, request access, old access-code form behind a link).
 - All page templates: menu item "Company documents" → "Investor and team portal".
 - Backups of the original `functions.php` and `page-invest.php` (base64): private WordPress page "Theme backup 2026-10-09".
+- `functions.php`: on the homepage, while the calmer look is on, `aa_map_js()` (source: `aa-map.js` here) replaces the 3D city with the live response map and drives the dispatch panel. It is printed just before the theme's `aa.js`, which skips the old city because its canvases are gone.
