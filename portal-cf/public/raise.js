@@ -479,6 +479,16 @@
         mc.checked = false;
       }
       gm.addEventListener('click', sent); ml.addEventListener('click', sent); cp.onclick = function () { copy('Subject: ' + sj.value + '\n\n' + bd.value, 'Email'); sent(); };
+      if (D.mail) {
+        var now = btn('Send now from info@aeroassist.us', 'pri', function () {
+          if (!to.value.trim()) { toast('Add their email first.'); to.focus(); return; }
+          if (/\[(?!Portal link\])[^\]]+\]/.test(sj.value + bd.value)) { toast('Fill in the [bracketed] parts first.'); return; }
+          now.disabled = true; now.textContent = 'Sending…';
+          api('POST', '/api/raise/' + p.id + '/send', { to: to.value.trim(), subject: sj.value, body: bd.value }).then(function () { sent(); toast('Sent to ' + to.value.trim()); m.close(); })
+            .catch(function (e) { now.disabled = false; now.textContent = 'Send now from info@aeroassist.us'; toast(e.message || 'Didn’t send.'); });
+        });
+        gm.className = 'ip-btn'; bar.appendChild(now);
+      }
       bar.appendChild(gm); bar.appendChild(ml); bar.appendChild(cp); bar.appendChild(btn('Close', '', m.close));
       b.appendChild(bar);
       if (p.phone) { var tx = el('p', 'ip-empty'); var sms = el('a', 'ip-linkbtn', 'Send a text: “Just sent you an email about AeroAssist.”'); sms.href = 'sms:' + p.phone.replace(/[^\d+]/g, '') + '?&body=' + encodeURIComponent('Hi ' + first(p.name) + ', just sent you an email about AeroAssist. — Sarvesh'); tx.appendChild(sms); b.appendChild(tx); }

@@ -99,6 +99,12 @@ const DEFAULT_SETTINGS = {
   offer_email: 'sarvesh@aeroassist.us',
   offer_exits: [10000000, 25000000, 50000000, 100000000, 250000000],
   offer_dilution: 30,
+  // The investor dashboard (Overview). All editable in Settings.
+  dash_kpis: [['Aircraft built', 'About 50', 'In our Phoenix shop since 2022'], ['Agencies we work with', '7', 'Police, fire, DOT and rescue teams'], ['Debt', '$0', 'Debt-free'], ['Certified', 'FCC · CE', 'Built to NDAA §848']],
+  dash_asof: '',
+  dash_milestones: [['done', 'FCC certified and CE marked', ''], ['done', 'About 50 aircraft built in Phoenix', '2022–2026'], ['done', '2023 investors repaid in full', 'April 2024'], ['done', 'Working with Arizona police, fire and DOT', ''], ['next', 'Finish the hybrid gas-electric powertrain', ''], ['next', 'XR-2 ready for production', ''], ['next', 'Close the $2M round', '']],
+  dash_round_show: false, dash_round_amount: 0,
+  dash_next_update: 'Next update by the 15th of the month',
   offer_note: 'For discussion with prospective investors only. Not an offer to sell or a solicitation of an offer to buy securities; any offer is made only through the subscription documents, and only to accredited investors. Company figures are company-reported and unaudited.',
 };
 async function getSettings(env) {
@@ -130,6 +136,10 @@ function cleanSettings(d) {
     offer_exits: (Array.isArray(d.offer_exits) ? d.offer_exits : []).map(Number).filter(v => Number.isFinite(v) && v > 0).slice(0, 6),
     offer_dilution: Math.min(80, Math.max(0, num(d.offer_dilution, 30))),
     offer_note: str(d.offer_note, 1500),
+    dash_kpis: rows(d.dash_kpis, 3).slice(0, 4), dash_asof: date(d.dash_asof),
+    dash_milestones: rows(d.dash_milestones, 3).slice(0, 10).map(r => [['done', 'next', 'later'].includes(r[0].toLowerCase()) ? r[0].toLowerCase() : 'next', r[1], r[2]]).filter(r => r[1]),
+    dash_round_show: d.dash_round_show === true || d.dash_round_show === 'true', dash_round_amount: Math.max(0, num(d.dash_round_amount)),
+    dash_next_update: str(d.dash_next_update, 200),
   };
   return s;
 }
@@ -317,6 +327,54 @@ function docOut(d, mine) {
     url: '/api/file/' + d.id, view: '/api/file/' + d.id + '?mode=view',
   };
 }
+// Money funded or signed (committed) in the raise tracker. Soft yeses never count.
+async function raisedSoFar(env) {
+  let rs = [];
+  try { rs = (await env.DB.prepare('SELECT id, data FROM raise_people').all()).results; } catch (e) { return 0; }
+  let t = 0;
+  for (const r of rs) {
+    try { const d = JSON.parse(await decryptText(env, r.data, 'raise:' + r.id)); if (d.status === 'funded') t += +d.funded || +d.committed || +d.soft || 0; else if (d.status === 'committed') t += +d.committed || +d.soft || 0; } catch (e) { /* skip */ }
+  }
+  return t;
+}
+
+/* ---------------------------------------------------------------- email (Resend) */
+function mailReady(env) { return !!env.RESEND_API_KEY; }
+function mailFrom(env) { return env.MAIL_FROM || 'AeroAssist Industries <info@aeroassist.us>'; }
+const esc = t => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+async function sendMail(env, m) {
+  if (!mailReady(env)) fail(400, 'Email sending isn’t set up yet. See Settings → Email.');
+  const r = await fetch(env.RESEND_API_URL || 'https://api.resend.com/emails', {
+    method: 'POST', headers: { authorization: 'Bearer ' + env.RESEND_API_KEY, 'content-type': 'application/json' },
+    body: JSON.stringify({ from: mailFrom(env), to: [m.to], reply_to: m.replyTo || env.MAIL_REPLY_TO || 'info@aeroassist.us', subject: m.subject, text: m.text, html: m.html }),
+  });
+  if (!r.ok) { let e = ''; try { e = (await r.json()).message || ''; } catch (x) {} fail(502, 'The email didn’t send' + (e ? ': ' + e : '.')); }
+  return true;
+}
+// Plain text to simple, safe HTML in the portal's colours.
+function mailHtml(text, button) {
+  const paras = String(text).split(/\n{2,}/).map(p => '<p style="margin:0 0 14px">' + esc(p).replace(/\n/g, '<br>') + '</p>').join('');
+  const btn = button ? '<p style="margin:22px 0"><a href="' + esc(button.url) + '" style="display:inline-block;background:#14213d;color:#ffffff;text-decoration:none;font-weight:600;padding:12px 22px;border-radius:6px">' + esc(button.label) + '</a></p>' : '';
+  return '<!doctype html><html><body style="margin:0;background:#f4f5f8;padding:24px 12px;font:15px/1.55 -apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#3a4556">'
+    + '<div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #e3e6ec;border-radius:10px;padding:28px 28px 20px">'
+    + '<div style="font-weight:700;color:#0b1220;font-size:16px;margin-bottom:18px">AeroAssist Industries</div>' + (paras.includes('<p style="margin:0 0 14px">{{BUTTON}}</p>') ? paras.replace('<p style="margin:0 0 14px">{{BUTTON}}</p>', btn) : paras.replace('{{BUTTON}}', btn)) + '</div>'
+    + '<p style="max-width:560px;margin:14px auto 0;font-size:12px;color:#8a93a2;text-align:center">AeroAssist Industries · 4750 S 44th Pl, Suite E18, Phoenix, AZ 85040</p></body></html>';
+}
+function linkMail(u, link, kind, note) {
+  const first = String(u.name || '').trim().split(/\s+/)[0] || 'there';
+  const exp = new Date(link.expires_at * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric', timeZone: 'America/Phoenix' });
+  const what = { invite: 'Here’s your personal link to set up your sign-in to the AeroAssist investor and team portal.', reset: 'Here’s a link to choose a new password for the AeroAssist portal. Your old password no longer works.', twofa: 'Here’s a link to set up the authenticator app on your new phone for the AeroAssist portal.' }[kind] || '';
+  const how = kind === 'twofa' ? 'You’ll set your password again, then scan a code with your authenticator app.' : kind === 'reset' ? 'You’ll choose a new password, then enter the code from your authenticator app as usual.' : 'You’ll choose a password and add an authenticator app (Google Authenticator, Microsoft Authenticator or similar). It takes about two minutes.';
+  const subject = kind === 'invite' ? 'Your AeroAssist portal sign-in' : kind === 'reset' ? 'Reset your AeroAssist portal password' : 'Set up your new phone for the AeroAssist portal';
+  const body = 'Hi ' + first + ',\n\n' + (note ? note + '\n\n' : '') + what + '\n\n{{BUTTON}}\n\n' + how + '\n\nThe link works once and expires on ' + exp + '. If it expires, reply to this email and we’ll send a new one. Please don’t forward it; it opens your account.\n\nAeroAssist Industries';
+  return { to: u.email, subject, text: body.replace('{{BUTTON}}', link.url), html: mailHtml(body, { url: link.url, label: kind === 'invite' ? 'Set up my sign-in' : kind === 'reset' ? 'Choose a new password' : 'Set up my new phone' }) };
+}
+async function mailLink(ctx, u, link, kind, note) {
+  await throttle(ctx, 'mail:' + ctx.user.id, 300, 3600);
+  await sendMail(ctx.env, linkMail(u, link, kind, str(note, 600)));
+  await log(ctx, 'invite_emailed', null, u.name + ' (' + kind + ')');
+}
+
 async function portalData(ctx) {
   const { env, user } = ctx, s = ctx.settings;
   const mine = (await env.DB.prepare("SELECT * FROM documents WHERE grp = 'personal' AND user_id = ? ORDER BY doc_date DESC, id DESC").bind(user.id).all()).results;
@@ -342,7 +400,12 @@ async function portalData(ctx) {
       risks: s.offer_risks, steps: s.offer_steps, email: s.offer_email, exits: s.offer_exits, dilution: s.offer_dilution, note: s.offer_note,
     };
   }
+  out.dash = { kpis: s.dash_kpis, asof: s.dash_asof || s.as_of, milestones: s.dash_milestones, next: s.dash_next_update };
+  if (s.offer_on && (user.role === 'admin' || (s.dash_round_show && ['prospect', 'investor'].includes(user.role)))) {
+    out.dash.round = { raised: s.dash_round_amount || await raisedSoFar(env), goal: s.offer_raise, shown: s.dash_round_show, manual: !!s.dash_round_amount };
+  }
   if (user.role === 'admin') {
+    out.mail = { ready: mailReady(env), from: mailFrom(env) };
     const people = (await env.DB.prepare('SELECT * FROM users ORDER BY name').all()).results;
     out.roster = people.filter(p => ROLES.includes(p.role) && p.active).map(p => ({
       id: p.portal_id, uid: p.id, name: p.name, role: p.role, units: p.units, invested: p.invested,
@@ -565,7 +628,7 @@ route('GET', '/api/raise', async ctx => {
     };
   }
   const s = ctx.settings;
-  return json({ people, portal, admin: ctx.user.role === 'admin', round: { raise: s.offer_raise, pre: s.offer_pre, units: s.units_outstanding }, origin: ctx.url.origin });
+  return json({ people, portal, mail: mailReady(ctx.env), admin: ctx.user.role === 'admin', round: { raise: s.offer_raise, pre: s.offer_pre, units: s.units_outstanding }, origin: ctx.url.origin });
 });
 route('PUT', '/api/raise/:id', async (ctx, p) => {
   await requireRaise(ctx);
@@ -581,6 +644,20 @@ route('PUT', '/api/raise/:id', async (ctx, p) => {
 route('DELETE', '/api/raise/:id', async (ctx, p) => {
   await requireRaise(ctx);
   await ctx.env.DB.prepare('DELETE FROM raise_people WHERE id = ?').bind(p.id).run();
+  return json({ ok: true });
+});
+// Send one personal email from the tracker (one recipient; replies go to the round contact).
+route('POST', '/api/raise/:id/send', async (ctx, p) => {
+  await requireRaise(ctx);
+  const r = await ctx.env.DB.prepare('SELECT data FROM raise_people WHERE id = ?').bind(p.id).first();
+  if (!r) fail(404, 'Save this person first.');
+  const d = JSON.parse(await decryptText(ctx.env, r.data, 'raise:' + p.id)), b = await body(ctx);
+  const to = cleanEmail(b.to || d.email), subject = str(b.subject, 200), text = String(b.body || '').slice(0, 20000);
+  if (!subject || !text.trim()) fail(400, 'Add a subject and a message.');
+  await throttle(ctx, 'mail:' + ctx.user.id, 300, 3600);
+  const link = (text.match(/https:\/\/\S+#setup=\S+/) || [])[0];
+  await sendMail(ctx.env, { to, subject, text, replyTo: ctx.settings.offer_email || undefined, html: mailHtml(link ? text.replace(link, '{{BUTTON}}') : text, link ? { url: link, label: 'Set up my sign-in' } : null) });
+  await log(ctx, 'invite_emailed', null, (d.name || to) + ' (raise tracker)');
   return json({ ok: true });
 });
 // Give a tracked person a prospective-investor sign-in (or a fresh link if they already have one).
@@ -671,8 +748,23 @@ route('POST', '/api/admin/people', async ctx => {
   await ctx.env.DB.prepare('INSERT INTO users (id, email, name, portal_id, role, units, since, invested, title, created_at) VALUES (?,?,?,?,?,?,?,?,?,?)')
     .bind(id, email, str(b.name, 120) || email, pid, b.role || null, num(b.units), date(b.since) || null, num(b.invested), str(b.title, 120), now()).run();
   await log(ctx, 'person_add', null, (str(b.name, 120) || email) + ' as ' + (b.role || 'no access'));
-  const link = await makeLink(ctx, id);
-  return json({ person: publicPerson(await ctx.env.DB.prepare('SELECT * FROM users WHERE id = ?').bind(id).first()), link });
+  const link = await makeLink(ctx, id), person = await ctx.env.DB.prepare('SELECT * FROM users WHERE id = ?').bind(id).first();
+  let emailed = false, mail_error = '';
+  if (b.send_email && b.role) { try { await mailLink(ctx, person, link, 'invite', b.note); emailed = true; } catch (e) { mail_error = e.message || 'The email didn’t send.'; } }
+  return json({ person: publicPerson(person), link, emailed, mail_error });
+});
+// Email a fresh one-time link to everyone with access who hasn't set up a password yet.
+route('POST', '/api/admin/people/invite-pending', async ctx => {
+  await requireAdmin(ctx);
+  if (!mailReady(ctx.env)) fail(400, 'Email sending isn’t set up yet. See Settings → Email.');
+  const b = await body(ctx);
+  const us = (await ctx.env.DB.prepare('SELECT * FROM users WHERE active = 1 AND role IS NOT NULL AND pw_hash IS NULL ORDER BY name').all()).results.slice(0, 200);
+  const sent = [], failed = [];
+  for (const u of us) {
+    if (u.id === ctx.user.id) continue;
+    try { await mailLink(ctx, u, await makeLink(ctx, u.id), 'invite', b.note); sent.push(u.name); } catch (e) { failed.push(u.name + ': ' + (e.message || 'failed')); }
+  }
+  return json({ sent, failed });
 });
 route('PATCH', '/api/admin/people/:id', async (ctx, p) => {
   await requireAdmin(ctx);
@@ -718,7 +810,9 @@ route('POST', '/api/admin/people/:id/link', async (ctx, p) => {
     await ctx.env.DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(u.id).run();
   }
   await log(ctx, 'link_issued', null, u.name + (b.reset_password ? ' (old password stopped)' : ''));
-  return json(await makeLink(ctx, u.id));
+  const link = await makeLink(ctx, u.id);
+  if (b.send_email) { await mailLink(ctx, u, link, b.reset_password ? 'reset' : 'invite', b.note); return json({ ...link, emailed: true }); }
+  return json(link);
 });
 route('POST', '/api/admin/people/:id/reset-2fa', async (ctx, p) => {
   await requireAdmin(ctx);
@@ -731,7 +825,9 @@ route('POST', '/api/admin/people/:id/reset-2fa', async (ctx, p) => {
   ]);
   await log(ctx, 'twofa_reset', null, u.name);
   // They set up the new phone through a fresh one-time link, so a stolen password alone is never enough.
-  return json(await makeLink(ctx, u.id));
+  const link = await makeLink(ctx, u.id), b = await body(ctx);
+  if (b.send_email) { await mailLink(ctx, u, link, 'twofa'); return json({ ...link, emailed: true }); }
+  return json(link);
 });
 route('POST', '/api/admin/people/:id/signout', async (ctx, p) => {
   await requireAdmin(ctx);

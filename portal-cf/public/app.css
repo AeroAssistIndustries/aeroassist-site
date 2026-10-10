@@ -381,3 +381,37 @@ html,body.aap-body{margin:0;background:#f4f5f8}
   .rs-frow{grid-template-columns:minmax(0,1fr) auto}
   .rs-frow .rs-fbar{grid-column:1/-1;grid-row:2}
 }
+/* ---- Investor dashboard ---- */
+.ip-stat small.sub{display:block;margin-top:4px;font-size:12px;color:var(--faint)}
+.ip-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(170px,100%),1fr));gap:12px}
+.ip-kpi{background:var(--raise);border:1px solid var(--line);border-radius:8px;padding:14px 16px;min-width:0}
+.ip-kpi span{display:block;font-size:12.5px;color:var(--muted)}
+.ip-kpi b{display:block;margin-top:4px;color:var(--ink);font-size:22px;font-weight:600;letter-spacing:-.01em;overflow-wrap:anywhere}
+.ip-kpi small{display:block;margin-top:2px;font-size:12px;color:var(--faint)}
+.ip-prog{margin-top:16px}
+.ip-prog .top{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;margin-bottom:8px}
+.ip-prog .top b{color:var(--ink);font-size:18px;font-weight:600}
+.ip-prog .top span{font-size:13px;color:var(--muted)}
+.ip-prog .bar{height:10px;border-radius:999px;background:#eef0f4;overflow:hidden}
+.ip-prog .bar i{display:block;height:100%;background:linear-gradient(90deg,#8a6420,#c9a24f);border-radius:999px;min-width:2px}
+.ip-prog small{display:block;margin-top:8px;font-size:12px;color:var(--faint)}
+.ip-prog.off{border:1px dashed var(--line2);border-radius:8px;padding:12px 14px}
+.ip-upd b{display:block;color:var(--ink);font-weight:600;margin-bottom:4px}
+.ip-upd p{margin:0;font-size:14.5px;white-space:pre-line}
+.ip-money p{margin:0 0 8px;font-size:15px;color:var(--ink)}
+.ip-money small{display:block;margin-top:6px;font-size:12.5px;color:var(--faint)}
+.ip-ms{list-style:none;margin:0;padding:0}
+.ip-ms li{display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:10px;align-items:start;padding:9px 0;border-top:1px solid var(--line);font-size:14px}
+.ip-ms li:first-child{border-top:0;padding-top:0}
+.ip-ms li>i{width:16px;height:16px;border-radius:50%;margin-top:2px;border:2px solid var(--line2);box-sizing:border-box}
+.ip-ms li.done>i{background:var(--good);border-color:var(--good);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8.5l2.5 2.5L12 5.5' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-size:12px;background-position:center;background-repeat:no-repeat}
+.ip-ms li.next>i{border-color:var(--gold)}
+.ip-ms li span{color:var(--ink)}
+.ip-ms li small{display:block;font-size:12px;color:var(--faint)}
+.ip-ms li em{font-style:normal;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px;background:#eef0f4;color:var(--muted);white-space:nowrap}
+.ip-ms li.done em{background:var(--good-bg);color:var(--good)}
+.ip-ms li.next em{background:var(--gold-bg);color:var(--gold)}
+.ip-talk li{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 12px}
+.ip-talk li small{display:block;font-size:12.5px;color:var(--muted)}
+.ip-talk .ip-row-btns{gap:6px}
+@media (max-width:520px){.ip-kpis{grid-template-columns:1fr 1fr;gap:8px}.ip-kpi{padding:12px}.ip-kpi b{font-size:18px}}

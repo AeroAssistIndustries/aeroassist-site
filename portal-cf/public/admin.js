@@ -74,6 +74,7 @@
     function people() { return api('GET', '/api/admin/people').then(function (r) { state.people = r; return r; }); }
     function personOptions(list, blank) { return [['', blank || 'Choose a person…']].concat(list.map(function (p) { return [p.id, p.name + ' (' + p.portal_id + ')']; })); }
     O.openPerson = function (id) { state.person = id; O.go('person'); };
+    function mailAddr() { var f = (O.data && O.data.mail && O.data.mail.from) || 'info@aeroassist.us', m = /<([^>]+)>/.exec(f); return m ? m[1] : f; }
     function fail(box) { return function (err) { banner(box, err.message, 'err'); }; }
 
     /* ---------- People ---------- */
@@ -86,18 +87,34 @@
       var inv = f(g, 'Paid-in ($)', 'invested', 'number');
       var since = f(g, 'Holder since', 'since', 'date');
       var title = f(g, 'Title (team, optional)', 'title', 'text');
+      var mailOk = !!(O.data && O.data.mail && O.data.mail.ready);
+      var send = f(g, mailOk ? 'Email the invite from ' + mailAddr() : 'Email the invite (set up email sending in Settings first)', 'send_email', 'checkbox', { value: mailOk, full: true });
+      if (!mailOk) send.disabled = true;
+      var note = f(g, 'Personal note in the email (optional)', 'note', 'textarea', { full: true, rows: 2 });
+      if (!mailOk) note.parentNode.classList.add('ip-hidden');
+      send.onchange = function () { note.parentNode.classList.toggle('ip-hidden', !send.checked); };
       var b = formbar(form, 'Add person');
       form.onsubmit = function (e) {
         e.preventDefault(); b.disabled = true;
-        api('POST', '/api/admin/people', { name: name.value, email: email.value, role: role.value, units: units.value, invested: inv.value, since: since.value, title: title.value })
-          .then(function (r) { form.reset(); role.value = 'investor'; linkBox(add, r.link, r.person.name); list(); })
+        api('POST', '/api/admin/people', { name: name.value, email: email.value, role: role.value, units: units.value, invested: inv.value, since: since.value, title: title.value, send_email: send.checked, note: note.value })
+          .then(function (r) { form.reset(); role.value = 'investor'; send.checked = mailOk; if (r.emailed) banner(add, 'Added ' + r.person.name + ' and emailed their sign-in link to ' + r.person.email + '.'); else { linkBox(add, r.link, r.person.name); if (r.mail_error) banner(add, 'Added, but ' + r.mail_error + ' Send the link below yourself.', 'err'); } list(); })
           .catch(function (err) { banner(add, err.message, 'err'); }).then(function () { b.disabled = false; });
       };
       add.appendChild(form); box.appendChild(add);
-      var c = card('Everyone with a sign-in'), out = el('div'); out.appendChild(el('p', 'ip-empty', 'Loading…')); c.appendChild(out); box.appendChild(c);
+      var c = card('Everyone with a sign-in'), bulk = el('div'), out = el('div'); out.appendChild(el('p', 'ip-empty', 'Loading…')); c.appendChild(bulk); c.appendChild(out); box.appendChild(c);
       function list() {
         people().then(function (ps) {
-          out.textContent = '';
+          out.textContent = ''; bulk.textContent = '';
+          var pend = ps.filter(function (p) { return p.active && p.role && !p.has_password && !(O.data && O.data.holder && O.data.holder.email === p.email); });
+          if (pend.length && O.data && O.data.mail && O.data.mail.ready) {
+            var row = el('div', 'ip-row-btns'); row.style.marginBottom = '12px';
+            row.appendChild(btn('Email invites to the ' + pend.length + ' ' + (pend.length === 1 ? 'person' : 'people') + ' not set up yet', 'pri', function (bt) {
+              if (!confirm('Email a fresh one-time sign-in link from ' + mailAddr() + ' to ' + pend.map(function (p) { return p.name; }).join(', ') + '? Any older links they have stop working.')) return;
+              bt.disabled = true; bt.textContent = 'Sending…';
+              api('POST', '/api/admin/people/invite-pending', {}).then(function (r) { banner(c, 'Emailed ' + r.sent.length + (r.sent.length === 1 ? ' person' : ' people') + (r.failed.length ? '. Not sent: ' + r.failed.join('; ') : '.'), r.failed.length ? 'err' : undefined); list(); }).catch(fail(c));
+            }));
+            bulk.appendChild(row);
+          }
           out.appendChild(table([{ h: 'Portal ID' }, { h: 'Name' }, { h: 'Email' }, { h: 'Role' }, { h: 'Status' }, { h: 'Last sign-in' }, { h: 'Units', n: 1 }, { h: 'Paid-in', n: 1 }],
             ps.map(function (p) { var s = status(p), n = el('button', 'ip-linkbtn nm', p.name); n.type = 'button'; n.onclick = function () { O.openPerson(p.id); };
               return { cells: [el('span', 'ip-mono', p.portal_id), n, p.email, p.role ? ROLES[p.role] : '—', pill(s[0], s[1]), p.last_signin ? fmtTime(p.last_signin) : 'Never', p.units ? num(p.units) : '—', p.invested ? money(p.invested) : '—'] }; })));
@@ -142,11 +159,15 @@
         var ac = card('Sign-in and access'), s = status(p), kv = el('dl', 'ip-kv');
         [['Status', pill(s[0], s[1])], ['Password', p.has_password ? 'Set' : 'Not set yet'], ['Authenticator', p.twofa ? 'Set up' : 'Not set up'], ['Recovery codes left', p.twofa ? String(p.recovery_left) : '—'], ['Last sign-in', p.last_signin ? fmtTime(p.last_signin) : 'Never'], ['Open sign-in link', p.link_expires ? 'Until ' + fmtTime(p.link_expires) : 'None']].forEach(function (x) { kv.appendChild(el('dt', null, x[0])); var dd = el('dd'); if (x[1] instanceof Node) dd.appendChild(x[1]); else dd.textContent = x[1]; kv.appendChild(dd); });
         ac.appendChild(kv);
-        var acts = el('div', 'ip-row-btns');
+        var acts = el('div', 'ip-row-btns'), mailOn = !!(O.data && O.data.mail && O.data.mail.ready);
+        var viaMail = null;
+        if (!me && mailOn) { var mw = el('label', 'ip-check'); viaMail = el('input'); viaMail.type = 'checkbox'; viaMail.checked = true; viaMail.id = 'ipViaMail'; mw.appendChild(viaMail); mw.appendChild(el('span', null, 'Email links to ' + p.email + ' from ' + mailAddr() + ' (untick to copy the link yourself)')); mw.style.margin = '12px 0 4px'; ac.appendChild(mw); }
+        var sent = function (l, what) { if (l.emailed) banner(ac, what + ' emailed to ' + p.email + '. It works once and expires ' + fmtTime(l.expires_at) + '.'); else linkBox(ac, l, p.name); };
+        var vm = function () { return !!(viaMail && viaMail.checked); };
         if (!me) {
-          acts.appendChild(btn(p.has_password ? 'New sign-in link' : 'Make a sign-in link', 'pri', function (bt) { bt.disabled = true; api('POST', '/api/admin/people/' + p.id + '/link', { reset_password: false }).then(function (l) { linkBox(ac, l, p.name); }).catch(fail(ac)).then(function () { bt.disabled = false; }); }));
-          if (p.has_password) acts.appendChild(btn('Forgot password: reset it', '', function (bt) { if (!confirm('Their current password stops working now, and they set a new one from the link. Continue?')) return; bt.disabled = true; api('POST', '/api/admin/people/' + p.id + '/link', { reset_password: true }).then(function (l) { linkBox(ac, l, p.name); }).catch(fail(ac)).then(function () { bt.disabled = false; }); }));
-          if (p.twofa) acts.appendChild(btn('Reset two-factor (lost phone)', '', function (bt) { if (!confirm('Their authenticator stops working now. You’ll get a one-time link to send them; they set up the new phone from it. Continue?')) return; bt.disabled = true; api('POST', '/api/admin/people/' + p.id + '/reset-2fa', {}).then(function (l) { linkBox(ac, l, p.name); }).catch(fail(ac)).then(function () { bt.disabled = false; }); }));
+          acts.appendChild(btn(p.has_password ? 'New sign-in link' : (mailOn ? 'Send a sign-in link' : 'Make a sign-in link'), 'pri', function (bt) { bt.disabled = true; api('POST', '/api/admin/people/' + p.id + '/link', { reset_password: false, send_email: vm() }).then(function (l) { sent(l, 'A sign-in link was'); }).catch(fail(ac)).then(function () { bt.disabled = false; }); }));
+          if (p.has_password) acts.appendChild(btn('Forgot password: reset it', '', function (bt) { if (!confirm('Their current password stops working now, and they set a new one from the link. Continue?')) return; bt.disabled = true; api('POST', '/api/admin/people/' + p.id + '/link', { reset_password: true, send_email: vm() }).then(function (l) { sent(l, 'A password reset link was'); }).catch(fail(ac)).then(function () { bt.disabled = false; }); }));
+          if (p.twofa) acts.appendChild(btn('Reset two-factor (lost phone)', '', function (bt) { if (!confirm('Their authenticator stops working now. They set up the new phone from a one-time link. Continue?')) return; bt.disabled = true; api('POST', '/api/admin/people/' + p.id + '/reset-2fa', { send_email: vm() }).then(function (l) { sent(l, 'A new-phone setup link was'); }).catch(fail(ac)).then(function () { bt.disabled = false; }); }));
           acts.appendChild(btn('Sign out everywhere', '', function () { api('POST', '/api/admin/people/' + p.id + '/signout', {}).then(function () { banner(ac, 'Signed out on every device.'); }).catch(fail(ac)); }));
           acts.appendChild(btn(p.active ? 'Switch off access' : 'Restore access', p.active ? 'danger' : '', function () {
             if (p.active && !confirm('Switch off ' + p.name + '? They are signed out at once. Their documents and history are kept.')) return;
@@ -371,7 +392,16 @@
         F.offer_risks = f(g3, 'Risks (one per line: title | text)', 'offer_risks', 'textarea', { value: lines(s.offer_risks), full: true, rows: 8 });
         F.offer_steps = f(g3, 'How to invest (one per line: step | text)', 'offer_steps', 'textarea', { value: lines(s.offer_steps), full: true, rows: 4 });
         F.offer_note = f(g3, 'Legal note at the bottom', 'offer_note', 'textarea', { value: s.offer_note, full: true, rows: 3 });
-        form.appendChild(c1); form.appendChild(c2); form.appendChild(c3);
+        var c4 = card('Investor dashboard (the Overview page)'), g4 = grid(c4);
+        F.dash_kpis = f(g4, 'Company tiles, up to 4 (one per line: label | value | small note)', 'dash_kpis', 'textarea', { value: lines(s.dash_kpis), full: true, rows: 4 });
+        F.dash_asof = f(g4, 'Tiles are as of', 'dash_asof', 'date', { value: s.dash_asof, hint: 'Blank uses “Records as of”' });
+        F.dash_next_update = f(g4, 'Line under the latest update', 'dash_next_update', 'text', { value: s.dash_next_update });
+        F.dash_milestones = f(g4, 'Milestones (one per line: done, next or later | milestone | when, optional)', 'dash_milestones', 'textarea', { value: lines(s.dash_milestones), full: true, rows: 7 });
+        F.dash_round_show = f(g4, 'Show round progress (“$X of $2M”) to investors and prospects', 'dash_round_show', 'checkbox', { value: !!s.dash_round_show, full: true });
+        F.dash_round_amount = f(g4, 'Amount raised to show ($)', 'dash_round_amount', 'number', { value: s.dash_round_amount || '', hint: 'Blank or 0 uses the raise tracker: funded and signed only' });
+        var mc = card('Email'), mready = !!(O.data && O.data.mail && O.data.mail.ready);
+        mc.appendChild(el('p', mready ? 'ip-banner ok' : 'ip-banner info', mready ? 'Connected. Invites and password links go out from ' + ((O.data.mail && O.data.mail.from) || 'info@aeroassist.us') + '; replies go to info@aeroassist.us.' : 'Not set up yet. Until it is, the portal shows each link for you to copy and send. To switch it on: verify aeroassist.us in Resend (resend.com), create an API key, and add it to the Cloudflare Worker as a secret named RESEND_API_KEY.'));
+        form.appendChild(c1); form.appendChild(c4); form.appendChild(c2); form.appendChild(c3); form.appendChild(mc);
         var bar = el('div'); var b = formbar(bar, 'Save settings'); form.appendChild(bar);
         form.onsubmit = function (e) {
           e.preventDefault(); b.disabled = true;
@@ -382,6 +412,8 @@
           d.company_facts = unlines(F.company_facts.value, 2); d.contacts = unlines(F.contacts.value, 4); d.links = unlines(F.links.value, 2);
           ['offer_title', 'offer_raise', 'offer_pre', 'offer_min', 'offer_security', 'offer_email', 'offer_dilution', 'offer_lead', 'offer_note'].forEach(function (k) { d[k] = F[k].value; });
           d.offer_on = F.offer_on.checked;
+          d.dash_kpis = unlines(F.dash_kpis.value, 3).slice(0, 4); d.dash_milestones = unlines(F.dash_milestones.value, 3); d.dash_asof = F.dash_asof.value; d.dash_next_update = F.dash_next_update.value;
+          d.dash_round_show = F.dash_round_show.checked; d.dash_round_amount = +String(F.dash_round_amount.value).replace(/[^0-9.]/g, '') || 0;
           d.offer_exits = String(F.offer_exits.value).split(',').map(function (x) { return +x.replace(/[^0-9.]/g, ''); }).filter(function (x) { return x > 0; });
           d.offer_highlights = unlines(F.offer_highlights.value, 2); d.offer_track = unlines(F.offer_track.value, 2); d.offer_use = unlines(F.offer_use.value, 2);
           d.offer_phases = unlines(F.offer_phases.value, 4); d.offer_comps = unlines(F.offer_comps.value, 3); d.offer_risks = unlines(F.offer_risks.value, 2); d.offer_steps = unlines(F.offer_steps.value, 2);

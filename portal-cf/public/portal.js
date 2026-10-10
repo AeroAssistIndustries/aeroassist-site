@@ -7,7 +7,7 @@ var OUT=+D.unitsOutstanding||10000,ROUND_UNITS=+D.roundUnits||0,ROUND=D.roundNam
 var GROUPS={company:['prospect','investor','employee','admin'],investors:['prospect','investor','admin'],holders:['investor','admin'],team:['employee','admin'],admin:['admin']};
 var ROLES={prospect:'Prospective investor',investor:'Unit holder',employee:'AeroAssist team',admin:'Administrator'};
 var PCATS={tax:'Tax (K-1)',certificates:'Certificate',agreements:'Agreement',updates:'Investor update',team:'Employment',other:'Other'};
-var ACT={round_view:'opened the round page',view:'viewed',download:'downloaded',zip:'downloaded (zip)',signin:'signed in',signin_failed:'failed sign-in',denied:'was refused'};
+var ACT={invite_emailed:'was emailed a sign-in link',round_view:'opened the round page',view:'viewed',download:'downloaded',zip:'downloaded (zip)',signin:'signed in',signin_failed:'failed sign-in',denied:'was refused'};
 var ICON={
  overview:'<path d="M4 13h6V4H4zM14 20h6v-9h-6zM4 20h6v-3H4zM14 7h6V4h-6z"/>',
  investment:'<path d="M4 19h16M7 15v-4M12 15V7M17 15v-6"/>',
@@ -64,13 +64,12 @@ function views(){
   var v=[['Portfolio'],['overview','Overview']];
   if(m.offer)v.push(['opportunity',m.offer.title||'The opportunity']);
   if(holder())v.push(['investment','My investment']);
-  v.push(['Documents'],['documents','Documents',allDocs().length],['updates','Updates']);
-  v.push(['Company'],['company','Company']);
+  v.push(['documents','Documents',allDocs().length]);
   if(m.role==='admin'){
     v.push(['Administration'],['investors','Investors and access',(m.roster||[]).length],['people','People'],['library','Manage documents'],['txns','Transactions'],['log','Activity log'],['settings','Settings'],['import','Import']);
   }
   if(m.raise&&EXTRA.raise)v.push(['Fundraising'],['raise','Raise tracker']);
-  v.push(['Account'],['security','Password and two-factor'],['help','Help']);
+  v.push(['Account'],['company','Company and help'],['security','Password and two-factor']);
   return v;
 }
 function boot(){
@@ -81,7 +80,7 @@ function boot(){
   $('dbAsOf').textContent=m.asOf?'Records as of '+fmtDate(m.asOf):'';
   var n=$('dbNote');n.hidden=!m.note;n.textContent=m.note||'';
   var hash=(location.hash||'').slice(1);
-  S.view=views().some(function(x){return x[0]===hash&&x[1];})||(EXTRA[hash]&&EXTRA[hash].hidden&&m.role==='admin')?hash:'overview';
+  S.view=views().some(function(x){return x[0]===hash&&x[1];})||HIDDEN.indexOf(hash)>=0||(EXTRA[hash]&&EXTRA[hash].hidden&&m.role==='admin')?hash:'overview';
   nav();render();idleStart();
 }
 function nav(){
@@ -97,7 +96,7 @@ function nav(){
 function go(v){S.view=v;try{history.replaceState(null,'','#'+v);}catch(e){}nav();render();window.scrollTo(0,0);var t=$('dbTitle');t.setAttribute('tabindex','-1');t.focus({preventScroll:true});}
 function render(){
   var first=((m.holder||{}).name||'').split(/\s+/)[0];
-  var T={overview:[greeting()+(first?', '+first:'')+'.','Overview'],investment:['My investment','Your units in AeroAssist Industries'],documents:['Documents','Everything shared with you, in one place'],updates:['Updates','News and reports from the company'],company:['AeroAssist Industries','Company profile'],investors:['Investors and access','Administrator'],help:['Help','How the portal works'],opportunity:[(m.offer&&m.offer.title)||'The opportunity','Investment opportunity · for prospective investors']};
+  var T={overview:[greeting()+(first?', '+first:'')+'.','Overview'],investment:['My investment','Your units in AeroAssist Industries'],documents:['Documents','Everything shared with you, in one place'],updates:['Updates','News and reports from the company'],company:['AeroAssist Industries','Company, contacts and help'],investors:['Investors and access','Administrator'],help:['Help','How the portal works'],opportunity:[(m.offer&&m.offer.title)||'The opportunity','Investment opportunity · for prospective investors']};
   Object.keys(EXTRA).forEach(function(k){if(EXTRA[k].title)T[k]=EXTRA[k].title;});
   var t=T[S.view]||T.overview;$('dbTitle').textContent=t[0];$('dbKicker').textContent=t[1];
   var act=$('dbActions');act.textContent='';
@@ -107,7 +106,7 @@ function render(){
   (V[S.view]||vOverview)(box,act);
 }
 function card(title,small,link,linkTo){var c=el('section','ip-card'),h=el('h2',null,title);if(small)h.appendChild(el('small',null,small));if(link){var a=el('button',null,link);a.type='button';a.onclick=function(){go(linkTo);};h.appendChild(a);}c.appendChild(h);return c;}
-function strip(items){var s=el('div','ip-strip');items.forEach(function(it){var d=el('div','ip-stat'+(it.hi?' hi':''));d.appendChild(el('span',null,it.label));d.appendChild(el('b',null,it.value));if(it.badge)d.appendChild(el('em',null,it.badge));s.appendChild(d);});return s;}
+function strip(items){var s=el('div','ip-strip');items.forEach(function(it){var d=el('div','ip-stat'+(it.hi?' hi':''));d.appendChild(el('span',null,it.label));d.appendChild(el('b',null,it.value));if(it.sub)d.appendChild(el('small','sub',it.sub));if(it.badge)d.appendChild(el('em',null,it.badge));s.appendChild(d);});return s;}
 function btn(label,icon,pri,fn){var b=el('button','ip-btn'+(pri?' pri':''));b.type='button';if(icon)b.appendChild(svgIcon(icon));b.appendChild(document.createTextNode(label));b.onclick=function(){fn(b);};return b;}
 function link(label,icon,href,pri,newTab){var a=el('a','ip-btn'+(pri?' pri':''));a.href=href;if(newTab){a.target='_blank';a.rel='noopener';}if(icon)a.appendChild(svgIcon(icon));a.appendChild(document.createTextNode(label));return a;}
 function table(cols,rows){
@@ -118,29 +117,77 @@ function table(cols,rows){
 }
 
 /* ---------- views ---------- */
+var HIDDEN=['updates','help'];
+function priceNow(){return +m.unitPrice||(m.offer?offerNums().price:0);}
 function vOverview(box,act){
-  var a=acct();
-  if(m.offer&&!holder())box.appendChild(offerHero(true));
-  if(holder()){
+  var a=acct(),hd=holder(),pn=priceNow();
+  if(m.offer&&!hd)box.appendChild(offerHero(true));
+  if(hd){
     act.appendChild(btn('Download statement','dl',true,statement));
-    box.appendChild(strip([{label:'Current value (indicative)',value:money(a.value),hi:true},{label:'Paid-in capital',value:a.paid?money(a.paid):'—'},{label:'Distributions',value:money(a.dist)},{label:'Total value',value:money(a.total)},{label:'Multiple (TVPI)',value:a.tvpi?a.tvpi.toFixed(2)+'×':'—',badge:a.paid?'DPI '+a.dpi.toFixed(2)+'×':null}]));
-  }else{
-    var docs=allDocs();
-    box.appendChild(strip([{label:'Documents shared with you',value:num(docs.length)},{label:'New in the last 14 days',value:num(docs.filter(isNew).length)},{label:'Personal documents',value:num((m.docs||[]).length)},{label:'Your access',value:ROLES[m.role]||'—'}]));
+    var st=[{label:'Value today',value:pn?money(a.units*pn):'—',hi:true,sub:pn?'At '+money(pn)+' a unit':''},{label:'Returned to you',value:money(a.dist),sub:a.paid?(a.dist>=a.paid?'All of what you put in':Math.round(a.dist/a.paid*100)+'% of what you put in'):''},{label:'Units owned',value:num(a.units),sub:a.pct.toFixed(2)+'% of the company today'}];
+    if(ROUND_UNITS)st.push({label:'Ownership after the round',value:a.after.toFixed(2)+'%',sub:'If '+ROUND+' is fully raised'});
+    box.appendChild(strip(st));
   }
+  box.appendChild(companyCard());
   var g=el('div','ip-grid ip-2'),L=el('div','ip-grid'),R=el('div','ip-grid');
-  if(holder()&&(m.priceHistory||[]).length>1){var c=card('Value of your units','Units × price per unit at each round');c.appendChild(valueChart(m.priceHistory,a.units));L.appendChild(c);}
-  else if(m.role==='admin'&&(m.priceHistory||[]).length>1){var c2=card('Price per unit','By round');c2.appendChild(valueChart(m.priceHistory,1));L.appendChild(c2);}
-  var rc=card('Recent documents',null,'View all','documents');
-  var recent=allDocs().slice(0,6);
-  rc.appendChild(recent.length?docTable(recent,true):el('p','ip-empty','No documents have been shared with you yet.'));
-  L.appendChild(rc);
+  var up=updateCard();if(up)L.appendChild(up);
+  if(hd)L.appendChild(moneyCard(a,pn));
+  var rc=card('Recent documents',null,'View all','documents'),recent=allDocs().slice(0,3);
+  rc.appendChild(recent.length?docTable(recent,true):el('p','ip-empty','No documents have been shared with you yet.'));L.appendChild(rc);
+  var ms=milestoneCard();if(ms)R.appendChild(ms);
   R.appendChild(actionCard());
-  if(m.offer&&holder()){var oc=card(m.offer.title+' is open'),op=el('p',null,'New units at '+money(offerNums().price)+' each. See the terms, the plan and what it means for your ownership.');op.style.margin='0 0 12px';oc.appendChild(op);oc.appendChild(btn('See the round','arrow',false,function(){go('opportunity');}));R.appendChild(oc);}
-  if((m.announcements||[]).length)R.appendChild(annCard(2));
-  R.appendChild(factsCard());
+  if(m.offer&&hd){var oc=card(m.offer.title+' is open'),op=el('p',null,'New units at '+money(offerNums().price)+' each. See the terms, the plan and what it means for your ownership.');op.style.margin='0 0 12px';oc.appendChild(op);oc.appendChild(btn('See the round','arrow',false,function(){go('opportunity');}));R.appendChild(oc);}
+  R.appendChild(talkCard());
   g.appendChild(L);g.appendChild(R);box.appendChild(g);
 }
+function companyCard(){
+  var d=m.dash||{},k=(d.kpis||[]).filter(function(x){return x[0]||x[1];}),r=d.round;
+  var c=card('AeroAssist today',d.asof?'As of '+fmtDate(d.asof):null);
+  if(k.length){var w=el('div','ip-kpis');k.forEach(function(x){var t=el('div','ip-kpi');t.appendChild(el('span',null,x[0]));t.appendChild(el('b',null,x[1]));if(x[2])t.appendChild(el('small',null,x[2]));w.appendChild(t);});c.appendChild(w);}
+  if(r&&r.goal){
+    var p=el('div','ip-prog'+(r.shown?'':' off')),pct=Math.min(100,r.raised/r.goal*100),top=el('div','top');
+    top.appendChild(el('b',null,short$(r.raised)+' of '+short$(r.goal)));top.appendChild(el('span',null,(m.offer&&m.offer.title||'The round')+' · '+Math.round(pct)+'% funded or signed'));p.appendChild(top);
+    var bar=el('div','bar'),i=el('i');i.style.width=pct.toFixed(1)+'%';bar.appendChild(i);p.appendChild(bar);
+    if(!r.shown)p.appendChild(el('small',null,'Only administrators see this bar. Switch it on for investors in Settings → Investor dashboard.'+(r.manual?'':' The amount comes from the raise tracker: funded and signed only, never soft commitments.')));
+    c.appendChild(p);
+  }
+  if(!k.length&&!(r&&r.goal))return el('div');
+  return c;
+}
+function updateCard(){
+  var d=m.dash||{},an=(m.announcements||[]).slice().sort(function(a,b){return (b.date||'').localeCompare(a.date||'');}),u=an[0];
+  if(!u&&!d.next)return null;
+  var c=card('Latest update',u&&u.date?fmtDate(u.date):null,an.length>1?'All updates':null,'updates');
+  if(u){var b=el('div','ip-upd');b.appendChild(el('b',null,u.title||''));if(u.body)b.appendChild(el('p',null,u.body));c.appendChild(b);}
+  else c.appendChild(el('p','ip-empty','No updates yet.'));
+  if(d.next){var n=el('p','ip-empty',d.next);n.style.marginTop='12px';c.appendChild(n);}
+  return c;
+}
+function moneyCard(a,pn){
+  var h=m.holder||{},c=card('Your investment in plain English',null,'Details','investment'),w=el('div','ip-money');
+  var yr=h.since?String(h.since).slice(0,4):'';
+  var s1=a.paid?'You put in '+money(a.paid)+' for '+num(a.units)+' units'+(yr?' in '+yr:'')+'.':'You hold '+num(a.units)+' units'+(yr?', since '+yr:'')+'.';
+  var s2=a.dist?(a.paid&&a.dist>=a.paid?money(a.dist)+' has been paid back to you, all of what you put in, and you still own every unit.':money(a.dist)+' has been paid back to you so far, and you still own every unit.'):'';
+  var s3=pn?'At today’s round price of '+money(pn)+' a unit, your units are valued at '+money(a.units*pn)+'.':'';
+  [s1,s2,s3].filter(Boolean).forEach(function(t){w.appendChild(el('p',null,t));});
+  w.appendChild(el('small',null,'That’s the price new investors pay in the round, not cash: there’s no market to sell units, and values can go down as well as up.'));
+  c.appendChild(w);return c;
+}
+function milestoneCard(){
+  var ms=((m.dash||{}).milestones||[]);if(!ms.length)return null;
+  var c=card('Milestones'),ul=el('ul','ip-ms');
+  ['done','next','later'].forEach(function(st){ms.filter(function(x){return x[0]===st;}).forEach(function(x){var li=el('li',st);li.appendChild(el('i'));var d=el('div');d.appendChild(el('span',null,x[1]));if(x[2])d.appendChild(el('small',null,x[2]));li.appendChild(d);li.appendChild(el('em',null,st==='done'?'Done':st==='next'?'Next':'Later'));ul.appendChild(li);});});
+  c.appendChild(ul);return c;
+}
+function talkCard(){
+  var c=card('Talk to us'),ul=el('ul','ip-list ip-talk');
+  (m.contacts||[]).slice(0,3).forEach(function(x){var li=el('li'),d=el('div');d.appendChild(el('b',null,x[0]));if(x[1])d.appendChild(el('small',null,x[1]));li.appendChild(d);
+    if(x[3]){var a=el('div','ip-row-btns');a.appendChild(link('Email','',mailto2(x[3],'AeroAssist: question'),false,false));a.appendChild(link('Book a call','',mailto2(x[3],'Call request from '+((m.holder||{}).name||'an investor'),'Hi '+String(x[0]).split(' ')[0]+',\n\nCould we set up a call? Times that work for me:\n\n'),false,false));li.appendChild(a);}
+    ul.appendChild(li);});
+  if(!(m.contacts||[]).length)ul.appendChild(el('li',null,'Contacts will appear here.'));
+  c.appendChild(ul);return c;
+}
+function mailto2(to,sub,body){return 'mailto:'+to+'?subject='+encodeURIComponent(sub)+(body?'&body='+encodeURIComponent(body):'');}
 function actionCard(){
   var c=card('For your attention'),ul=el('ul','ip-list'),items=[];
   (m.docs||[]).filter(isNew).forEach(function(d){items.push({t:d.title,p:(PCATS[d.cat]||'Document')+' added '+fmtDate(d.date),d:d});});
@@ -169,7 +216,8 @@ function vInvestment(box,act){
   act.appendChild(btn('Download statement','dl',true,statement));
   var st=[{label:'Units held',value:num(a.units)},{label:'Ownership today',value:a.pct.toFixed(2)+'%'}];
   if(ROUND_UNITS)st.push({label:'After '+ROUND+' (if fully raised)',value:a.after.toFixed(2)+'%'});
-  st.push({label:'Current value (indicative)',value:money(a.value),hi:true,badge:a.tvpi?a.tvpi.toFixed(2)+'× TVPI':null});
+  st.push({label:'Value today',value:priceNow()?money(a.units*priceNow()):'—',hi:true,sub:priceNow()?'At '+money(priceNow())+' a unit':''});
+  st.push({label:'Returned to you',value:money(a.dist)});
   box.appendChild(strip(st));
   var g=el('div','ip-grid ip-2'),L=el('div','ip-grid'),R=el('div','ip-grid');
   var pc=card('Position',h.since?'Unit holder since '+fmtDate(h.since):null);
@@ -241,6 +289,7 @@ function vCompany(box){
   R.appendChild(contacts());
   if((m.links||[]).length){var lk=card('Links'),ul=el('ul','ip-list');m.links.forEach(function(x){var li=el('li'),a=el('a',null,x[0]);a.href=x[1];li.appendChild(a);ul.appendChild(li);});lk.appendChild(ul);R.appendChild(lk);}
   g.appendChild(L);g.appendChild(R);box.appendChild(g);
+  box.appendChild(helpCard());
 }
 function contacts(){
   var c=card('Contacts'),ul=el('ul','ip-list');
@@ -265,7 +314,8 @@ function vInvestors(box,act){
   var al=el('p','ip-empty');al.style.marginTop='12px';var aa=el('button','ip-linkbtn','Full activity log');aa.type='button';aa.onclick=function(){go('log');};al.appendChild(aa);ac.appendChild(al);
   box.appendChild(ac);
 }
-function vHelp(box){
+function vHelp(box){box.appendChild(helpCard());box.appendChild(contacts());}
+function helpCard(){
   var c=card('How the portal works'),d=el('div','ip-help');
   [['Your sign-in','You sign in with your email and your own password, then the 6-digit code from your authenticator app. Forgot your password? Ask the CFO for a new sign-in link; it lets you choose a new one.'],
    ['Two-factor','Your authenticator app (Google Authenticator, Microsoft Authenticator, 1Password or similar) makes a new code every 30 seconds. If you lose your phone, sign in with one of your recovery codes, or ask the CFO to reset your two-factor.'],
@@ -273,7 +323,7 @@ function vHelp(box){
    ['Security','Documents are stored encrypted and are sent only to signed-in people whose role allows it. Every view and download is logged. You are signed out after '+(m.idleMinutes||30)+' minutes without activity.'],
    ['Values and multiples','Current value uses the price per unit in the most recent round. TVPI is total value (current value plus distributions) divided by what you paid in; DPI is distributions divided by paid-in. These are indicative, not an appraisal or a tax valuation.']].forEach(function(x){var p=el('p');p.appendChild(el('b',null,x[0]+'. '));p.appendChild(document.createTextNode(x[1]));d.appendChild(p);});
   var pa=el('p');pa.appendChild(btn('Password and two-factor','security',true,function(){go('security');}));d.appendChild(pa);
-  c.appendChild(d);box.appendChild(c);box.appendChild(contacts());
+  c.appendChild(d);return c;
 }
 
 /* ---------- the round, for prospective investors ---------- */
