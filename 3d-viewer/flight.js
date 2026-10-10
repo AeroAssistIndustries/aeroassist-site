@@ -32,7 +32,7 @@
   };
   const ZOOMS = [1, 4, 10, 20];
   const CAMS = ['chase', 'nose', 'orbit'];
-  const CAM_NAME = { chase: 'CHASE', nose: 'ONBOARD', orbit: 'ORBIT' };
+  const CAM_NAME = { chase: 'CHASE', nose: 'NOSE', orbit: 'ORBIT' };
 
   // ------------------------------------------------------------------ sound
   function makeAudio() {
@@ -111,7 +111,7 @@
     const scene = o.scene, camera = o.camera, renderer = o.renderer, controls = o.controls, ui = o.ui;
     const q = (s) => ui.querySelector(s);
     const el = {
-      alt: q('#tAlt'), spd: q('#tSpd'), hdg: q('#tHdg'), home: q('#tHome'), extra: q('#tExtra'), status: q('#fStatus'),
+      alt: q('#tAlt'), spd: q('#tSpd'), hdg: q('#tHdg'), home: q('#tHome'), homeA: q('#tHomeA'), tgt: q('#tTgt'), tgtV: q('#tTgtV'), tgtA: q('#tTgtA'), extra: q('#tExtra'), status: q('#fStatus'), again: q('#fAgain'),
       obj: q('#fObj'), fns: q('#fFns'), map: q('#fMap'), toast: q('#fToast'), go: q('#fGo'), ret: q('#fRet'), retTag: q('#fRetTag'),
       modelName: q('#fModelName'), exit: q('#fExit'), model: q('#fModel'), sL: q('#stickL'), sR: q('#stickR')
     };
@@ -120,11 +120,14 @@
     const v1 = new V3(), v2 = new V3(), v3 = new V3(), camT = new V3(), qa = new T.Quaternion(), qb = new T.Quaternion();
     const Y_AXIS = new V3(0, 1, 0);
     const calm = !!(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches);   // no flashing lights
+    const coarse = !!(root.matchMedia && root.matchMedia('(pointer: coarse)').matches);                // phone or tablet
+    const host = ui.parentElement;
+    const buzz = (ms) => { if (coarse && navigator.vibrate) { try { navigator.vibrate(ms); } catch (e) {} } };
 
     let active = false, model = null, fx = null, type = 'utility', tune = TUNE.utility, world = null;
     let cam = 'chase', zoomIdx = 0, fovNow = 50;
     const rig = { cg: 0.4, r: 1.2, chaseDist: 6, chaseH: 1.9 };
-    const S = { pos: new V3(), vel: new V3(), yaw: 0, yawRate: 0, pitch: 0, roll: 0, level: 0, mode: 'landed', armed: false, spool: 0, t: 0, gimbal: -0.45, groundT: 0, rthT: 0, landHome: false, lastPos: new V3() };
+    const S = { zoomK: 1, pos: new V3(), vel: new V3(), yaw: 0, yawRate: 0, pitch: 0, roll: 0, level: 0, mode: 'landed', armed: false, spool: 0, t: 0, gimbal: -0.45, groundT: 0, rthT: 0, landHome: false, lastPos: new V3() };
     const F = { lights: true, spot: false, bar: false, siren: false, thermal: false, spray: false, hold: false, sound: true };
     const W = { state: 'stowed', len: 0 };
     const chute = { open: 0, collapse: 0 };
@@ -189,6 +192,8 @@
       });
       const pad = new T.Mesh(new T.CircleGeometry(2.8, 56), new T.MeshStandardMaterial({ map: padT, transparent: true, roughness: 0.8, envMapIntensity: 0.15, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
       pad.rotation.x = -Math.PI / 2; pad.position.y = 0.012; pad.receiveShadow = true; g.add(pad);
+      w.padLights = [];
+      for (let i = 0; i < 12; i++) { const a = i * Math.PI / 6, pl = new T.Mesh(new T.SphereGeometry(0.04, 8, 6), new T.MeshBasicMaterial({ color: 0x5bede2 })); pl.scale.y = 0.5; pl.position.set(Math.cos(a) * 2.92, 0.03, Math.sin(a) * 2.92); g.add(pl); w.padLights.push(pl); }
 
       function facade(seed, rx, ry) {
         const r1 = rng(seed), cols = 10, rows = 4, Wd = 160, cw = Wd / cols, ch = Wd / rows, lit = [];
@@ -304,7 +309,7 @@
 
     // ---------------------------------------------------------------- function buttons
     function fnList() {
-      const common = [{ id: 'lights', label: 'LIGHTS', key: 'L' }, { id: 'cam', label: 'CAMERA', key: 'C' }, { id: 'home', label: 'HOME', key: 'H' }, { id: 'sound', label: 'SOUND', key: 'M' }];
+      const common = [{ id: 'lights', label: 'LIGHTS', key: 'L', sys: 1 }, { id: 'cam', label: 'CAMERA', key: 'C', sys: 1 }, { id: 'home', label: 'HOME', key: 'H', sys: 1 }, { id: 'sound', label: 'SOUND', key: 'M', sys: 1 }];
       if (type === 'utility') return [{ id: 'spray', label: 'SPRAY', key: '1' }, { id: 'hold', label: 'WALL HOLD', key: '2' }].concat(common);
       return [{ id: 'spot', label: 'SPOTLIGHT', key: '1' }, { id: 'bar', label: 'LIGHT BAR', key: '2' }, { id: 'siren', label: 'SIREN', key: '3' }, { id: 'zoom', label: 'ZOOM', key: '4' },
         { id: 'thermal', label: 'THERMAL', key: '5' }, { id: 'winch', label: 'WINCH', key: '6' }, { id: 'chute', label: 'PARACHUTE', key: '7' }].concat(common);
@@ -312,10 +317,12 @@
     let fns = [];
     function buildButtons() {
       fns = fnList(); el.fns.textContent = '';
+      const grp = (cls, label) => { const d = document.createElement('div'); d.className = 'fgrp ' + cls; d.setAttribute('role', 'group'); d.setAttribute('aria-label', label); el.fns.appendChild(d); return d; };
+      const gPay = grp('pay', 'Payload functions'), gSys = grp('sys', 'Lights, camera, home and sound');
       fns.forEach((f) => {
         const b = document.createElement('button'); b.type = 'button'; b.className = 'ffn'; b.dataset.fn = f.id;
         const s = document.createElement('span'); s.textContent = f.label; const k = document.createElement('kbd'); k.textContent = f.key; b.appendChild(s); b.appendChild(k);
-        b.addEventListener('click', () => { act(f.id); b.blur(); }); el.fns.appendChild(b); f.node = b; f.text = s;
+        b.addEventListener('click', () => { act(f.id); b.blur(); }); (f.sys ? gSys : gPay).appendChild(b); f.node = b; f.text = s;
       });
       syncButtons();
     }
@@ -323,7 +330,7 @@
       fns.forEach((f) => {
         let on = null, label = f.label;
         if (f.id in F) on = F[f.id];
-        if (f.id === 'cam') label = 'CAM · ' + CAM_NAME[cam];
+        if (f.id === 'cam') label = 'CAM ' + CAM_NAME[cam];
         if (f.id === 'zoom') { label = 'ZOOM ' + ZOOMS[zoomIdx] + '×'; on = cam === 'nose' && zoomIdx > 0; }
         if (f.id === 'home') on = S.mode === 'rth';
         if (f.id === 'winch') { label = W.state === 'lowering' ? 'WINCH ▼' : W.state === 'raising' || W.state === 'retract' ? 'WINCH ▲' : W.state === 'empty' ? 'POD OUT' : 'WINCH'; on = W.state === 'lowering' || W.state === 'raising' || W.state === 'retract'; }
@@ -351,10 +358,10 @@
       if (!M.t0) M.t0 = S.t;
       toast('Motors starting');
     }
-    function setLanded(msg) { S.mode = 'landed'; S.armed = false; S.vel.set(0, 0, 0); S.pos.y = groundAt(S.pos.x, S.pos.z, S.pos.y); S.groundT = 0; S.landHome = false; if (msg) toast(msg); }
+    function setLanded(msg) { buzz(18); S.mode = 'landed'; S.armed = false; S.vel.set(0, 0, 0); S.pos.y = groundAt(S.pos.x, S.pos.z, S.pos.y); S.groundT = 0; S.landHome = false; if (msg) toast(msg); }
 
     function act(id) {
-      audio.unlock();
+      audio.unlock(); buzz(8);
       switch (id) {
         case 'go':
           if (S.mode === 'landed') takeoff();
@@ -405,7 +412,7 @@
         const d = Math.hypot(x, y); if (d > m) { x *= m / d; y *= m / d; } touch[ax] = x / m; touch[ay] = -y / m;
       };
       const end = (e) => { if (e.pointerId !== pid) return; pid = null; touch[ax] = 0; touch[ay] = 0; };
-      node.addEventListener('pointerdown', (e) => { if (pid !== null) return; pid = e.pointerId; try { node.setPointerCapture(pid); } catch (er) {} set(e); e.preventDefault(); audio.unlock(); });
+      node.addEventListener('pointerdown', (e) => { node.classList.remove('pulse'); if (pid !== null) return; pid = e.pointerId; try { node.setPointerCapture(pid); } catch (er) {} set(e); e.preventDefault(); audio.unlock(); });
       node.addEventListener('pointermove', (e) => { if (e.pointerId === pid) set(e); });
       node.addEventListener('pointerup', end); node.addEventListener('pointercancel', end); node.addEventListener('lostpointercapture', end);
       node.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -435,6 +442,18 @@
       const up = (ev) => { if (ev.pointerId !== id) return; root.removeEventListener('pointermove', mv); root.removeEventListener('pointerup', up); root.removeEventListener('pointercancel', up); };
       root.addEventListener('pointermove', mv); root.addEventListener('pointerup', up); root.addEventListener('pointercancel', up);
     });
+    const pts = new Map(); let pinch0 = 0, zoom0 = 1;
+    const cv = renderer.domElement, pdist = () => { const a = Array.from(pts.values()); return Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y); };
+    cv.addEventListener('pointerdown', (e) => { if (!active) return; pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); if (pts.size === 2) { pinch0 = pdist(); zoom0 = S.zoomK; } });
+    cv.addEventListener('pointermove', (e) => { if (!active || !pts.has(e.pointerId)) return; pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); if (pts.size === 2 && cam === 'chase' && pinch0 > 10) S.zoomK = clamp(zoom0 * pinch0 / pdist(), 0.6, 3.2); });
+    const pend = (e) => { pts.delete(e.pointerId); };
+    cv.addEventListener('pointerup', pend); cv.addEventListener('pointercancel', pend); cv.addEventListener('pointerleave', pend);
+    cv.addEventListener('wheel', (e) => { if (!active || cam !== 'chase') return; e.preventDefault(); S.zoomK = clamp(S.zoomK * Math.exp(e.deltaY * 0.0012), 0.6, 3.2); }, { passive: false });
+    // phones: keep the browser from zooming or scrolling the page while flying
+    document.addEventListener('gesturestart', (e) => { if (active) e.preventDefault(); });
+    ui.addEventListener('touchmove', (e) => { if (active) e.preventDefault(); }, { passive: false });
+    ui.addEventListener('contextmenu', (e) => e.preventDefault());
+
     function readPad() {
       pad.lx = pad.ly = pad.rx = pad.ry = pad.tilt = 0;
       const list = navigator.getGamepads ? navigator.getGamepads() : []; let gp = null;
@@ -463,6 +482,7 @@
       if (tiltIn && fx && fx.gimbalHead) S.gimbal = clamp(S.gimbal + tiltIn * dt * 0.9 / Math.sqrt(ZOOMS[zoomIdx]), -1.45, 0.3);
     }
     el.go.addEventListener('click', () => { act('go'); el.go.blur(); });
+    el.again.addEventListener('click', () => { resetFlight(); toast('New mission'); el.again.blur(); });
     el.exit.addEventListener('click', () => o.onExit());
     el.model.addEventListener('click', () => { o.onNextModel(); el.model.blur(); });
     document.addEventListener('visibilitychange', () => { if (active) audio.pause(document.hidden); });
@@ -510,7 +530,8 @@
       S.pos.set(0, 0, 0); S.vel.set(0, 0, 0); S.yaw = 0; S.yawRate = 0; S.pitch = S.roll = 0; S.level = 0; S.mode = 'landed'; S.armed = false; S.gimbal = -0.45; S.t = 0;
       Object.assign(F, { lights: true, spot: false, bar: false, siren: false, thermal: false, spray: false, hold: false });
       W.state = 'stowed'; W.len = 0; chute.open = chute.collapse = 0; world.canopy.visible = false; world.drop.visible = false; zoomIdx = 0;
-      M.stage = 0; M.done = false; M.t0 = 0; M.tEnd = 0; M.pct = 0;
+      M.stage = 0; M.done = false; M.t0 = 0; M.tEnd = 0; M.pct = 0; M.text = ''; el.again.hidden = true; S.zoomK = 1;
+      el.sL.classList.add('pulse'); el.sR.classList.add('pulse');
       if (type === 'utility') paintGrime();
       else { const s = HIKER_SPOTS[Math.floor(Math.random() * HIKER_SPOTS.length)]; world.hiker.position.set(s[0], 0, s[1]); world.hiker.rotation.y = Math.random() * 6.28; world.ring.visible = false; }
       world.sprayPos.fill(-999); world.spray.geometry.attributes.position.needsUpdate = true;
@@ -701,12 +722,13 @@
     function updateCamera(dt) {
       const fxx = Math.cos(S.yaw), fzz = -Math.sin(S.yaw), snap = camSnap; camSnap = false;
       if (cam === 'chase') {
-        const far = S.mode === 'chute' || chute.collapse > 0; let dist = rig.chaseDist * (far ? 1.9 : 1); const ch = rig.chaseH + (far ? 1.6 : 0);
+        const far = S.mode === 'chute' || chute.collapse > 0, tall = Math.max(0, 1 - camera.aspect);   // portrait screens see a narrow slice, so stand further back
+        let dist = rig.chaseDist * (far ? 1.9 : 1) * S.zoomK * (1 + tall * 0.9); const ch = (rig.chaseH + (far ? 1.6 : 0)) * (0.6 + 0.4 * S.zoomK) * (1 + tall * 0.5);
         for (let i = 0; i < 6; i++) { v1.set(S.pos.x - fxx * dist, S.pos.y + rig.cg + ch, S.pos.z - fzz * dist); if (!insideBuilding(v1.x, v1.y, v1.z, 0.4)) break; dist *= 0.72; }
         const gy = groundAt(v1.x, v1.z, v1.y) + 0.35; if (v1.y < gy) v1.y = gy;
-        v2.set(S.pos.x + fxx * 1.3, S.pos.y + rig.cg + (far ? 1.5 : 0.1), S.pos.z + fzz * 1.3);
+        v2.set(S.pos.x + fxx * 1.3, S.pos.y + rig.cg + (far ? 1.5 : 0.1) - tall * 1.9 * (0.5 + 0.5 * S.zoomK), S.pos.z + fzz * 1.3);
         if (snap) { camera.position.copy(v1); camT.copy(v2); } else { camera.position.lerp(v1, 1 - Math.exp(-dt * 4.5)); camT.lerp(v2, 1 - Math.exp(-dt * 11)); }
-        camera.up.set(0, 1, 0); camera.lookAt(camT); setFov(50 + Math.min(9, Math.hypot(S.vel.x, S.vel.z) * 0.55));
+        camera.up.set(0, 1, 0); camera.lookAt(camT); setFov(50 + tall * 20 + Math.min(9, Math.hypot(S.vel.x, S.vel.z) * 0.55));
       } else if (cam === 'nose') {
         fx.eye.getWorldPosition(v1);
         if (fx.eyeFixed) { fx.eye.getWorldQuaternion(qa); qb.setFromAxisAngle(Y_AXIS, -Math.PI / 2); camera.position.copy(v1); camera.quaternion.copy(qa).multiply(qb); setFov(72); }
@@ -716,7 +738,11 @@
       }
       S.lastPos.copy(S.pos);
       const therm = F.thermal && cam === 'nose';
-      if (therm !== saved.therm) { saved.therm = therm; renderer.domElement.style.filter = therm ? 'grayscale(1) contrast(1.3) brightness(1.5)' : ''; }
+      if (therm !== saved.therm) {
+        // thermal: everything has some warmth, so lift the whole scene to grey and let the hot things burn white
+        saved.therm = therm; renderer.domElement.style.filter = therm ? 'grayscale(1) contrast(1.25) brightness(1.2)' : '';
+        renderer.toneMappingExposure = therm ? saved.exp * 2.6 : saved.exp; if (o.hemi) o.hemi.intensity = therm ? 1.5 : 0.2;
+      }
       world.sky.position.copy(camera.position); world.stars.position.copy(camera.position);
     }
 
@@ -734,13 +760,23 @@
       if (type === 'utility') {
         extra = 'HOSE ' + Math.round(S.hoseOut || 0) + ' / ' + HOSE + ' M';
         let wd = 99; BUILDINGS.forEach((b) => { if (S.pos.y < b.h) { const dx = Math.max(0, Math.abs(S.pos.x - b.x) - b.w / 2), dz = Math.max(0, Math.abs(S.pos.z - b.z) - b.d / 2); wd = Math.min(wd, Math.hypot(dx, dz)); } });
-        if (wd < 15) extra += ' · WALL ' + wd.toFixed(1) + ' M';
+        if (wd < 6) extra += ' · GAP ' + wd.toFixed(1) + ' M';
       } else if (W.len > 0.05) extra = 'LINE ' + W.len.toFixed(1) + ' M';
       if (el.extra.textContent !== extra) el.extra.textContent = extra;
       let ob;
-      if (type === 'utility') ob = M.done ? 'WALL CLEAN · ' + fmtT(M.tEnd - M.t0) + ' · head home' : 'OBJECTIVE · wash the marked wall panel · ' + Math.round(M.pct / 0.9 * 100 > 100 ? 100 : M.pct / 0.9 * 100) + '% clean';
-      else ob = M.stage === 0 ? 'OBJECTIVE · find the missing hiker · the thermal camera helps' : M.stage === 1 ? 'HIKER LOCATED · hover above and lower the supply pod' : 'SUPPLIES DELIVERED · ' + fmtT(M.tEnd - M.t0) + ' · head home';
-      if (M.text !== ob) { M.text = ob; el.obj.textContent = ob; el.obj.classList.toggle('done', M.done); }
+      if (type === 'utility') ob = M.done ? 'Wall clean in ' + fmtT(M.tEnd - M.t0) + ' · head home' : 'Wash the marked wall · ' + Math.min(100, Math.round(M.pct / 0.9 * 100)) + '% clean';
+      else ob = M.stage === 0 ? 'Find the missing hiker · try thermal' : M.stage === 1 ? 'Hiker found · lower the supply pod' : 'Delivered in ' + fmtT(M.tEnd - M.t0) + ' · head home';
+      if (M.text !== ob) { M.text = ob; el.obj.textContent = ob; el.obj.classList.toggle('done', M.done); el.again.hidden = !M.done; }
+      // arrows: straight up means dead ahead
+      const fwx = Math.cos(S.yaw), fwz = -Math.sin(S.yaw), rtx = Math.sin(S.yaw), rtz = Math.cos(S.yaw);
+      const bearing = (dx, dz) => Math.atan2(dx * rtx + dz * rtz, dx * fwx + dz * fwz) * 180 / Math.PI;
+      el.homeA.style.transform = 'rotate(' + bearing(-S.pos.x, -S.pos.z).toFixed(0) + 'deg)'; el.homeA.style.visibility = home > 3 ? 'visible' : 'hidden';
+      let tx = null, tz = 0, tn = '';
+      if (type === 'utility') { if (!M.done) { tx = PANEL.x - 3; tz = 0; tn = 'WALL'; } }
+      else if (M.stage === 1) { tx = world.hiker.position.x; tz = world.hiker.position.z; tn = 'HIKER'; }
+      const td = tx === null ? 0 : Math.hypot(tx - S.pos.x, tz - S.pos.z), showT = tx !== null && td > 6;
+      if (el.tgt.hidden === showT) el.tgt.hidden = !showT;
+      if (showT) { el.tgtV.textContent = tn + ' ' + Math.round(td); el.tgtA.style.transform = 'rotate(' + bearing(tx - S.pos.x, tz - S.pos.z).toFixed(0) + 'deg)'; }
       const showRet = cam === 'nose' && !!fx.gimbalHead;
       if (el.ret.hidden === showRet) el.ret.hidden = !showRet;
       if (showRet) { const tg = 'ZOOM ' + ZOOMS[zoomIdx] + '×' + (F.thermal ? ' · THERMAL' : '') + ' · TILT ' + Math.round(S.gimbal * 180 / Math.PI) + '°'; if (el.retTag.textContent !== tg) el.retTag.textContent = tg; }
@@ -781,7 +817,7 @@
       if (!world) world = buildWorld();
       saved.fov = camera.fov; saved.near = camera.near; saved.far = camera.far; saved.minD = controls.minDistance; saved.maxD = controls.maxDistance;
       saved.keyI = o.key.intensity; saved.rimI = o.rim.intensity; saved.hemiI = o.hemi ? o.hemi.intensity : 0; saved.shFar = o.key.shadow.camera.far; saved.therm = false;
-      saved.touch = renderer.domElement.style.touchAction; renderer.domElement.style.touchAction = 'none';
+      saved.touch = renderer.domElement.style.touchAction; renderer.domElement.style.touchAction = 'none'; saved.exp = renderer.toneMappingExposure;
       saved.hidden = (typeof o.viewerObjects === 'function' ? o.viewerObjects() : o.viewerObjects).filter(Boolean);
       camera.near = 0.1; camera.far = 2200; fovNow = 0; setFov(50);
       controls.minDistance = 2; controls.maxDistance = 45;
@@ -790,6 +826,8 @@
       saved.hidden.forEach((x) => { x.visible = false; });
       world.group.visible = true; craft.visible = true;
       attach(m); audio.pause(false); audio.unlock(); audio.setOn(F.sound);
+      saved.pr = renderer.getPixelRatio(); perf.t = 0; perf.n = 0;
+      if (coarse && host.requestFullscreen && !document.fullscreenElement) { try { const r = host.requestFullscreen({ navigationUI: 'hide' }); if (r && r.catch) r.catch(() => {}); saved.fs = true; } catch (e) {} }
       toast('Push the left stick up, or press TAKE OFF');
     }
     function exit() {
@@ -797,7 +835,10 @@
       detach(); audio.update({ level: 0, speed: 0 }); audio.pause(true);
       world.group.visible = false; craft.visible = false; scene.fog = null;
       world.spotL.intensity = 0; world.barR.intensity = world.barB.intensity = 0;
-      renderer.domElement.style.filter = ''; saved.therm = false; renderer.domElement.style.touchAction = saved.touch;
+      renderer.domElement.style.filter = ''; saved.therm = false; renderer.domElement.style.touchAction = saved.touch; renderer.toneMappingExposure = saved.exp;
+      if (renderer.getPixelRatio() !== saved.pr) renderer.setPixelRatio(saved.pr);
+      if (saved.fs && document.fullscreenElement && document.exitFullscreen) { try { const r = document.exitFullscreen(); if (r && r.catch) r.catch(() => {}); } catch (e) {} }
+      saved.fs = false; pts.clear();
       camera.near = saved.near; camera.far = saved.far; camera.fov = saved.fov; camera.up.set(0, 1, 0); camera.updateProjectionMatrix();
       controls.enabled = true; controls.minDistance = saved.minD; controls.maxDistance = saved.maxD;
       o.key.intensity = saved.keyI; o.rim.intensity = saved.rimI; if (o.hemi) o.hemi.intensity = saved.hemiI; o.key.position.set(2.5, 4.5, 3); o.key.target.position.set(0, 0, 0); o.key.target.updateMatrixWorld();
@@ -805,8 +846,11 @@
       saved.hidden.forEach((x) => { x.visible = true; });
       for (const k in keys) keys[k] = false; touch.lx = touch.ly = touch.rx = touch.ry = 0;
     }
-    function update(dt) {
+    const perf = { t: 0, n: 0 };
+    function update(dt, real) {
       if (!active || !model) return;
+      // if the device can't keep up, render fewer pixels rather than drop frames
+      if (real) { perf.t += real; perf.n++; if (perf.n >= 90) { const avg = perf.t / perf.n, pr = renderer.getPixelRatio(); perf.t = 0; perf.n = 0; if (avg > 0.03 && pr > 1) { renderer.setPixelRatio(Math.max(1, pr - 0.5)); if (o.onResize) o.onResize(); } } }
       S.t += dt;
       readInput(dt);
       simulate(dt);
@@ -818,7 +862,8 @@
       craft.updateMatrixWorld(true);
       o.key.position.set(S.pos.x + 1.6, S.pos.y + 10, S.pos.z + 2.2); o.key.target.position.copy(S.pos); o.key.target.updateMatrixWorld();
       updateCamera(dt);
-      const bl = 0.5 + 0.5 * Math.sin(S.t * 2.2); world.beacons.forEach((b) => { b.material.color.setRGB(0.35 + 0.65 * bl, 0.08, 0.06); });
+      const bl = calm ? 0.8 : 0.5 + 0.5 * Math.sin(S.t * 2.2); world.beacons.forEach((b) => { b.material.color.setRGB(0.35 + 0.65 * bl, 0.08, 0.06); });
+      const pk = Math.floor(S.t * 3) % 12; world.padLights.forEach((pl, i) => { const on = calm || S.mode === 'landed' || (i - pk + 12) % 12 < 3; pl.material.color.setHex(on ? 0x5bede2 : 0x12403c); });
       audio.update({ level: S.level, speed: S.vel.length(), engine: type === 'hybrid' && S.armed, siren: F.siren, spray: F.spray, winch: W.state === 'lowering' || W.state === 'raising' || W.state === 'retract' });
       updateHud(dt);
     }
@@ -827,7 +872,7 @@
       get active() { return active; },
       get state() { return { mode: S.mode, x: S.pos.x, y: S.pos.y, z: S.pos.z, yaw: S.yaw, level: S.level, cam: cam, winch: W.state, stage: M.stage, pct: M.pct, done: M.done, fn: Object.assign({}, F) }; },
       act: act,
-      get internals() { return { S: S, F: F, W: W, M: M, world: world, input: touch, rig: rig }; }
+      get internals() { return { S: S, F: F, W: W, M: M, world: world, input: touch, rig: rig, camera: camera, controls: controls }; }
     };
   }
 
