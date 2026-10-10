@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="The AeroAssist aircraft lineup in 3D: Hybrid Flagship, Electric Responder and Utility Hex. Watch each one build, explore it exploded, and compare.">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#05070b">
+<link rel="icon" href="../images/favicon.png">
+<title>Aircraft Lineup in 3D — AeroAssist Industries</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oxanium:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: brand products page. Sticky nav; hero headline over a full-width 3D studio with model tabs and build controls; product sections with render galleries and spec lists; compare table; contact band. Single dark brand look by choice. */
+:root{
+  --abyss:#05070b; --deep:#080b11; --hull:#0e121a; --hull2:#151a24;
+  --ink:#f4f6f8; --mist:#cdd2da; --dim:#9aa1ad; --gold:#e2be72; --gold-hi:#f4e2b0; --on-gold:#120c02; --silver:#d7dce2;
+  --signal:#5bede2; --warn:#e9a23b; --edge:rgba(214,220,228,.13); --edge-gold:rgba(226,190,114,.42);
+  --display:Oxanium,"Arial Narrow",system-ui,sans-serif; --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --cut:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth;scroll-padding-top:calc(env(safe-area-inset-top,0px) + 72px)}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
+body{background:var(--abyss);color:var(--mist);font-family:var(--sans);font-size:16px;line-height:1.6}
+a{color:var(--gold-hi)} a:hover{color:var(--gold)}
+:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+h1,h2,h3{font-family:var(--display);color:var(--ink);margin:0;text-wrap:balance;letter-spacing:-.005em}
+h1{font-size:clamp(38px,6.2vw,76px);line-height:.98;font-weight:800;text-transform:uppercase}
+h2{font-size:clamp(30px,4vw,46px);line-height:1.05;font-weight:800}
+h3{font-size:22px;font-weight:700;line-height:1.2}
+p{margin:0}
+.wrap{max-width:1280px;margin:0 auto;padding-inline:24px}
+@media (max-width:600px){.wrap{padding-inline:16px}}
+.kicker{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+.lead{font-size:18px;line-height:28px;max-width:62ch}
+.dim{color:var(--dim)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 22px;font-family:var(--display);font-size:14.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;text-decoration:none;cursor:pointer;border:1px solid var(--gold);background:linear-gradient(180deg,#f7e8bc,#e2be72 45%,#c9973f);color:var(--on-gold);clip-path:var(--cut)}
+.btn:hover{color:var(--on-gold);filter:brightness(1.06)}
+.btn.line{background:transparent;color:var(--gold-hi);border-color:var(--edge-gold)}
+.btn.line:hover{color:var(--gold)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.tag{display:inline-block;font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.08em;padding:2px 7px;border:1px solid var(--edge);color:var(--mist)}
+.tag.t{border-color:var(--warn);color:var(--warn)}
+.tag.g{border-color:var(--edge-gold);color:var(--gold)}
+
+/* nav */
+.nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:rgba(5,7,11,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--edge)}
+.nav .wrap{display:flex;align-items:center;gap:24px;height:66px}
+.nav img{height:30px;width:auto;display:block}
+.nav ul{display:flex;gap:6px;list-style:none;margin:0 0 0 auto;padding:0}
+.nav ul a{display:block;padding:10px 12px;font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--mist);text-decoration:none}
+.nav ul a:hover{color:var(--gold)}
+@media (max-width:820px){.nav ul{display:none}}
+
+/* hero + studio */
+.hero{padding-block:56px 0}
+.hero-head{display:flex;justify-content:space-between;align-items:flex-end;gap:32px;flex-wrap:wrap;margin-bottom:28px}
+.hero-head .lead{max-width:46ch}
+.studio{position:relative;border:1px solid var(--edge);background:radial-gradient(ellipse at 50% 62%,#1b2131 0%,#0a0d13 58%,#05070b 100%);height:min(68vh,680px);min-height:420px;overflow:hidden}
+.studio canvas{display:block;width:100%;height:100%;touch-action:none}
+.studio .fallback{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.tabs{position:absolute;left:16px;top:16px;display:flex;gap:6px;flex-wrap:wrap;z-index:3;max-width:calc(100% - 32px)}
+.tab{min-height:44px;padding:6px 14px;font-family:var(--display);font-weight:700;font-size:14px;letter-spacing:.03em;cursor:pointer;border:1px solid var(--edge);background:rgba(8,11,17,.82);color:var(--mist);text-align:left;line-height:1.15}
+.tab small{display:block;font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.1em;color:var(--dim)}
+.tab[aria-pressed="true"]{background:var(--gold);border-color:var(--gold);color:var(--on-gold)}
+.tab[aria-pressed="true"] small{color:var(--on-gold)}
+.controls{position:absolute;left:16px;right:16px;bottom:16px;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;z-index:3}
+.panel{background:rgba(8,11,17,.86);border:1px solid var(--edge);padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.seg{display:flex}
+.seg button{min-height:42px;padding:0 14px;font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.03em;cursor:pointer;border:1px solid var(--edge);border-right-width:0;background:transparent;color:var(--mist)}
+.seg button:last-child{border-right-width:1px}
+.seg button[aria-pressed="true"]{background:var(--gold);color:var(--on-gold);border-color:var(--gold)}
+.stepbox{flex:1 1 360px;max-width:520px}
+.stepline{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.stepnum{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.14em;color:var(--signal)}
+.stepname{font-family:var(--display);font-size:16px;font-weight:700;color:var(--ink);line-height:1.25}
+.pips{display:grid;grid-template-columns:repeat(10,1fr);gap:4px}
+.pip{height:28px;border:0;padding:0;cursor:pointer;background:transparent;position:relative}
+.pip::after{content:"";position:absolute;left:0;right:0;top:12px;height:4px;background:rgba(214,220,228,.18)}
+.pip.done::after{background:var(--gold)}
+.pip.cur::after{background:var(--signal);height:6px;top:11px}
+.stepbtns{display:flex;gap:6px}
+.sbtn{min-height:40px;min-width:44px;padding:0 12px;font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.1em;cursor:pointer;border:1px solid var(--edge);background:transparent;color:var(--mist)}
+.sbtn[aria-pressed="true"]{border-color:var(--gold);color:var(--ink);background:rgba(226,190,114,.14)}
+.sbtn:disabled{opacity:.4;cursor:not-allowed}
+.labels{position:absolute;inset:0;pointer-events:none;z-index:2;overflow:hidden}
+.lbl{position:absolute;transform:translate(10px,-50%);font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.04em;color:var(--ink);background:rgba(5,7,11,.8);border-left:2px solid var(--gold);padding:3px 7px;white-space:nowrap}
+.lbl::before{content:"";position:absolute;left:-12px;top:50%;width:6px;height:6px;margin-top:-3px;border-radius:50%;background:var(--gold)}
+.hud{position:absolute;right:16px;top:20px;font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--dim);text-align:right;z-index:3;pointer-events:none}
+.hud b{color:var(--gold)}
+@media (max-width:760px){
+  .studio{height:auto;min-height:0;display:flex;flex-direction:column}
+  .studio canvas{height:62vh;min-height:360px}
+  .controls{position:static;padding:12px;background:var(--deep);border-top:1px solid var(--edge)}
+  .tabs{top:12px;left:12px}
+  .hud{display:none}
+  .stepbox{max-width:none}
+}
+
+/* sections */
+section.block{padding-block:96px;border-bottom:1px solid var(--edge)}
+section.alt{background:var(--deep)}
+@media (max-width:600px){section.block{padding-block:64px}}
+.sec-head{display:flex;flex-direction:column;gap:12px;margin-bottom:36px;max-width:820px}
+.product{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:44px;align-items:start}
+@media (max-width:960px){.product{grid-template-columns:minmax(0,1fr)}}
+.gallery{display:flex;flex-direction:column;gap:10px}
+.gmain{position:relative;aspect-ratio:3/2;border:1px solid var(--edge);overflow:hidden;background:var(--abyss);max-width:100%}
+.gmain img{width:100%;height:100%;object-fit:cover;display:block}
+.thumbs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.thumb{padding:0;border:1px solid var(--edge);background:var(--abyss);cursor:pointer;aspect-ratio:3/2;overflow:hidden}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block;opacity:.75}
+.thumb[aria-pressed="true"]{border-color:var(--gold)}
+.thumb[aria-pressed="true"] img,.thumb:hover img{opacity:1}
+.pinfo{display:flex;flex-direction:column;gap:18px}
+.tier{font-family:var(--display);font-weight:800;font-size:13px;letter-spacing:.08em;color:var(--gold)}
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.stat{background:var(--hull);border:1px solid var(--edge);padding:14px 16px;clip-path:var(--cut);min-width:0}
+.stat b{display:block;font-family:var(--display);font-size:28px;line-height:1.05;font-weight:800;color:var(--ink)}
+.stat b.g{color:var(--gold)}
+.stat span{font-size:13px;color:var(--dim)}
+dl.spec{display:grid;grid-template-columns:130px minmax(0,1fr);gap:8px 14px;margin:0;font-size:15px;line-height:1.45;border-top:1px solid var(--edge);padding-top:16px}
+dl.spec dt{color:var(--dim)} dl.spec dd{margin:0;color:var(--ink)}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.tablebox{overflow-x:auto;border:1px solid var(--edge);background:var(--hull)}
+table{border-collapse:collapse;width:100%;min-width:760px;font-size:15px;line-height:1.45}
+th{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);text-align:left;background:var(--hull2);padding:12px 16px}
+th:not(:first-child){color:var(--gold)}
+td{padding:12px 16px;border-top:1px solid var(--edge);vertical-align:top;color:var(--ink)}
+td:first-child{color:var(--dim);white-space:nowrap}
+.band{background:linear-gradient(180deg,var(--deep),var(--abyss));padding-block:88px}
+.band .wrap{display:flex;justify-content:space-between;align-items:center;gap:28px;flex-wrap:wrap}
+footer{padding-block:40px;font-size:13px;color:var(--dim)}
+/* light product area */
+.light{--abyss:#ffffff;--deep:#f4f5f7;--hull:#f7f8fa;--hull2:#eceef2;--ink:#0b1220;--mist:#3a4556;--dim:#5a6577;--gold:#8a6420;--gold-hi:#6e4e14;--edge:rgba(11,18,32,.12);--edge-gold:rgba(138,100,32,.45);--warn:#9a5b00;--signal:#0b6b64;background:var(--abyss);color:var(--mist);color-scheme:light}
+.light section.alt,.light.alt{background:var(--deep)}
+.light .gmain,.light .thumb{background:#f3f4f6}
+.light .btn{color:#120c02}
+.light .btn.line{color:#6e4e14;border-color:rgba(138,100,32,.5)}
+.light .stat b.g{color:#8a6420}
+.light table th:not(:first-child){color:#8a6420}
+.yes{color:#1a7046;font-weight:600}.no{color:#9aa3b0}
+/* studio light mode */
+.studio.lit{background:radial-gradient(ellipse at 50% 62%,#ffffff 0%,#f1f3f6 55%,#e4e7ec 100%);border-color:rgba(11,18,32,.12)}
+.studio.lit .tab{background:rgba(255,255,255,.92);color:#0b1220;border-color:rgba(11,18,32,.14)}
+.studio.lit .tab small{color:#5a6577}
+.studio.lit .tab[aria-pressed="true"]{background:#e2be72;border-color:#e2be72;color:#120c02}
+.studio.lit .tab[aria-pressed="true"] small{color:#120c02}
+.studio.lit .panel{background:rgba(255,255,255,.93);border-color:rgba(11,18,32,.14)}
+.studio.lit .seg button,.studio.lit .sbtn{color:#0b1220;border-color:rgba(11,18,32,.18)}
+.studio.lit .seg button[aria-pressed="true"]{background:#e2be72;color:#120c02;border-color:#e2be72}
+.studio.lit .sbtn[aria-pressed="true"]{background:rgba(226,190,114,.25);border-color:#8a6420}
+.studio.lit .stepname{color:#0b1220}
+.studio.lit .stepnum{color:#0b6b64}
+.studio.lit .pip::after{background:rgba(11,18,32,.15)}
+.studio.lit .pip.done::after{background:#c9973f}
+.studio.lit .pip.cur::after{background:#0b6b64}
+.studio.lit .hud{color:#5a6577}.studio.lit .hud b{color:#8a6420}
+.studio.lit .lbl{background:rgba(255,255,255,.94);color:#0b1220;border-left-color:#c9973f}
+@media (max-width:760px){.studio.lit .controls{background:#f4f5f7;border-top-color:rgba(11,18,32,.12)}}
+/* mission picker */
+.missions{display:flex;flex-wrap:wrap;gap:8px}
+.mchip{min-height:46px;padding:0 16px;font-family:var(--display);font-weight:700;font-size:14px;letter-spacing:.02em;cursor:pointer;border:1px solid var(--edge);background:var(--abyss);color:var(--ink)}
+.mchip[aria-pressed="true"]{background:#0b1220;color:#fff;border-color:#0b1220}
+.mresult{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:24px;align-items:center;border:1px solid var(--edge);background:var(--abyss);padding:18px;margin-top:18px;clip-path:var(--cut)}
+.mresult img{width:100%;aspect-ratio:3/2;object-fit:cover;display:block;background:#f3f4f6}
+@media (max-width:700px){.mresult{grid-template-columns:minmax(0,1fr)}}
+footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.mono{font-family:var(--mono);letter-spacing:.12em;font-size:12px}
+</style>
+</head>
+<body style="margin:0">
+
+<nav class="nav" aria-label="Main">
+<div class="wrap">
+<a href="../index.html" aria-label="AeroAssist Industries home"><img src="img/logo-dark.png" alt="AeroAssist Industries" width="97" height="30"></a>
+<ul>
+<li><a href="#studio">Build it</a></li>
+<li><a href="#hybrid">Hybrid Flagship</a></li>
+<li><a href="#responder">Electric Responder</a></li>
+<li><a href="#utility">Utility Hex</a></li>
+<li><a href="#compare">Compare</a></li>
+<li><a href="../products.html">Pricing &amp; ordering</a></li>
+</ul>
+<a class="btn" href="#contact" style="min-height:40px;padding:0 16px;font-size:13px">Book a briefing</a>
+</div>
+</nav>
+
+<main id="top">
+<section class="hero">
+<div class="wrap">
+<div class="hero-head">
+<div style="display:flex;flex-direction:column;gap:16px">
+<span class="kicker">Aircraft · designed, fabricated and built in Phoenix, Arizona</span>
+<h1>Three aircraft.<br>One Phoenix line.</h1>
+</div>
+<p class="lead">A gas-electric flagship for long overwatch, a battery responder for urban 911 calls, and a utility hexacopter that washes buildings today. Spin each one, explode it, or watch it build part by part.</p>
+</div>
+<div class="studio lit" id="studio">
+<img class="fallback" id="fallback" src="img/hybrid-hero.jpg" alt="Rendering of the Hybrid Flagship octocopter">
+<div class="tabs" role="group" aria-label="Choose an aircraft">
+<button class="tab" data-model="hybrid" aria-pressed="true">Hybrid Flagship<small>TIER 1</small></button>
+<button class="tab" data-model="responder" aria-pressed="false">Electric Responder<small>TIER 2</small></button>
+<button class="tab" data-model="utility" aria-pressed="false">Utility Hex<small>TIER 3</small></button>
+</div>
+<div class="hud" id="hud"></div>
+<div class="labels" id="labels"></div>
+<div class="controls">
+<div class="panel">
+<div class="seg" role="group" aria-label="View">
+<button data-mode="assembled" aria-pressed="true">Assembled</button>
+<button data-mode="exploded" aria-pressed="false">Exploded</button>
+<button data-mode="build" aria-pressed="false">Builder</button>
+</div>
+<div class="stepbtns">
+<button class="sbtn" id="play" style="flex:1">▶ WATCH IT BUILD</button>
+<button class="sbtn" id="tSpin" aria-pressed="false" title="Spin propellers">PROPS</button>
+<button class="sbtn" id="tLabels" aria-pressed="false" title="Show part labels">LABELS</button>
+<button class="sbtn" id="tTheme" aria-pressed="false" title="Switch studio background">DARK</button>
+</div>
+</div>
+<div class="panel stepbox" id="stepbox" hidden>
+<div class="stepline"><span class="stepnum" id="stepNum">STEP 1 OF 10</span><span class="stepnum" id="station" style="color:var(--dim)"></span></div>
+<span class="stepname" id="stepName">Landing gear and bottom plate</span>
+<div class="pips" id="pips" role="group" aria-label="Build steps"></div>
+<div class="stepbtns"><button class="sbtn" id="prev">◀ PREV</button><button class="sbtn" id="next">NEXT ▶</button></div>
+</div>
+<div class="panel" id="explodebox" hidden style="flex:0 1 260px">
+<label for="explode" class="stepnum" style="color:var(--dim)">EXPLODE</label>
+<input type="range" id="explode" min="0" max="100" value="100" style="accent-color:#e2be72;width:100%;min-height:30px">
+</div>
+</div>
+</div>
+<p class="dim" style="font-size:13px;margin-top:10px">Drag to orbit, scroll or pinch to zoom. Models are design renders; performance figures marked as targets are not yet flight-tested.</p>
+</div>
+</section>
+
+<div class="light">
+<section class="block alt" id="find" style="margin-top:72px">
+<div class="wrap">
+<div class="sec-head"><span class="kicker">Find your aircraft</span><h2>What's the job?</h2><p class="lead" style="font-size:17px">Pick the work and we'll point you to the aircraft built for it.</p></div>
+<div class="missions" role="group" aria-label="Choose a job">
+<button class="mchip" data-job="police" aria-pressed="true">Police overwatch</button>
+<button class="mchip" data-job="sar" aria-pressed="false">Search &amp; rescue</button>
+<button class="mchip" data-job="fire" aria-pressed="false">Wildfire &amp; fire</button>
+<button class="mchip" data-job="ems" aria-pressed="false">EMS &amp; supply drop</button>
+<button class="mchip" data-job="clean" aria-pressed="false">Building cleaning</button>
+</div>
+<div class="mresult" aria-live="polite">
+<img id="mImg" src="img/responder-hero.jpg" alt="">
+<div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+<span class="tier" id="mTier">TIER 2 · TOP ELECTRIC</span>
+<h3 id="mName" style="font-size:26px">Electric Responder</h3>
+<p id="mWhy" style="font-size:16px;line-height:1.55">First on scene in town: quiet, quick from a dock, with zoom and thermal, a spotlight and a loudspeaker. For long holds over a scene, the Hybrid Flagship stays up for hours.</p>
+<div class="actions"><button class="btn line" id="mShow">See it in 3D</button><a class="btn" id="mLink" href="#responder">View details</a></div>
+</div>
+</div>
+</div>
+</section>
+<section class="block" id="hybrid">
+<div class="wrap product">
+<div class="gallery" data-model="hybrid"></div>
+<div class="pinfo">
+<span class="tier">TIER 1 · FLAGSHIP</span>
+<h2>Hybrid Flagship</h2>
+<span><span class="tag g">IN DESIGN</span></span>
+<p class="lead" style="font-size:17px">Our gas-electric octocopter for long overwatch, search and rescue and wildfire. It carries the full responder kit for hours, launched and refueled from a dock or a vehicle.</p>
+<div class="stats">
+<div class="stat"><b class="g">2–3 h</b><span>With sensor suite · design target</span></div>
+<div class="stat"><b>3 kg</b><span>Supply drop · design target</span></div>
+</div>
+<dl class="spec">
+<dt>Power</dt><dd>Fuel-injected gas-electric genset with a battery buffer</dd>
+<dt>Camera</dt><dd>20× zoom, 640 thermal, laser rangefinder</dd>
+<dt>Awareness</dt><dd>Four 360° HD cameras with onboard detection</dd>
+<dt>On scene</dt><dd>Spotlight, loudspeaker, siren, light bar</dd>
+<dt>Delivery</dt><dd>Winch lowers supplies without landing</dd>
+<dt>Safety</dt><dd>Parachute, anti-collision strobe, dual RTK GPS</dd>
+</dl>
+<div class="actions"><button class="btn line" data-show="hybrid">Explore in 3D</button><a class="btn" href="#contact">Book a briefing</a></div>
+</div>
+</div>
+</section>
+
+<section class="block alt" id="responder">
+<div class="wrap product">
+<div class="gallery" data-model="responder"></div>
+<div class="pinfo">
+<span class="tier">TIER 2 · TOP ELECTRIC</span>
+<h2>Electric Responder</h2>
+<span><span class="tag g">NEXT BUILD</span></span>
+<p class="lead" style="font-size:17px">The quiet, fast battery aircraft for urban 911 calls. Same octo frame and payloads as the Flagship, with hot-swap packs and dock charging.</p>
+<div class="stats">
+<div class="stat"><b class="g">30–40 min</b><span>With sensor suite · design target</span></div>
+<div class="stat"><b>2 kg</b><span>Supply drop · design target</span></div>
+</div>
+<dl class="spec">
+<dt>Power</dt><dd>Two 12S semi-solid-state packs, hot-swap</dd>
+<dt>Camera</dt><dd>20× zoom, 640 thermal, laser rangefinder</dd>
+<dt>Awareness</dt><dd>Four 360° HD cameras with onboard detection</dd>
+<dt>On scene</dt><dd>Spotlight, loudspeaker, siren, light bar</dd>
+<dt>Delivery</dt><dd>Winch for naloxone, an AED, a flotation device or a radio</dd>
+<dt>Safety</dt><dd>Parachute, anti-collision strobe, dual RTK GPS</dd>
+</dl>
+<div class="actions"><button class="btn line" data-show="responder">Explore in 3D</button><a class="btn" href="#contact">Book a briefing</a></div>
+</div>
+</div>
+</section>
+
+<section class="block" id="utility">
+<div class="wrap product">
+<div class="gallery" data-model="utility"></div>
+<div class="pinfo">
+<span class="tier">TIER 3 · UTILITY</span>
+<h2>Utility Hex</h2>
+<span><span class="tag">IN SERVICE</span></span>
+<p class="lead" style="font-size:17px">The hexacopter that pressure-washes and soft-washes facades, windows and roofs today. A robotic lance aims the spray while radar holds the aircraft a set distance from the wall.</p>
+<div class="stats">
+<div class="stat"><b class="g">~29 min</b><span>Hover logged on battery (company test)</span></div>
+<div class="stat"><b>All day</b><span>On ground power tether · design target</span></div>
+</div>
+<dl class="spec">
+<dt>Spray</dt><dd>Robotic swivel lance, automatic valve, quick-change tips</dd>
+<dt>Chemicals</dt><dd>Pump injection for soap and soft-wash mix</dd>
+<dt>Sensing</dt><dd>Dual RTK GPS and obstacle-avoidance radar</dd>
+<dt>Power</dt><dd>Semi-solid-state 12S packs, dual-battery charger</dd>
+<dt>Kit</dt><dd>Hard case, carbon props, warranty and support</dd>
+</dl>
+<div class="actions"><button class="btn line" data-show="utility">Explore in 3D</button><a class="btn" href="#contact">Request pricing</a></div>
+</div>
+</div>
+</section>
+
+<section class="block alt" id="compare">
+<div class="wrap">
+<div class="sec-head"><span class="kicker">Compare</span><h2>Pick the aircraft for the job</h2></div>
+<div class="tablebox">
+<table>
+<thead><tr><th></th><th>Hybrid Flagship</th><th>Electric Responder</th><th>Utility Hex</th></tr></thead>
+<tbody>
+<tr><td>Best for</td><td>Long overwatch, SAR, wildfire</td><td>Urban 911 response</td><td>Building cleaning</td></tr>
+<tr><td>Airframe</td><td>Octocopter, 8 folding arms</td><td>Octocopter, 8 folding arms</td><td>Hexacopter, 6 folding arms</td></tr>
+<tr><td>Power</td><td>Gas-electric genset</td><td>Two 12S packs</td><td>12S packs + tether</td></tr>
+<tr><td>Endurance</td><td>2–3 h (target)</td><td>30–40 min (target)</td><td>~29 min logged · tether all day</td></tr>
+<tr><td>Camera</td><td>Zoom + thermal + rangefinder</td><td>Zoom + thermal + rangefinder</td><td>Pilot camera on the lance</td></tr>
+<tr><td>On scene</td><td>Light, speaker, siren, light bar</td><td>Light, speaker, siren, light bar</td><td>Spray, chemical injection</td></tr>
+<tr><td>Delivery</td><td>3 kg winch (target)</td><td>2 kg winch (target)</td><td class="no">—</td></tr>
+<tr><td>Zoom + thermal camera</td><td class="yes">✓ Yes</td><td class="yes">✓ Yes</td><td class="no">—</td></tr>
+<tr><td>Spotlight, speaker, siren</td><td class="yes">✓ Yes</td><td class="yes">✓ Yes</td><td class="no">—</td></tr>
+<tr><td>Parachute</td><td class="yes">✓ Yes</td><td class="yes">✓ Yes</td><td>Optional</td></tr>
+<tr><td>Dock ready</td><td class="yes">✓ Yes</td><td class="yes">✓ Yes</td><td class="no">—</td></tr>
+<tr><td>Status</td><td>In design</td><td>Next build</td><td>In service</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+
+</div>
+<section class="band" id="contact">
+<div class="wrap">
+<div style="display:flex;flex-direction:column;gap:10px;max-width:640px">
+<span class="kicker">Talk to us</span>
+<h2>See the aircraft fly in Phoenix</h2>
+<p class="lead" style="font-size:17px">Book a briefing and a flight demo at our Phoenix facility, or ask for pricing on the Utility Hex cleaning package.</p>
+</div>
+<a class="btn" href="../contact.html">Book a briefing</a>
+</div>
+</section>
+</main>
+
+<footer>
+<div class="wrap">
+<span>AeroAssist Industries · Designed, fabricated and built in Phoenix, Arizona</span>
+<span class="mono">RENDERS ARE DESIGN VISUALIZATIONS · TARGETS NOT YET FLIGHT-TESTED</span>
+</div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/environments/RoomEnvironment.js"></script>
+<script src="aircraft.js"></script>
+<script>
+(function(){
+  const $ = (s, r) => (r || document).querySelector(s);
+  const NAMES = { hybrid: 'Hybrid Flagship', responder: 'Electric Responder', utility: 'Utility Hex' };
+  const ANGLES = [['hero','Three-quarter'],['low','Low angle'],['front','Front'],['profile','Side'],['rear','Rear'],['above','Above']];
+  const STATION = ['S4','S5','S4','S4','S6','S4','S6','S5','S6','S5–S6'];
+  const EXTRA = {
+    hybrid: {6:'Power: genset, fuel tank and buffer battery', 9:'Payloads: gimbal, 360° cameras, scene module, winch, parachute'},
+    responder: {6:'Power: battery bay and two 12S packs', 9:'Payloads: gimbal, 360° cameras, scene module, winch, parachute'},
+    utility: {6:'Power: battery rails and semi-solid-state packs', 9:'Payloads: robotic lance, valve, radar, hose and tether'}
+  };
+
+  // galleries
+  document.querySelectorAll('.gallery').forEach((g) => {
+    const m = g.dataset.model;
+    g.innerHTML = '<div class="gmain"><img alt="" width="1600" height="1067"></div><div class="thumbs" role="group" aria-label="' + NAMES[m] + ' views"></div>';
+    const main = $('img', g), th = $('.thumbs', g);
+    ANGLES.forEach((a, i) => {
+      const b = document.createElement('button'); b.className = 'thumb'; b.setAttribute('aria-pressed', String(i === 0)); b.setAttribute('aria-label', a[1] + ' view');
+      const im = document.createElement('img'); im.src = 'img/' + m + '-' + a[0] + '.jpg'; im.alt = ''; im.loading = 'lazy'; b.appendChild(im);
+      b.addEventListener('click', () => { main.src = im.src; main.alt = NAMES[m] + ', ' + a[1].toLowerCase() + ' render'; th.querySelectorAll('.thumb').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); });
+      th.appendChild(b);
+    });
+    main.src = 'img/' + m + '-hero.jpg'; main.alt = NAMES[m] + ', three-quarter render';
+  });
+
+  let showInStudio = (m) => { const el = document.getElementById(m); if (el) el.scrollIntoView(); };
+  // job picker
+  const JOBS = {
+    police: ['responder', 'First on scene in town: quiet, quick from a dock, with zoom and thermal, a spotlight and a loudspeaker. For long holds over a scene, the Hybrid Flagship stays up for hours.'],
+    sar: ['hybrid', 'Hours of thermal search over open ground, a loudspeaker to guide people, and a winch to lower a radio, water or a flotation device.'],
+    fire: ['hybrid', 'Radiometric thermal sees hot spots through smoke, and the hybrid powertrain keeps a 360° view over incident command for hours.'],
+    ems: ['responder', 'Lowers naloxone, an AED or a trauma kit on a tether before the ambulance arrives, while a dispatcher talks to bystanders over the speaker.'],
+    clean: ['utility', 'Pressure-washes and soft-washes facades, windows and roofs. A robotic lance aims the spray and radar holds a set distance from the wall.']
+  };
+  const TIERS = { hybrid: 'TIER 1 · FLAGSHIP', responder: 'TIER 2 · TOP ELECTRIC', utility: 'TIER 3 · UTILITY' };
+  let jobModel = 'responder';
+  document.querySelectorAll('.mchip').forEach((c) => c.addEventListener('click', () => {
+    document.querySelectorAll('.mchip').forEach((x) => x.setAttribute('aria-pressed', String(x === c)));
+    const j = JOBS[c.dataset.job]; jobModel = j[0];
+    $('#mImg').src = 'img/' + j[0] + '-hero.jpg'; $('#mImg').alt = NAMES[j[0]] + ' render';
+    $('#mTier').textContent = TIERS[j[0]]; $('#mName').textContent = NAMES[j[0]]; $('#mWhy').textContent = j[1];
+    $('#mLink').setAttribute('href', '#' + j[0]);
+  }));
+  $('#mShow').addEventListener('click', () => showInStudio(jobModel));
+  // 3D studio
+  const studio = $('#studio'), labelsEl = $('#labels');
+  if (!window.THREE || !window.AeroAircraft || !window.WebGLRenderingContext) { document.querySelectorAll('.controls,.hud').forEach((e) => e.hidden = true); return; }
+  let renderer;
+  try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); renderer.setClearColor(0x000000, 0); } catch (e) { document.querySelectorAll('.controls,.hud').forEach((el) => el.hidden = true); return; }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.outputEncoding = THREE.sRGBEncoding; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  studio.insertBefore(renderer.domElement, labelsEl);
+  $('#fallback').hidden = true;
+  const scene = new THREE.Scene();
+  scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new THREE.RoomEnvironment(), 0.04).texture;
+  const shadow = new THREE.Mesh(new THREE.PlaneGeometry(16, 16), new THREE.ShadowMaterial({ opacity: 0.5 }));
+  shadow.rotation.x = -Math.PI / 2; shadow.receiveShadow = true; scene.add(shadow);
+  let grid = null, lit = true, brand = null;
+  function makeGrid() { if (grid) { scene.remove(grid); grid.geometry.dispose(); } grid = lit ? new THREE.GridHelper(7, 28, 0xb9bfc8, 0xdfe2e7) : new THREE.GridHelper(7, 28, 0x3a4252, 0x161b24); grid.material.transparent = true; grid.material.opacity = lit ? 0.7 : 0.45; scene.add(grid); shadow.material.opacity = lit ? 0.22 : 0.5; }
+  makeGrid();
+  const key = new THREE.DirectionalLight(0xffffff, 2.0); key.position.set(2.5, 4.5, 3); key.castShadow = true; key.shadow.mapSize.set(2048, 2048);
+  Object.assign(key.shadow.camera, { left: -2.5, right: 2.5, top: 2.5, bottom: -2.5, near: 0.5, far: 12 }); key.shadow.bias = -0.0004; scene.add(key);
+  const rim = new THREE.DirectionalLight(0xffe2a8, 0.9); rim.position.set(-3, 2.2, -3.5); scene.add(rim);
+  const fill = new THREE.DirectionalLight(0x9fb4d0, 0.6); fill.position.set(-2, 1, 3); scene.add(fill);
+  const hemi = new THREE.HemisphereLight(0xdfe6f0, 0x2a2e36, 0.55); scene.add(hemi);
+  const camera = new THREE.PerspectiveCamera(30, 1, 0.05, 80);
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true; controls.maxPolarAngle = Math.PI * 0.495; controls.minDistance = 0.7; controls.maxDistance = 9; controls.enablePan = false;
+  controls.addEventListener('start', () => { idleTurn = false; });
+
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const st = { model: 'hybrid', mode: 'assembled', explode: 1, step: 0, labels: false, spin: false, playing: false };
+  let model = null, curE = 0, stepE = 0, labelNodes = [], idleTurn = !reduce, playTimer = null;
+
+  for (let i = 0; i < 10; i++) { const p = document.createElement('button'); p.className = 'pip'; p.setAttribute('aria-label', 'Step ' + (i + 1)); p.addEventListener('click', () => { stopPlay(); setStep(i); }); $('#pips').appendChild(p); }
+
+  function frame() {
+    const wb = model.dims.wheelbase / 1000, d = wb * 1.62, az = 36 * Math.PI / 180, el = 18 * Math.PI / 180;
+    camera.position.set(Math.cos(az) * Math.cos(el) * d, 0.36 + Math.sin(el) * d, Math.sin(az) * Math.cos(el) * d);
+    controls.target.set(0, 0.36, 0); controls.update();
+  }
+  function load(type) {
+    if (model) { scene.remove(model.group); model.group.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); }
+    st.model = type; model = AeroAircraft.build(type, { livery: 'mono', brand: brand }); scene.add(model.group);
+    labelsEl.textContent = '';
+    labelNodes = model.labels.map((l) => { const d = document.createElement('div'); d.className = 'lbl'; d.textContent = l.text; labelsEl.appendChild(d); return d; });
+    document.querySelectorAll('.tab').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.model === type)));
+    $('#hud').innerHTML = NAMES[type].toUpperCase() + '<br>WHEELBASE <b>' + model.dims.wheelbase.toLocaleString() + ' MM</b> · PROPS <b>24 IN</b>';
+    curE = 0; stepE = 1; frame();
+    if (st.mode === 'build') setStep(st.step);
+  }
+  function setMode(m) {
+    st.mode = m;
+    document.querySelectorAll('.seg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === m)));
+    $('#stepbox').hidden = m !== 'build'; $('#explodebox').hidden = m !== 'exploded';
+    if (m !== 'build') stopPlay();
+    if (m === 'build') setStep(st.step);
+  }
+  function setStep(s) {
+    st.step = Math.max(0, Math.min(9, s)); stepE = 1;
+    $('#stepNum').textContent = 'STEP ' + (st.step + 1) + ' OF 10';
+    $('#station').textContent = 'STATION ' + STATION[st.step];
+    $('#stepName').textContent = EXTRA[st.model][st.step] || AeroAircraft.STEPS[st.step];
+    document.querySelectorAll('.pip').forEach((p, i) => { p.className = 'pip' + (i < st.step ? ' done' : '') + (i === st.step ? ' cur' : ''); });
+    $('#prev').disabled = st.step === 0; $('#next').disabled = st.step === 9;
+  }
+  function stopPlay() { st.playing = false; clearTimeout(playTimer); $('#play').textContent = '▶ WATCH IT BUILD'; }
+  function play() {
+    if (st.playing) { stopPlay(); return; }
+    setMode('build'); st.playing = true; $('#play').textContent = '❚❚ PAUSE'; idleTurn = !reduce;
+    let s = st.step >= 9 ? 0 : st.step; setStep(s);
+    const next = () => {
+      if (!st.playing) return;
+      if (st.step >= 9) { playTimer = setTimeout(() => { stopPlay(); setMode('assembled'); }, 1600); return; }
+      setStep(st.step + 1); playTimer = setTimeout(next, reduce ? 900 : 1500);
+    };
+    playTimer = setTimeout(next, reduce ? 900 : 1500);
+  }
+  document.querySelectorAll('.tab').forEach((b) => b.addEventListener('click', () => { stopPlay(); load(b.dataset.model); }));
+  document.querySelectorAll('.seg button').forEach((b) => b.addEventListener('click', () => setMode(b.dataset.mode)));
+  $('#play').addEventListener('click', play);
+  $('#prev').addEventListener('click', () => { stopPlay(); setStep(st.step - 1); });
+  $('#next').addEventListener('click', () => { stopPlay(); setStep(st.step + 1); });
+  $('#explode').addEventListener('input', (e) => { st.explode = e.target.value / 100; });
+  $('#tSpin').addEventListener('click', (e) => { st.spin = !st.spin; e.currentTarget.setAttribute('aria-pressed', String(st.spin)); });
+  $('#tLabels').addEventListener('click', (e) => { st.labels = !st.labels; e.currentTarget.setAttribute('aria-pressed', String(st.labels)); labelsEl.hidden = !st.labels; });
+  labelsEl.hidden = true;
+  showInStudio = (m) => { stopPlay(); load(m); setMode('assembled'); studio.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' }); };
+  document.querySelectorAll('[data-show]').forEach((b) => b.addEventListener('click', () => showInStudio(b.dataset.show)));
+
+  function resize() { const r = renderer.domElement.parentElement.getBoundingClientRect(); const c = renderer.domElement; const w = c.clientWidth || r.width, h = c.clientHeight || r.height; renderer.setSize(w, h, false); camera.aspect = w / Math.max(1, h); camera.updateProjectionMatrix(); }
+  new ResizeObserver(resize).observe(studio);
+  const tmp = new THREE.Vector3(), bb = new THREE.Box3(), up = new THREE.Vector3(0, 1, 0);
+  let last = performance.now(), sig = '', visible = true;
+  new IntersectionObserver((es) => { visible = es[0].isIntersecting; }).observe(studio);
+  function lift() {
+    model.group.position.y = 0; model.group.updateMatrixWorld(true); bb.makeEmpty();
+    model.group.traverse((o) => { if (o.isMesh) { let v = true, p = o; while (p) { if (!p.visible) { v = false; break; } p = p.parent; } if (v) bb.expandByObject(o); } });
+    if (!bb.isEmpty() && bb.min.y < 0.01) model.group.position.y = 0.01 - bb.min.y;
+  }
+  function tick(now) {
+    requestAnimationFrame(tick);
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (!visible) return;
+    const k = reduce ? 1 : Math.min(1, dt * 5);
+    if (st.mode === 'assembled') { curE += (0 - curE) * k; AeroAircraft.pose(model, curE, null); }
+    else if (st.mode === 'exploded') { curE += (st.explode - curE) * k; AeroAircraft.pose(model, curE, null); }
+    else { stepE += (0 - stepE) * (reduce ? 1 : Math.min(1, dt * 2.6)); AeroAircraft.pose(model, 0, st.step, Math.max(0, stepE - 0.02)); }
+    const s = st.mode + curE.toFixed(3) + st.step + stepE.toFixed(3);
+    if (s !== sig) { lift(); sig = s; }
+    if (st.spin) model.group.traverse((o) => { if (o.userData.isProp) o.rotation.y += (o.userData.spinDir || 1) * dt * 40; });
+    if (idleTurn) { const p = camera.position.clone().sub(controls.target); p.applyAxisAngle(up, dt * 0.18); camera.position.copy(controls.target).add(p); }
+    controls.update();
+    renderer.render(scene, camera);
+    if (st.labels) {
+      const w = renderer.domElement.clientWidth, h = renderer.domElement.clientHeight;
+      model.labels.forEach((l, i) => {
+        const n = labelNodes[i]; let v = l.obj.visible && (st.mode !== 'build' || l.obj.userData.step === st.step); let p = l.obj.parent; while (v && p) { if (!p.visible) v = false; p = p.parent; }
+        if (!v) { n.hidden = true; return; }
+        tmp.copy(l.anchor); l.obj.localToWorld(tmp); tmp.project(camera);
+        if (tmp.z > 1) { n.hidden = true; return; }
+        n.hidden = false; n.style.left = ((tmp.x + 1) / 2 * w) + 'px'; n.style.top = ((1 - tmp.y) / 2 * h) + 'px';
+      });
+    }
+  }
+  $('#tTheme').addEventListener('click', (e) => { lit = !lit; studio.classList.toggle('lit', lit); e.currentTarget.textContent = lit ? 'DARK' : 'LIGHT'; makeGrid(); hemi.intensity = lit ? 0.55 : 0.2; });
+  const loadTex = (u) => new Promise((res) => new THREE.TextureLoader().load(u, (tx) => { tx.encoding = THREE.sRGBEncoding; tx.anisotropy = 8; res(tx); }, undefined, () => res(null)));
+  load('hybrid'); setMode('assembled'); resize(); requestAnimationFrame(tick);
+  Promise.all([loadTex('img/brand-mark.png'), loadTex('img/brand-wordmark.png')]).then(([mark, wordWhite]) => {
+    if (mark && wordWhite) { brand = { mark: mark, wordWhite: wordWhite }; const keep = st.mode; load(st.model); setMode(keep); }
+  });
+})();
+</script>
+
+</body>
+</html>
