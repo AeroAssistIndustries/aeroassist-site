@@ -60,7 +60,7 @@ p{margin:0}
 .hero-head{display:flex;justify-content:space-between;align-items:flex-end;gap:32px;flex-wrap:wrap;margin-bottom:28px}
 .hero-head .lead{max-width:46ch}
 .studio{position:relative;border:1px solid var(--edge);background:radial-gradient(ellipse at 50% 62%,#1b2131 0%,#0a0d13 58%,#05070b 100%);height:min(68vh,680px);min-height:420px;overflow:hidden}
-.studio canvas{display:block;width:100%;height:100%;touch-action:none}
+.studio > canvas{display:block;width:100%;height:100%;touch-action:none}
 .studio .fallback{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .tabs{position:absolute;left:16px;top:16px;display:flex;gap:6px;flex-wrap:wrap;z-index:3;max-width:calc(100% - 32px)}
 .tab{min-height:44px;padding:6px 14px;font-family:var(--display);font-weight:700;font-size:14px;letter-spacing:.03em;cursor:pointer;border:1px solid var(--edge);background:rgba(8,11,17,.82);color:var(--mist);text-align:left;line-height:1.15}
@@ -93,7 +93,7 @@ p{margin:0}
 .hud b{color:var(--gold)}
 @media (max-width:760px){
   .studio{height:auto;min-height:0;display:flex;flex-direction:column}
-  .studio canvas{height:62vh;min-height:360px}
+  .studio > canvas{height:62vh;min-height:360px}
   .controls{position:static;padding:12px;background:var(--deep);border-top:1px solid var(--edge)}
   .tabs{top:12px;left:12px}
   .hud{display:none}
@@ -185,12 +185,12 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
 @media (prefers-reduced-motion: reduce){.hint .hand{animation:none}}
 .hint.gone{opacity:0}
 .studio.max{position:fixed;inset:0;height:100vh;height:100dvh;min-height:0;z-index:60;border:0;display:block}
-.studio.max canvas{height:100%!important}
+.studio.max > canvas{height:100%!important}
 @media (max-width:760px){
   .vtools{top:auto;bottom:auto;top:12px;right:12px}
   .tabs{max-width:calc(100% - 80px)}
   .studio.max{display:flex;flex-direction:column}
-  .studio.max canvas{flex:1 1 auto;height:auto!important;min-height:0}
+  .studio.max > canvas{flex:1 1 auto;height:auto!important;min-height:0}
   .hint{font-size:14px;padding:12px 16px;gap:10px}
   .tab{min-height:40px;padding:6px 10px;font-size:13px}
 }
@@ -270,6 +270,78 @@ dialog.rsv::backdrop{background:rgba(5,7,11,.66)}
 #qbar .btn{flex:1;min-height:44px;font-size:13px;padding:0 10px}
 @media (max-width:760px){#qbar.on{display:flex} body.qb footer{padding-bottom:96px}}
 @media (max-width:1080px){.nav ul{display:none}}
+/* Fly mode: the studio goes full window and the flight controls float over the 3D view. */
+.sbtn.flyit{flex:1;min-height:44px;font-family:var(--display);font-size:14px;font-weight:800;letter-spacing:.06em;color:var(--on-gold);border-color:var(--gold);background:linear-gradient(180deg,#f7e8bc,#e2be72 45%,#c9973f)}
+.sbtn.flyit:hover{filter:brightness(1.06)}
+.studio.lit .sbtn.flyit{color:#120c02;border-color:#c9973f}
+.studio.flying .tabs,.studio.flying .controls,.studio.flying .vtools,.studio.flying .hint,.studio.flying .hud,.studio.flying .labels{display:none}
+.studio.flying{background:#05070b}
+.fly{position:absolute;inset:0;z-index:6;overflow:hidden;pointer-events:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;--stick:136px}
+.fhead{position:absolute;left:0;right:0;top:0;display:flex;flex-direction:column;gap:8px;padding:0 12px}
+.fbar{display:flex;align-items:center;flex-wrap:wrap;gap:8px 10px;margin:0 -12px;padding:max(10px,env(safe-area-inset-top,0px)) 12px 16px;background:linear-gradient(to bottom,rgba(5,7,11,.88),rgba(5,7,11,.6) 62%,rgba(5,7,11,0))}
+.fbtn{pointer-events:auto;min-height:40px;padding:4px 12px;cursor:pointer;text-align:left;line-height:1.1;font-family:var(--display);font-weight:700;font-size:13px;color:var(--ink);background:rgba(14,18,26,.82);border:1px solid var(--edge)}
+.fbtn small{display:block;font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:.14em;color:var(--gold)}
+.fbtn:hover{border-color:var(--edge-gold)}
+.fstatus{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.12em;color:var(--signal);padding:4px 8px;border:1px solid currentColor;white-space:nowrap}
+.fstatus[data-mode="landed"]{color:var(--dim)} .fstatus[data-mode="rth"],.fstatus[data-mode="land"]{color:var(--gold)} .fstatus[data-mode="chute"]{color:var(--warn)}
+.ftel{margin-left:auto;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 16px;font-family:var(--mono)}
+.ftel span{white-space:nowrap}
+.ftel i{font-style:normal;font-size:10px;font-weight:600;letter-spacing:.12em;color:var(--dim);margin-right:5px}
+.ftel b{font-size:16px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
+.ftel u{text-decoration:none;font-size:10px;color:var(--dim);margin-left:3px}
+.ftel .fextra{font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--signal)}
+.fobj{align-self:flex-start;max-width:100%;font-family:var(--mono);font-size:11.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--ink);background:rgba(5,7,11,.66);border-left:2px solid var(--signal);padding:5px 9px}
+.fobj.done{border-color:var(--gold);color:var(--gold-hi)}
+.ftoast{align-self:center;min-height:28px;max-width:100%;padding:5px 12px;font-family:var(--sans);font-size:13px;font-weight:500;color:var(--ink);background:rgba(5,7,11,.8);border:1px solid var(--edge-gold);opacity:0;transition:opacity .25s;text-align:center}
+.ftoast.show{opacity:1}
+.ffns{align-self:flex-end;display:grid;grid-template-columns:repeat(2,112px);gap:6px}
+.ffn{pointer-events:auto;position:relative;min-height:44px;padding:4px 6px;cursor:pointer;text-align:center;font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.06em;line-height:1.2;color:var(--mist);background:rgba(10,13,19,.76);border:1px solid var(--edge)}
+.ffn:hover{border-color:var(--edge-gold)}
+.ffn[aria-pressed="true"]{color:var(--on-gold);background:var(--gold);border-color:var(--gold)}
+.ffn kbd{position:absolute;right:4px;top:2px;font:600 9px var(--mono);color:var(--dim)}
+.ffn[aria-pressed="true"] kbd{color:var(--on-gold)}
+.studio .fmap{position:absolute;left:18px;bottom:calc(max(18px,env(safe-area-inset-bottom,0px)) + var(--stick) + 34px);width:128px;height:128px}
+.fret{position:absolute;left:50%;top:50%;width:132px;height:132px;transform:translate(-50%,-50%);
+  background:linear-gradient(var(--signal),var(--signal)) 0 0/22px 2px no-repeat,linear-gradient(var(--signal),var(--signal)) 0 0/2px 22px no-repeat,
+  linear-gradient(var(--signal),var(--signal)) 100% 0/22px 2px no-repeat,linear-gradient(var(--signal),var(--signal)) 100% 0/2px 22px no-repeat,
+  linear-gradient(var(--signal),var(--signal)) 0 100%/22px 2px no-repeat,linear-gradient(var(--signal),var(--signal)) 0 100%/2px 22px no-repeat,
+  linear-gradient(var(--signal),var(--signal)) 100% 100%/22px 2px no-repeat,linear-gradient(var(--signal),var(--signal)) 100% 100%/2px 22px no-repeat}
+.fret i{position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:var(--signal)}
+.fret span{position:absolute;left:50%;top:100%;transform:translateX(-50%);margin-top:8px;white-space:nowrap;font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.1em;color:var(--signal);background:rgba(5,7,11,.6);padding:2px 6px}
+.stick{position:absolute;bottom:max(18px,env(safe-area-inset-bottom,0px));width:var(--stick);height:var(--stick);border-radius:50%;pointer-events:auto;touch-action:none;cursor:grab;border:1px solid var(--edge-gold);
+  background:linear-gradient(rgba(214,220,228,.16),rgba(214,220,228,.16)) 50% 50%/1px 64% no-repeat,linear-gradient(rgba(214,220,228,.16),rgba(214,220,228,.16)) 50% 50%/64% 1px no-repeat,radial-gradient(circle,rgba(226,190,114,.12),rgba(8,11,17,.6) 72%)}
+.stick:active{cursor:grabbing}
+#stickL{left:18px} #stickR{right:18px}
+.stick .knob{position:absolute;left:50%;top:50%;width:42%;height:42%;margin:-21% 0 0 -21%;border-radius:50%;pointer-events:none;will-change:transform;background:radial-gradient(circle at 35% 30%,#f4e2b0,#e2be72 55%,#9c7c3a);box-shadow:0 4px 14px rgba(0,0,0,.55)}
+.stick span{position:absolute;left:-10px;right:-10px;top:-21px;text-align:center;pointer-events:none;font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.14em;color:var(--mist)}
+.fcenter{position:absolute;left:50%;bottom:max(18px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px}
+.fgo{pointer-events:auto;min-width:156px;min-height:54px;padding:0 14px;cursor:pointer;font-family:var(--display);font-weight:800;font-size:16px;letter-spacing:.08em;color:var(--on-gold);background:var(--gold);border:1px solid var(--gold-hi)}
+.fgo:disabled{opacity:.5;cursor:not-allowed}
+.fkeys{margin:0;white-space:nowrap;font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;color:var(--mist);background:rgba(5,7,11,.6);padding:3px 8px}
+.fkeys b{color:var(--gold);font-weight:600}
+.fly:not(.has-gimbal) .fkeys .gim{display:none}
+@media (hover:none){.fkeys,.ffn kbd{display:none}}
+@media (max-width:980px){.fkeys{display:none}}
+@media (min-width:641px) and (max-height:720px){
+  .ffns{grid-template-columns:repeat(3,104px)}
+}
+@media (max-width:640px){
+  .fly{--stick:116px}
+  .ftel{margin-left:0;width:100%;gap:2px 14px} .ftel b{font-size:14px}
+  .fobj{font-size:10.5px}
+  .ffns{align-self:stretch;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+  .ffn{min-height:38px;font-size:9.5px;letter-spacing:.03em;padding:3px 2px}
+  .studio .fmap{width:96px;height:96px}
+  .fgo{min-width:0;width:100px;padding:0 2px;font-size:13px;letter-spacing:.03em}
+}
+@media (max-height:480px){
+  .fly{--stick:108px}
+  .fbar{padding-bottom:8px} .fbtn{min-height:34px}
+  .ffns{align-self:flex-end;grid-template-columns:repeat(4,84px);gap:4px}
+  .ffn{min-height:34px;font-size:9.5px}
+  .studio .fmap{display:none}
+  .fgo{min-height:44px}
+}
 </style>
 </head>
 <body style="margin:0">
@@ -310,6 +382,33 @@ dialog.rsv::backdrop{background:rgba(5,7,11,.66)}
 <div class="vtools" role="group" aria-label="View tools"><button class="vbtn" id="zIn" aria-label="Zoom in" title="Zoom in"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.4-4.4M11 8v6M8 11h6"/></svg></button><button class="vbtn" id="zOut" aria-label="Zoom out" title="Zoom out"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.4-4.4M8 11h6"/></svg></button><button class="vbtn" id="vReset" aria-label="Reset view" title="Reset view"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4.5h4.5"/></svg></button><button class="vbtn" id="vFull" aria-label="Full screen" title="Full screen" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg></button></div>
 <div class="hint" id="hint" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M8 20a17 9 0 0 1 32 0" /><path d="M36 15l4 5-6 1"/><g class="hand"><path d="M22 44v-9l-5-5a2.5 2.5 0 0 1 3.5-3.5L22 28V15a2.5 2.5 0 0 1 5 0v9l7 1.5a3 3 0 0 1 2.4 3.4L35 38v6"/></g></svg><span id="hintTx">Drag to spin the aircraft<small>SCROLL TO ZOOM · DOUBLE-CLICK TO RESET</small></span></div>
 <div class="labels" id="labels"></div>
+<div class="fly" id="fly" hidden>
+<div class="fhead">
+<div class="fbar">
+<button class="fbtn" id="fExit" type="button" aria-label="Exit Fly it and return to the studio">&lsaquo; Exit</button>
+<button class="fbtn" id="fModel" type="button" aria-label="Switch aircraft"><small>AIRCRAFT</small><span id="fModelName">Utility Hex</span></button>
+<span class="fstatus" id="fStatus" data-mode="landed">ON THE GROUND</span>
+<div class="ftel">
+<span><i>ALT</i><b id="tAlt">0.0</b><u>M</u></span>
+<span><i>SPD</i><b id="tSpd">0.0</b><u>M/S</u></span>
+<span><i>HDG</i><b id="tHdg">000</b><u>&deg;</u></span>
+<span><i>HOME</i><b id="tHome">0</b><u>M</u></span>
+<span class="fextra" id="tExtra"></span>
+</div>
+</div>
+<div class="fobj" id="fObj"></div>
+<div class="ftoast" id="fToast" role="status" aria-live="polite"></div>
+<div class="ffns" id="fFns" role="group" aria-label="Aircraft functions"></div>
+</div>
+<canvas class="fmap" id="fMap" width="256" height="256" aria-hidden="true"></canvas>
+<div class="fret" id="fRet" hidden><i></i><span id="fRetTag"></span></div>
+<div class="stick" id="stickL" role="img" aria-label="Left stick: up and down to climb and descend, left and right to turn"><div class="knob"></div><span>CLIMB &middot; TURN</span></div>
+<div class="stick" id="stickR" role="img" aria-label="Right stick: fly forward, back, left and right"><div class="knob"></div><span>MOVE</span></div>
+<div class="fcenter">
+<button class="fgo" id="fGo" type="button">TAKE OFF</button>
+<p class="fkeys"><b>W S</b> climb &middot; <b>A D</b> turn &middot; <b>arrows</b> move &middot; <b>space</b> take off / land<span class="gim"> &middot; <b>R F</b> tilt camera</span> &middot; gamepad works too</p>
+</div>
+</div>
 <div class="controls">
 <div class="panel">
 <div class="seg" role="group" aria-label="View">
@@ -323,6 +422,7 @@ dialog.rsv::backdrop{background:rgba(5,7,11,.66)}
 <button class="sbtn" id="tLabels" aria-pressed="false" title="Show part labels">LABELS</button>
 <button class="sbtn" id="tTheme" aria-pressed="false" title="Switch studio background">DARK</button>
 </div>
+<div class="stepbtns"><button class="sbtn flyit" id="flyBtn" type="button" title="Fly this aircraft with on-screen sticks, a keyboard or a gamepad">FLY IT &middot; SOUND, LIGHTS, CONTROLLER</button></div>
 </div>
 <div class="panel stepbox" id="stepbox" hidden>
 <div class="stepline"><span class="stepnum" id="stepNum">STEP 1 OF 10</span><span class="stepnum" id="station" style="color:var(--dim)"></span></div>
@@ -336,7 +436,7 @@ dialog.rsv::backdrop{background:rgba(5,7,11,.66)}
 </div>
 </div>
 </div>
-<p class="dim" id="howto" style="font-size:13px;margin-top:10px">Drag to spin, scroll to zoom, double-click to reset. On a phone or tablet: swipe sideways to spin and pinch to zoom. Use the buttons on the right to zoom, reset or go full screen. Models are design renders; figures marked target are not yet flight-tested.</p>
+<p class="dim" id="howto" style="font-size:13px;margin-top:10px">Drag to spin, scroll to zoom, double-click to reset. On a phone or tablet: swipe sideways to spin and pinch to zoom. Use the buttons on the right to zoom, reset or go full screen. Press Fly it to take the controls with motor sound, lights and each aircraft's payloads. Models are design renders; figures marked target are not yet flight-tested, and Fly it is a simplified simulation whose handling and speeds are not performance figures.</p>
 </div>
 </section>
 
@@ -531,6 +631,7 @@ dialog.rsv::backdrop{background:rgba(5,7,11,.66)}
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/environments/RoomEnvironment.js"></script>
 <script src="aircraft.js"></script>
+<script src="flight.js"></script>
 <script>
 (function(){
   const $ = (s, r) => (r || document).querySelector(s);
@@ -657,6 +758,17 @@ dialog.rsv::backdrop{background:rgba(5,7,11,.66)}
   const st = { model: 'hybrid', mode: 'assembled', explode: 1, step: 0, labels: false, spin: false, playing: false };
   let model = null, curE = 0, stepE = 0, labelNodes = [], idleTurn = !reduce, playTimer = null;
 
+  // Fly it: flight.js takes over the scene while st.mode is 'fly'
+  const flyUI = $('#fly'), ORDER = ['hybrid', 'responder', 'utility'];
+  let flyMaxed = false;
+  const flight = window.AeroFlight ? AeroFlight.create({
+    scene: scene, camera: camera, renderer: renderer, controls: controls, ui: flyUI, key: key, rim: rim, hemi: hemi,
+    viewerObjects: function () { return [shadow, grid]; },
+    onExit: function () { setMode('assembled'); },
+    onNextModel: function () { load(ORDER[(ORDER.indexOf(st.model) + 1) % ORDER.length]); }
+  }) : null;
+  if (!flight) $('#flyBtn').hidden = true;
+
   for (let i = 0; i < 10; i++) { const p = document.createElement('button'); p.className = 'pip'; p.setAttribute('aria-label', 'Step ' + (i + 1)); p.addEventListener('click', () => { stopPlay(); setStep(i); }); $('#pips').appendChild(p); }
 
   function frame() {
@@ -665,16 +777,32 @@ dialog.rsv::backdrop{background:rgba(5,7,11,.66)}
     controls.target.set(0, 0.36, 0); controls.update();
   }
   function load(type) {
-    if (model) { scene.remove(model.group); model.group.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); }
+    const flying = flight && flight.active;
+    if (flying) flight.detach();
+    if (model) { scene.remove(model.group); model.group.traverse((o) => { if (o.geometry && !o.isSprite) o.geometry.dispose(); }); }
     st.model = type; model = AeroAircraft.build(type, { livery: 'mono', brand: brand }); scene.add(model.group);
     labelsEl.textContent = '';
     labelNodes = model.labels.map((l) => { const d = document.createElement('div'); d.className = 'lbl'; d.textContent = l.text; labelsEl.appendChild(d); return d; });
     document.querySelectorAll('.tab').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.model === type)));
     $('#hud').innerHTML = NAMES[type].toUpperCase() + '<br>WHEELBASE <b>' + model.dims.wheelbase.toLocaleString() + ' MM</b> · PROPS <b>24 IN</b>';
-    curE = 0; stepE = 1; frame();
+    curE = 0; stepE = 1;
+    if (flying) flight.attach(model); else frame();
     if (st.mode === 'build') setStep(st.step);
   }
   function setMode(m) {
+    const wasFly = st.mode === 'fly';
+    if (m === 'fly' && !flight) return;
+    if (m === 'fly' && !wasFly) {
+      // full-window studio for flying; remember whether the visitor had already gone full screen
+      stopPlay(); idleTurn = false; hideHint(); flyMaxed = !studio.classList.contains('max'); if (flyMaxed) setMax(true);
+      st.mode = m; studio.classList.add('flying'); flyUI.hidden = false; resize(); flight.enter(model);
+      return;
+    }
+    if (m === 'fly') return;
+    if (wasFly) {
+      flight.exit(); studio.classList.remove('flying'); flyUI.hidden = true; if (flyMaxed) setMax(false);
+      AeroAircraft.pose(model, 0, null); curE = 0; sig = ''; resize(); frame();
+    }
     st.mode = m;
     document.querySelectorAll('.seg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === m)));
     $('#stepbox').hidden = m !== 'build'; $('#explodebox').hidden = m !== 'exploded';
@@ -704,6 +832,7 @@ dialog.rsv::backdrop{background:rgba(5,7,11,.66)}
   document.querySelectorAll('.tab').forEach((b) => b.addEventListener('click', () => { stopPlay(); load(b.dataset.model); }));
   document.querySelectorAll('.seg button').forEach((b) => b.addEventListener('click', () => setMode(b.dataset.mode)));
   $('#play').addEventListener('click', play);
+  $('#flyBtn').addEventListener('click', () => setMode('fly'));
   $('#prev').addEventListener('click', () => { stopPlay(); setStep(st.step - 1); });
   $('#next').addEventListener('click', () => { stopPlay(); setStep(st.step + 1); });
   $('#explode').addEventListener('input', (e) => { st.explode = e.target.value / 100; });
@@ -726,6 +855,7 @@ dialog.rsv::backdrop{background:rgba(5,7,11,.66)}
   function tick(now) {
     requestAnimationFrame(tick);
     const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (st.mode === 'fly') { flight.update(dt); renderer.render(scene, camera); return; }
     if (!visible) return;
     const k = reduce ? 1 : Math.min(1, dt * 5);
     if (st.mode === 'assembled') { curE += (0 - curE) * k; AeroAircraft.pose(model, curE, null); }
@@ -769,7 +899,7 @@ dialog.rsv::backdrop{background:rgba(5,7,11,.66)}
   renderer.domElement.addEventListener('dblclick', () => { frame(); idleTurn = !reduce; hideHint(); });
   function setMax(on) { studio.classList.toggle('max', on); $('#vFull').setAttribute('aria-pressed', String(on)); $('#vFull').setAttribute('aria-label', on ? 'Exit full screen' : 'Full screen'); document.documentElement.style.overflow = on ? 'hidden' : ''; resize(); }
   $('#vFull').addEventListener('click', () => setMax(!studio.classList.contains('max')));
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && studio.classList.contains('max')) setMax(false); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && st.mode !== 'fly' && studio.classList.contains('max')) setMax(false); });
   $('#tTheme').addEventListener('click', (e) => { lit = !lit; studio.classList.toggle('lit', lit); e.currentTarget.textContent = lit ? 'DARK' : 'LIGHT'; makeGrid(); hemi.intensity = lit ? 0.55 : 0.2; });
   const loadTex = (u) => new Promise((res) => new THREE.TextureLoader().load(u, (tx) => { tx.encoding = THREE.sRGBEncoding; tx.anisotropy = 8; res(tx); }, undefined, () => res(null)));
   load('hybrid'); setMode('assembled'); resize(); requestAnimationFrame(tick);

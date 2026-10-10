@@ -13,6 +13,8 @@ Shared files: `assets/aa.css`, `assets/aa.js`, `images/`.
   a "What's the job?" picker, white-background product sections with studio renders, and a comparison table.
   Linked from `products.html`. Renders in `3d-viewer/img/` carry the AeroAssist mark on the airframe.
   `3d-viewer/aircraft.js` is the shared procedural model library.
+  "Fly it" in the studio (`3d-viewer/flight.js`) lets a visitor fly each aircraft with on-screen sticks, a keyboard or a gamepad,
+  with synthesized motor sound, lights and payload functions. It is a simplified simulation, not a statement of flight performance.
 
 This is a staging copy: every page carries `noindex` and `robots.txt` blocks crawlers.
 The production site at aeroassist.us is unchanged.

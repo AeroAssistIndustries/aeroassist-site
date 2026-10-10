@@ -71,6 +71,18 @@
     };
   }
 
+  let glowMap = null;
+  function glow(color, size) {
+    if (!glowMap) glowMap = canvasTex(64, 64, (g, w, h) => {
+      const r = g.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2);
+      r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(0.22, 'rgba(255,255,255,0.55)'); r.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = r; g.fillRect(0, 0, w, h);
+    });
+    const s = new T.Sprite(new T.SpriteMaterial({ map: glowMap, color: color, blending: T.AdditiveBlending, depthWrite: false, transparent: true }));
+    s.scale.set(size, size, 1); s.visible = false;
+    return s;
+  }
+
   // ---------- primitives ----------
   function mesh(geo, mat) { const m = new T.Mesh(geo, mat); m.castShadow = true; m.receiveShadow = true; return m; }
   function cyl(r, h, mat, seg, rTop) { return mesh(new T.CylinderGeometry(rTop == null ? r : rTop, r, h, seg || 32), mat); }
@@ -135,6 +147,10 @@
     for (let k = 0; k < 2; k++) {
       const b = blade(len, mats.prop); const h = new T.Group(); h.add(b); h.rotation.y = k * Math.PI; h.position.y = 6; g.add(h);
     }
+    if (mats.disc) {
+      const disc = new T.Mesh(new T.CircleGeometry(len, 40), mats.disc);
+      disc.rotation.x = -Math.PI / 2; disc.position.y = 8; disc.visible = false; g.add(disc); g.userData.disc = disc;
+    }
     g.rotation.y = phase || 0;
     g.userData.isProp = true;
     return g;
@@ -175,10 +191,13 @@
     for (const sx of [-40, 40]) for (const sz of [-35, 35]) { const d = sphere(8, mats.rubber, 12); d.position.set(sx, -14, sz); g.add(d); }
     const yokeTop = box(70, 12, 60, mats.graphite); yokeTop.position.y = -28; g.add(yokeTop);
     for (const sz of [-70, 70]) { const arm = box(24, 80, 14, mats.graphite); arm.position.set(0, -70, sz); g.add(arm); }
-    const ball = sphere(66, mats.graphite, 32); ball.position.y = -98; g.add(ball);
-    const lens = cyl(26, 20, mats.glass, 32); lens.rotation.z = Math.PI / 2; lens.position.set(62, -92, -18); g.add(lens);
-    const ir = cyl(16, 16, mats.glass, 24); ir.rotation.z = Math.PI / 2; ir.position.set(60, -92, 28); g.add(ir);
-    const lrf = cyl(7, 10, mats.glass, 16); lrf.rotation.z = Math.PI / 2; lrf.position.set(62, -122, 10); g.add(lrf);
+    const head = new T.Group(); head.position.y = -98; g.add(head);
+    const ball = sphere(66, mats.graphite, 32); head.add(ball);
+    const lens = cyl(26, 20, mats.glass, 32); lens.rotation.z = Math.PI / 2; lens.position.set(62, 6, -18); head.add(lens);
+    const ir = cyl(16, 16, mats.glass, 24); ir.rotation.z = Math.PI / 2; ir.position.set(60, 6, 28); head.add(ir);
+    const lrf = cyl(7, 10, mats.glass, 16); lrf.rotation.z = Math.PI / 2; lrf.position.set(62, -24, 10); head.add(lrf);
+    const eye = new T.Object3D(); eye.position.set(84, 6, 0); head.add(eye);
+    g.userData.head = head; g.userData.eye = eye;
     return g;
   }
 
@@ -193,7 +212,7 @@
     const g = new T.Group();
     const body = cyl(42, 90, mats.alu, 32); body.rotation.z = Math.PI / 2; g.add(body);
     const fins = cyl(46, 30, mats.graphite, 32); fins.rotation.z = Math.PI / 2; fins.position.x = -30; g.add(fins);
-    const face = cyl(38, 3, mats.lamp, 32); face.rotation.z = Math.PI / 2; face.position.x = 46; g.add(face);
+    const face = cyl(38, 3, mats.lampFace || mats.lamp, 32); face.rotation.z = Math.PI / 2; face.position.x = 46; g.add(face);
     return g;
   }
 
@@ -272,6 +291,10 @@
     const MONO = { hybrid: [0x141619, 0x6f757e], responder: [0x3c4149, 0xb7bcc4], utility: [0x8a8f97, 0x2a2e35] };
     if (opts.livery === 'mono' && MONO[type]) { cfg.hull = MONO[type][0]; cfg.accent = MONO[type][1]; }
     const M = makeMaterials(cfg.hull, cfg.accent);
+    // dedicated light materials so flight mode can switch each light group on its own
+    M.navG = M.green.clone(); M.navR = M.red.clone(); M.navW = M.white.clone(); M.strobe = M.white.clone(); M.lampFace = M.lamp.clone();
+    M.disc = new T.MeshBasicMaterial({ color: 0x9aa4b4, transparent: true, opacity: 0, depthWrite: false, side: T.DoubleSide });
+    const fx = { type: type, props: [], navGlows: [], bar: [], propMat: M.prop, discMat: M.disc, navG: M.navG, navR: M.navR, navW: M.navW, strobeMat: M.strobe, lampMat: M.lampFace };
     const root = new T.Group();
     const parts = [];
     const labels = [];
@@ -335,12 +358,14 @@
       const pin = cyl(5, 12, M.gold, 12); pin.rotation.x = Math.PI / 2; pin.position.set(pr + 34, 0, 26); arm.add(pin);
       const sleeve = cyl(18, 50, M.alu, 24); sleeve.rotation.z = Math.PI / 2; sleeve.position.set(pr + 95, 0, 0); arm.add(sleeve);
       const mount = box(70, 24, 56, M.alu); mount.position.set(r1, 14, 0); arm.add(mount);
-      const nav = sphere(7, i === 0 ? M.green : (i === n - 1 ? M.red : M.white), 12); nav.position.set(r1, -14, 0); arm.add(nav);
+      const nav = sphere(7, i === 0 ? M.navG : (i === n - 1 ? M.navR : M.navW), 12); nav.position.set(r1, -14, 0); arm.add(nav);
+      const ng = glow(i === 0 ? 0x22d07a : (i === n - 1 ? 0xff2a1f : 0xffffff), i === 0 || i === n - 1 ? 300 : 170); ng.position.copy(nav.position); arm.add(ng); fx.navGlows.push(ng);
       arm.position.y = armY; arm.rotation.y = -a;
       add(arm, 3, out.clone().multiplyScalar(170), i === 0 ? 'Carbon arm, folding clamp, gold lock pin' : null, V(pr + 34, 30, 0));
       const mo = motor(M); mo.position.set(ca * r1, armY + 26, sa * r1); add(mo, 4, V(ca * 120, 140, sa * 120), i === 1 ? 'Vertiq 81-08 G2 motor + ESC' : null, V(0, 40, 0));
       const pp = prop(cfg.propLen, M, i * 0.9 + (i % 2) * 0.7); pp.position.set(ca * r1, armY + 26 + 42, sa * r1); pp.userData.spinDir = (i % 2 ? 1 : -1);
       add(pp, 8, V(ca * 60, 300, sa * 60), i === 2 ? '24 in folding carbon props' : null, V(0, 10, 0));
+      fx.props.push(pp);
     }
 
     // Step 5: top plate
@@ -392,7 +417,8 @@
     // Step 7: GPS masts, strobe, antennas
     for (const x of [pr - 50, -(pr - 50)]) { const m = gpsMast(120, M); m.position.set(x, topY + 3, 0); add(m, 7, V(0, 380, 0), x > 0 ? 'Dual RTK GPS masts' : null, V(0, 140, 0)); }
     const strobeBase = cyl(16, 14, M.dark, 20); strobeBase.position.set(-pr * 0.35, topY + 10, -pr * 0.35); add(strobeBase, 7, V(0, 380, 0));
-    const strobe = sphere(12, M.white, 16); strobe.position.set(-pr * 0.35, topY + 22, -pr * 0.35); add(strobe, 7, V(0, 380, 0), 'Anti-collision strobe', V(0, 14, 0));
+    const strobe = sphere(12, M.strobe, 16); strobe.position.set(-pr * 0.35, topY + 22, -pr * 0.35); add(strobe, 7, V(0, 380, 0), 'Anti-collision strobe', V(0, 14, 0));
+    fx.strobeGlow = glow(0xffffff, 900); strobe.add(fx.strobeGlow);
     for (const z of [-1, 1]) { const an = antenna(150, M); an.position.set(-cfg.gearX * 1.0 - 10, y0 - 80, z * (cfg.gearZ0 + 25)); add(an, 7, V(-140, -120, z * 80), z > 0 ? 'Mesh Rider radio antennas' : null, V(0, -150, 0)); }
 
     // Step 9: payloads
@@ -412,6 +438,9 @@
       const valve = box(56, 38, 38, M.alu); valve.position.set(70, -8, 0); lance.add(valve);
       const vtag = box(57, 6, 39, M.gold); vtag.position.set(70, 12, 0); lance.add(vtag);
       const pcam = camModule(M); pcam.position.set(130, 26, 0); lance.add(pcam);
+      const nozzle = new T.Object3D(); nozzle.position.set(688, -75.5, 0); nozzle.rotation.z = Math.atan2(-70, 640); lance.add(nozzle);
+      const lanceEye = new T.Object3D(); lanceEye.position.set(152, 30, 0); lanceEye.rotation.z = Math.atan2(-70, 640); lance.add(lanceEye);
+      fx.nozzle = nozzle; fx.eye = lanceEye; fx.eyeFixed = true;
       lance.position.set(pr - 4, y0 - 77, 0);
       add(lance, 9, V(340, -120, 0), 'Carbon lance, automatic spray valve, quick-change tip', V(560, -50, 0));
       // obstacle-avoidance radar (in today's package)
@@ -423,11 +452,15 @@
       add(radar, 9, V(240, 0, 0), 'Obstacle radar + wall-distance hold', V(14, 30, 0));
       const hoseCurve = new T.CatmullRomCurve3([V(pr - 4, y0 - 80, 0), V(pr - 110, y0 - 150, 30), V(40, y0 - 260, 60), V(-120, 120, 140), V(-260, 6, 220), V(-520, 6, 320)]);
       const hose = mesh(new T.TubeGeometry(hoseCurve, 80, 9, 12, false), M.hose); add(hose, 9, V(0, -200, 0), 'Hose from ground pump + power tether', V(-260, 30, 220));
+      fx.hoseMat = M.hose;
       const tether = mesh(new T.TubeGeometry(new T.CatmullRomCurve3([V(-20, y0 - 4, 0), V(-30, y0 - 200, 40), V(-160, 100, 170), V(-280, 8, 240), V(-560, 8, 340)]), 80, 5, 10, false), M.cable); add(tether, 9, V(0, -200, 0));
+      fx.groundLines = [hose, tether];
     } else {
       const bayBottom = type === 'hybrid' ? y0 - 140 : y0 - 108;
       const gim = gimbal(M); gim.position.set(cfg.plateR - 40, y0 - 2, 0); add(gim, 9, V(320, -200, 0), 'Gremsy VIO F1: 20× zoom + 640 thermal + rangefinder', V(60, -100, 0));
+      fx.gimbalHead = gim.userData.head; fx.eye = gim.userData.eye;
       const spot = spotlight(M); spot.rotation.z = -0.35; spot.position.set(cfg.plateR - 120, bayBottom + 10, 150); add(spot, 9, V(200, -250, 160), 'Spotlight, follows the camera', V(40, 0, 0));
+      fx.spot = spot;
       const hn = horn(M); hn.rotation.z = -0.5; hn.position.set(cfg.plateR - 140, bayBottom + 10, -150); add(hn, 9, V(200, -250, -160), 'Loudspeaker and siren horn', V(60, 0, 0));
       for (let k = 0; k < 4; k++) {
         const a = k * Math.PI / 2; const flat = (pr - 2);
@@ -439,26 +472,31 @@
         const a0 = rot + k * Math.PI * 2 / cfg.plateN, a1 = rot + (k + 1) * Math.PI * 2 / cfg.plateN;
         const p0 = V(Math.cos(a0) * (pr + 2), y0 + 8, Math.sin(a0) * (pr + 2)), p1 = V(Math.cos(a1) * (pr + 2), y0 + 8, Math.sin(a1) * (pr + 2));
         const mid = p0.clone().lerp(p1, 0.5); const len = p0.distanceTo(p1) * 0.6;
-        const seg = box(len, 8, 6, k % 2 ? M.blue : M.red); seg.position.copy(mid); seg.rotation.y = -(a0 + a1) / 2 + Math.PI / 2;
+        const segMat = (k % 2 ? M.blue : M.red).clone();
+        const seg = box(len, 8, 6, segMat); seg.position.copy(mid); fx.bar.push({ mat: segMat, blue: !!(k % 2) }); seg.rotation.y = -(a0 + a1) / 2 + Math.PI / 2;
         add(seg, 9, V(0, 60, 0), k === 0 ? 'Light bar: red / blue / white' : null, V(0, 0, 0));
       }
       const chute = new T.Group();
       const can = cyl(68, 110, M.graphite, 40); can.position.y = 55; chute.add(can);
       const capc = cyl(72, 14, M.accent, 40); capc.position.y = 117; chute.add(capc);
       chute.position.set(-30, topY + 3, 0); add(chute, 9, V(0, 520, 0), 'Parachute, ASTM F3322', V(0, 130, 0));
+      fx.chuteCan = chute;
       const winch = new T.Group();
       const wb = box(150, 56, 100, M.alu); winch.add(wb);
       const drum = cyl(26, 70, M.silver, 24); drum.rotation.x = Math.PI / 2; drum.position.y = -30; winch.add(drum);
-      const line = cyl(1.5, 20, M.cable, 6); line.position.y = -66; winch.add(line);
-      const podp = box(170, 100, 120, M.hull); podp.position.y = -126; winch.add(podp);
-      const podb = box(174, 10, 124, M.accent); podb.position.y = -168; winch.add(podb);
+      // line and pod hang from their own pivot so flight mode can pay the line out and keep it plumb
+      const hang = new T.Group(); hang.position.y = -56; winch.add(hang);
+      const line = cyl(1.5, 20, M.cable, 6); line.position.y = -10; hang.add(line);
+      const podp = box(170, 100, 120, M.hull); podp.position.y = -70; hang.add(podp);
+      const podb = box(174, 10, 124, M.accent); podb.position.y = -112; hang.add(podb);
+      fx.winch = { hang: hang, line: line, pod: [podp, podb], hullMat: M.hull, accentMat: M.accent };
       winch.position.set(-150, bayBottom - 34, 0);
       add(winch, 9, V(-100, -330, 0), type === 'hybrid' ? 'Winch + 3 kg supply pod' : 'Winch + 2 kg supply pod', V(0, -170, 60));
     }
 
     // scale to metres, and put on the ground
     root.scale.setScalar(0.001);
-    return { group: root, parts: parts, labels: labels, steps: STEPS, cfg: cfg, materials: M,
+    return { group: root, parts: parts, labels: labels, steps: STEPS, cfg: cfg, materials: M, fx: fx,
       dims: { wheelbase: 2 * R, height: topY + 150, propDia: 2 * cfg.propLen } };
   }
 
